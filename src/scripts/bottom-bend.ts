@@ -19,7 +19,7 @@
  *
  * In Chrome / Edge everything bends instead, text included (startAll, at the end).
  *
- * Skips the menu and page chrome, the home page's contact block and footer,
+ * Skips the menu and page chrome,
  * pictures turned in 3D or rotated (their box isn't where they show), pictures with a
  * clip-path of their own, and small icons. Videos from another site only bend if that site
  * allows it (CORS). Desktop with a mouse only (theirs is off on phones too); off for
@@ -40,9 +40,7 @@ const BELOW = 160;
 /** the widest the corners flare out, as a share of the screen width */
 const FLARE = 0.05 * STRENGTH;
 
-/** on the home page, the contact block and the footer stay flat too */
-const HOME = '.contact, .footer';
-const SKIP = ['.pt, .site-menu, .nav-pill, .get-in-touch', location.pathname === '/' && HOME].filter(Boolean).join(', ');
+const SKIP = '.pt, .site-menu, .nav-pill, .get-in-touch';
 
 const VERTEX = `#version 300 es
 in vec2 aPos;
@@ -512,8 +510,7 @@ function start() {
 // those). Same curve: each row is pulled toward the middle by
 // (2x / w − 1) · FLARE · w · d^DISTANCE, d = how close the row is to that edge (1 at it).
 // lens() also builds a mirrored strip for the top edge (tried, not used: bottom only).
-// Menu, menu pill and Get in touch sit above the strips and stay flat; on the home page a
-// strip fades out while the contact block or the footer is in it, as before.
+// Menu, menu pill and the contact page's Close sit above the strips and stay flat.
 const chromium = !!(navigator as Navigator & { userAgentData?: { brands: { brand: string }[] } }).userAgentData?.brands.some((b) =>
   /Chromium/.test(b.brand),
 );
@@ -576,20 +573,6 @@ function lens(edge: 'top' | 'bottom', svg: SVGSVGElement) {
     clearTimeout(resizing);
     resizing = window.setTimeout(build, 150);
   });
-
-  // home page: the contact block and the footer stay flat
-  if (location.pathname === '/') {
-    const inStrip = new Set<Element>();
-    const away = `-${(1 - BAND - 0.01) * 100}%`;
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) e.isIntersecting ? inStrip.add(e.target) : inStrip.delete(e.target);
-        strip.style.opacity = inStrip.size ? '0' : '1';
-      },
-      { rootMargin: edge === 'bottom' ? `${away} 0px 0px 0px` : `0px 0px ${away} 0px` },
-    );
-    document.querySelectorAll(HOME).forEach((el) => io.observe(el));
-  }
 }
 
 function startAll() {
