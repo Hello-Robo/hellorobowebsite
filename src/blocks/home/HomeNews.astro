@@ -15,7 +15,6 @@ const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.
 ---
 <section class="home-news">
   <header class="home-news__head container">
-    <img src="/images/home/stamp-news.svg" alt="" width="230" style="--w: 230" height="132" loading="lazy" />
     <h2 class="t-h1">Latest news</h2>
   </header>
 
@@ -77,12 +76,6 @@ const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.
     overflow-x: hidden;
     overflow-x: clip;
   }
-  /* Stamp at x 40, title at x 312 (stamp 230 + 42) */
-  .home-news__head {
-    display: flex;
-    align-items: flex-start;
-    gap: calc(42 * var(--px));
-  }
   /* Sideways scroller: starts at the page margin, snaps cards to it, no visible scrollbar */
   .home-news__row {
     display: flex;
@@ -133,19 +126,11 @@ const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.
     max-width: calc(465 * var(--px));
   }
 
-  /* ── Mobile: Figma 10098:1661 — stamp above the title; cards 276 / 184 wide in a sideways row ── */
+  /* ── Mobile: Figma 10098:1661 — cards 276 / 184 wide in a sideways row ── */
   @media (max-width: 1023px) {
     .home-news {
       padding-top: 188px;
       padding-bottom: 175px;
-    }
-    .home-news__head {
-      flex-direction: column;
-      gap: 12px;
-    }
-    .home-news__head img {
-      width: 120px;
-      height: auto;
     }
     .home-news__row {
       margin-top: 64px;

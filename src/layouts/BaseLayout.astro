@@ -93,7 +93,8 @@ const pageTitle = title === 'Home' ? 'Hello Robo — Make the world say yes to y
       </span>
       <span class="pt__bar"><span class="pt__bar-fill" data-pt-bar></span></span>
     </div>
-    {chrome && <GetInTouch variant={headerVariant} close={close} />}
+    {/* top right: only the contact page's Close (the Get in touch button there was removed) */}
+    {chrome && close && <GetInTouch variant={headerVariant} close />}
     <main>
       <slot />
     </main>

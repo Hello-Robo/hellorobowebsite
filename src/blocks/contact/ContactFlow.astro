@@ -1277,11 +1277,13 @@ const services = [
   }
 
   /* ── Field: label line at y 450, 680 wide; the arrow under its right end ── */
+  /* as wide as the Go back + Submit / Next pair under it: from the page margin to the
+     right edge of that button (x 247, 196 wide, at least 150px) */
   .contact__field {
     position: absolute;
     left: var(--space-40);
     top: calc(450 * var(--px));
-    width: calc(680 * var(--px));
+    width: calc(247 * var(--px) + max(150px, 196 * var(--px)) - var(--space-40));
     display: flex;
     flex-direction: column;
     align-items: flex-end;
