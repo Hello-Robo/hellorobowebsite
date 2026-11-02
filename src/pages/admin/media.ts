@@ -73,7 +73,9 @@ export const GET: APIRoute = async ({ url, request }) => {
   // (never an SVG, which is only ever served with the headers above)
   if (repo.remote && size > CHUNK) {
     if (type === 'image/svg+xml') return new Response('Too large', { status: 413 });
-    return Response.redirect((await repo.remote.url(file))!, 302);
+    // a plain Response (not Response.redirect, whose headers can't be changed afterwards,
+    // which the middleware does)
+    return new Response(null, { status: 302, headers: { Location: (await repo.remote.url(file))! } });
   }
   return new Response(new Uint8Array(size ? await slice(0, size - 1) : Buffer.alloc(0)), { headers });
 };
