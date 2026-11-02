@@ -1,5 +1,6 @@
 {
   "name": "Turing Robotic Industries",
+  "nda": false,
   "intro": "TRI is a smartphone company founded by former Nokia employees and backed by Chinese investors.",
   "services": [
     "Brand Identity",
@@ -7,7 +8,9 @@
     "Web Design",
     "Development"
   ],
-  "reveal": "../../assets/projects/turing-robotic-industries/turing-01-da2d2a.avif",
+  "reveal": {
+    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/tri+video+1.webm"
+  },
   "micrographics": {
     "left": "/images/project/badge-25.svg",
     "right": "/images/project/stamp-project-hero.svg"

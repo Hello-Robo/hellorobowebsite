@@ -42,12 +42,6 @@
       ]
     },
     {
-      "type": "media",
-      "images": [
-        "../../assets/projects/weekly-robotics/weekly-robotics-01-a72ca0.webp"
-      ]
-    },
-    {
       "type": "text",
       "label": "Designed for What Comes Next",
       "text": "Instead of delivering a heavy, hard-to-implement redesign, we used a Market-Ready Design approach to create a clear, tool-supported system the founder could assemble effortlessly."
@@ -175,5 +169,5 @@
     }
   ],
   "next": "turing-robotic-industries",
-  "order": 6
+  "order": 4
 }

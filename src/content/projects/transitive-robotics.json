@@ -26,8 +26,8 @@
     },
     {
       "type": "facts",
-      "label": "What Made People Say Yes",
-      "text": "A new brand and website for the platform robotics teams use to build, operate, and scale their own robot fleets.",
+      "label": "What made people say yes",
+      "text": "Transitive Robotics helps companies build and scale robotic systems without rigid infrastructure. We created a modular brand and website built around openness and independence. Your robots. Your rules. Our tools.",
       "facts": [
         {
           "label": "Industry",
@@ -35,14 +35,8 @@
         },
         {
           "label": "Services",
-          "value": "Brand, Website"
+          "value": "Brand Identity"
         }
-      ]
-    },
-    {
-      "type": "media",
-      "images": [
-        "../../assets/projects/transitive-robotics/transitive-01-9b0c3b.jpg"
       ]
     },
     {
@@ -160,5 +154,5 @@
   ],
   "credits": [],
   "next": "weekly-robotics",
-  "order": 5
+  "order": 3
 }
