@@ -1,15 +1,20 @@
 /**
- * Contact form responses: one JSON file per submission in data/contact-responses/
- * (git-ignored — people's names and emails never go into the repo or the site build).
- * Written by the public /api/contact endpoint, read and deleted in the CMS.
+ * Contact form responses: one JSON file per submission. Written by the public /api/contact
+ * endpoint, read and deleted in the CMS. People's names and emails never go into the repo
+ * or the site build:
+ * - locally: data/contact-responses/ (git-ignored)
+ * - on Vercel (BLOB_READ_WRITE_TOKEN set): the project's private Blob store, contact-responses/
  */
 import { randomBytes } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { del, get, list, put } from '@vercel/blob';
 import { CmsError } from './store';
 
 const DIR = path.resolve(process.env.CONTACT_RESPONSES_DIR || path.join(process.cwd(), 'data/contact-responses'));
+const BLOB_PREFIX = 'contact-responses/';
+const inBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
 const ID_RE = /^\d{8}-\d{6}-[0-9a-f]{6}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -62,26 +67,59 @@ export async function saveResponse(input: unknown): Promise<ContactResponse> {
     receivedAt: now.toISOString(),
     ...parseResponse(input),
   };
+  const text = JSON.stringify(entry, null, 2) + '\n';
+  if (inBlob) {
+    await put(`${BLOB_PREFIX}${entry.id}.json`, text, { access: 'private', addRandomSuffix: false, contentType: 'application/json' });
+    return entry;
+  }
   await mkdir(DIR, { recursive: true });
   const file = path.join(DIR, `${entry.id}.json`);
   const tmp = `${file}.tmp`;
-  await writeFile(tmp, JSON.stringify(entry, null, 2) + '\n');
+  await writeFile(tmp, text);
   await rename(tmp, file);
   return entry;
 }
 
+async function blobResponses(): Promise<ContactResponse[]> {
+  const pathnames: string[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = await list({ prefix: BLOB_PREFIX, cursor, limit: 1000 });
+    pathnames.push(...page.blobs.map((b) => b.pathname).filter((p) => p.endsWith('.json')));
+    cursor = page.hasMore ? page.cursor : undefined;
+  } while (cursor);
+  const entries = await Promise.all(
+    pathnames.map(async (p) => {
+      const res = await get(p, { access: 'private', useCache: false });
+      if (!res || res.statusCode !== 200 || !res.stream) return null;
+      return JSON.parse(await new Response(res.stream).text()) as ContactResponse;
+    }),
+  );
+  return entries.filter((e): e is ContactResponse => !!e);
+}
+
 /** Newest first */
 export async function listResponses(): Promise<ContactResponse[]> {
-  if (!existsSync(DIR)) return [];
-  const files = (await readdir(DIR)).filter((f) => f.endsWith('.json'));
-  const entries = await Promise.all(
-    files.map(async (f) => JSON.parse(await readFile(path.join(DIR, f), 'utf8')) as ContactResponse),
-  );
+  let entries: ContactResponse[];
+  if (inBlob) entries = await blobResponses();
+  else if (!existsSync(DIR)) return [];
+  else {
+    const files = (await readdir(DIR)).filter((f) => f.endsWith('.json'));
+    entries = await Promise.all(
+      files.map(async (f) => JSON.parse(await readFile(path.join(DIR, f), 'utf8')) as ContactResponse),
+    );
+  }
   return entries.sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
 }
 
 export async function deleteResponse(id: string) {
   if (!ID_RE.test(id)) throw new CmsError('Invalid response id', 400);
+  if (inBlob) {
+    const pathname = `${BLOB_PREFIX}${id}.json`;
+    if (!(await get(pathname, { access: 'private', useCache: false }))) throw new CmsError('Response not found', 404);
+    await del(pathname);
+    return;
+  }
   const file = path.join(DIR, `${id}.json`);
   if (!existsSync(file)) throw new CmsError('Response not found', 404);
   await unlink(file);

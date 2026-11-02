@@ -6,7 +6,7 @@ import { CmsError, isValidId, reorderEntries, saveEntry } from '../../../../cms/
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ params, request }) => {
+export const POST: APIRoute = async ({ params, request, locals }) => {
   const c = getCmsCollection(params.section);
   if (!c || c.fixed) return json({ error: 'Not found' }, 404);
   try {
@@ -16,19 +16,19 @@ export const POST: APIRoute = async ({ params, request }) => {
         'File name: use lowercase letters, numbers and dashes',
       ]);
     }
-    const entry = await saveEntry(c, id, data, files, 'create');
+    const entry = await saveEntry(c, id, data, files, 'create', locals.user?.email);
     return json(entry, 201);
   } catch (err) {
     return errorResponse(err);
   }
 };
 
-export const PUT: APIRoute = async ({ params, request }) => {
+export const PUT: APIRoute = async ({ params, request, locals }) => {
   const c = getCmsCollection(params.section);
   if (!c?.sortable) return json({ error: 'Not found' }, 404);
   try {
     const body = await request.json().catch(() => null);
-    await reorderEntries(c, body?.ids);
+    await reorderEntries(c, body?.ids, locals.user?.email);
     return json({ ok: true });
   } catch (err) {
     return errorResponse(err);

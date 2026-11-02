@@ -14,10 +14,14 @@
     "deploy:preview": "sh scripts/deploy-preview.sh"
   },
   "dependencies": {
-    "@astrojs/node": "^11.1.9",
+    "@astrojs/vercel": "^11.0.18",
+    "@vercel/blob": "^2.8.2",
     "astro": "^7.4.2"
   },
   "devDependencies": {
-    "svgo": "^4.1.0"
+    "@astrojs/check": "^0.9.12",
+    "@types/node": "^22.20.5",
+    "svgo": "^4.1.0",
+    "typescript": "^6.0.3"
   }
 }

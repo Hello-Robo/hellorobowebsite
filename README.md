@@ -295,9 +295,11 @@ The first run also creates `CMS_SESSION_SECRET`. Then open http://localhost:4321
 
 **How it fits together**
 
-- Site pages stay static (prerendered). Only `/admin` renders on demand, via the
-  Node adapter (`@astrojs/node`). `src/middleware.ts` sends anyone not signed in to
-  `/admin/login`.
+- Site pages stay static (prerendered). Only `/admin` and `/api/contact` render on
+  demand, as Vercel functions (`@astrojs/vercel`; `npm run dev` runs them locally).
+  `src/middleware.ts` sends anyone not signed in to `/admin/login`.
+- Files are read and written through `src/cms/repo.ts`: on disk locally, as **one GitHub
+  commit per save** on Vercel (see Production below).
 - `src/cms/collections.ts` lists the editable fields per section. **If you change a
   schema in `src/content.config.ts`, update the matching fields there.** The Team
   field object ids also mirror `OBJECTS` in `src/blocks/team/TeamField.astro`.
@@ -344,21 +346,40 @@ The first run also creates `CMS_SESSION_SECRET`. Then open http://localhost:4321
   submission as a JSON file in `data/contact-responses/` (git-ignored: personal data never
   goes into the repo). The CMS lists them newest first and can delete them. The endpoint
   only accepts posts from the site itself, has a hidden bot trap and allows 5 sends per
-  visitor per 10 minutes. In production, keep `data/` on persistent storage (or point
-  `CONTACT_RESPONSES_DIR` at it) so redeploys don't wipe responses.
+  visitor per 10 minutes. On Vercel they're kept in the project's private Blob store
+  (`contact-responses/`) instead, never in the repo.
 
 | Path | What |
 |---|---|
 | `src/cms/` | auth, field definitions, file store, admin layout + styles, browser editor |
+| `src/cms/repo.ts` | where files live: disk locally, GitHub commits on Vercel |
+| `src/cms/client/upload.ts`, `src/pages/admin/api/upload.ts` | on Vercel, uploads go from the browser to Blob first |
 | `src/pages/admin/` | login, logout, list / new / edit pages, `responses/`, `api/` (save, delete), `media` (image previews) |
 | `src/cms/responses.ts`, `src/pages/api/contact.ts` | contact form responses: storage and the public endpoint |
 | `scripts/cms-user.mjs` | `npm run cms:user` |
 
-**Production:** `npm run build` outputs the static site plus a Node server
-(`node dist/server/entry.mjs`). Set `CMS_USERS` and `CMS_SESSION_SECRET` (copy them from
-`.env`) as environment variables on the host. Saves write to the server's copy of
-`src/content/`, so publishing edits to the live site still needs a decision on
-hosting (e.g. the CMS committing to GitHub and the site rebuilding). See Open items.
+**Production (Vercel, project `hellorobo-co`):** the CMS runs at `/admin` on the live site.
+
+- **A save is a commit.** Each save, reorder, delete or micrographic upload becomes one
+  commit on the branch the deployment was built from (`main` for the live site, the PR
+  branch for a preview), authored "Hello Robo CMS", naming who saved it. Vercel then
+  rebuilds and the live site shows it in about 2 minutes; the CMS itself shows it at once
+  (it reads the branch head). Undo = revert the commit on GitHub.
+- **Uploads** over Vercel's 4.5 MB request limit (images up to 15 MB, models 30 MB,
+  videos 100 MB) go from the browser straight to the private Blob store (`uploads/tmp/`);
+  the save fetches them from there, commits them to the same folders as locally, and
+  deletes the temporary copy.
+- **Environment variables** (Vercel → Settings → Environment Variables, Production and
+  Preview):
+  - `CMS_USERS`, `CMS_SESSION_SECRET`: the same values as in `.env` (same logins).
+  - `GITHUB_TOKEN`: a fine-grained GitHub token for `Hello-Robo/hellorobowebsite` only,
+    with **Contents: Read and write**. Without it the CMS on Vercel refuses to save
+    rather than lose edits.
+  - `BLOB_READ_WRITE_TOKEN`: added by Vercel for the `hellorobo-fonts` Blob store (fonts,
+    contact responses, upload staging).
+  - Optional: `GITHUB_REPO` (`owner/name`) and `CMS_BRANCH` to override the defaults.
+- Adding a CMS user: `npm run cms:user -- add …` locally, then copy the new `CMS_USERS`
+  line into Vercel and redeploy.
 
 ## Assets
 
@@ -376,7 +397,6 @@ hosting (e.g. the CMS committing to GitHub and the site rebuilding). See Open it
 - Heavy SVGs to simplify with the designer: approved stamp (~965 KB), department stamp (~738 KB), logo rows (~990 KB), menu micrographic (~518 KB). Bedrock logo only exists as PNG.
 - Motion step: menu reveal, value tabs, contact copy-email and receipt with real data; polish of the Home scroll interactions (easing, timing).
 - Project wheel: some project reveal images may need a better crop for the wheel background.
-- CMS publishing: choose hosting for hellorobo.co and how CMS saves reach the live site.
 
 ---
 
