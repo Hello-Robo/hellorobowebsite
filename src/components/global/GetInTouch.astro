@@ -53,8 +53,9 @@ const { variant = 'dark', href = '/contact', close = false } = Astro.props;
     height: max(44px, calc(64 * var(--px)));
     padding: 0 var(--space-20) 0 var(--space-24);
     border-radius: var(--radius-ui);
-    backdrop-filter: blur(calc(10 * var(--px)));
+    /* prefixed first: the build's CSS minifier keeps only the last of the two */
     -webkit-backdrop-filter: blur(calc(10 * var(--px)));
+    backdrop-filter: blur(calc(10 * var(--px)));
     transition:
       opacity var(--duration-smooth) var(--ease-out),
       translate var(--duration-slow) var(--ease-out),

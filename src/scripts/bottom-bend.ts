@@ -17,6 +17,8 @@
  * follows the picture's box (moves and reveal included), its opacity, the frame
  * that crops it and its rounded corners.
  *
+ * In Chrome / Edge everything bends instead, text included (startAll, at the end).
+ *
  * Skips the menu and page chrome, the home page's contact block and footer,
  * pictures turned in 3D or rotated (their box isn't where they show), pictures with a
  * clip-path of their own, and small icons. Videos from another site only bend if that site
@@ -505,4 +507,101 @@ function start() {
   run();
 }
 
-if (desktop.matches && !still.matches) start();
+// ---- Everything, text included (Chrome / Edge): instead of a WebGL copy per picture, a
+// strip along the bottom of the screen bends whatever is behind it, with an SVG displacement filter as its backdrop-filter (only Chromium applies
+// those). Same curve: each row is pulled toward the middle by
+// (2x / w − 1) · FLARE · w · d^DISTANCE, d = how close the row is to that edge (1 at it).
+// lens() also builds a mirrored strip for the top edge (tried, not used: bottom only).
+// Menu, menu pill and Get in touch sit above the strips and stay flat; on the home page a
+// strip fades out while the contact block or the footer is in it, as before.
+const chromium = !!(navigator as Navigator & { userAgentData?: { brands: { brand: string }[] } }).userAgentData?.brands.some((b) =>
+  /Chromium/.test(b.brand),
+);
+const NS = 'http://www.w3.org/2000/svg';
+
+function lens(edge: 'top' | 'bottom', svg: SVGSVGElement) {
+  const id = `bend-${edge}`;
+  const filter = document.createElementNS(NS, 'filter');
+  filter.id = id;
+  for (const [k, v] of Object.entries({ filterUnits: 'userSpaceOnUse', primitiveUnits: 'userSpaceOnUse', 'color-interpolation-filters': 'sRGB', x: '0', y: '0' })) filter.setAttribute(k, v);
+  const map = document.createElementNS(NS, 'feImage');
+  map.setAttribute('result', 'map');
+  map.setAttribute('preserveAspectRatio', 'none');
+  const shift = document.createElementNS(NS, 'feDisplacementMap');
+  for (const [k, v] of Object.entries({ in: 'SourceGraphic', in2: 'map', xChannelSelector: 'R', yChannelSelector: 'G' })) shift.setAttribute(k, v);
+  filter.append(map, shift);
+  svg.append(filter);
+
+  const strip = document.createElement('div');
+  strip.className = `bend-lens bend-lens--${edge}`;
+  strip.setAttribute('aria-hidden', 'true');
+  strip.style.cssText = `position:fixed;left:0;right:0;${edge}:0;pointer-events:none;z-index:calc(var(--z-header) - 1);backdrop-filter:url(#${id});-webkit-backdrop-filter:url(#${id});transition:opacity .2s ease`;
+  document.body.append(strip);
+
+  /** the displacement map for this screen size: red = sideways pull, green = none */
+  const build = () => {
+    const w = innerWidth;
+    const vh = innerHeight;
+    const h = Math.ceil(vh * (BAND + 0.01));
+    const scale = 2 * FLARE * w + 4;
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const g = c.getContext('2d')!;
+    const img = g.createImageData(w, h);
+    for (let y = 0; y < h; y++) {
+      // how close this row of the strip is to its edge of the screen
+      const d = edge === 'bottom' ? (vh - h + y + 0.5) / vh : 1 - (y + 0.5) / vh;
+      const curve = Math.pow(d, DISTANCE);
+      for (let x = 0; x < w; x++) {
+        const dx = -((2 * (x + 0.5)) / w - 1) * FLARE * w * curve;
+        const i = (y * w + x) * 4;
+        img.data[i] = Math.round(255 * (0.5 + dx / scale));
+        img.data[i + 1] = 128;
+        img.data[i + 3] = 255;
+      }
+    }
+    g.putImageData(img, 0, 0);
+    strip.style.height = `${h}px`;
+    for (const el of [filter, map]) {
+      el.setAttribute('width', String(w));
+      el.setAttribute('height', String(h));
+    }
+    map.setAttribute('href', c.toDataURL('image/png'));
+    shift.setAttribute('scale', String(scale));
+  };
+  build();
+  let resizing = 0;
+  addEventListener('resize', () => {
+    clearTimeout(resizing);
+    resizing = window.setTimeout(build, 150);
+  });
+
+  // home page: the contact block and the footer stay flat
+  if (location.pathname === '/') {
+    const inStrip = new Set<Element>();
+    const away = `-${(1 - BAND - 0.01) * 100}%`;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) e.isIntersecting ? inStrip.add(e.target) : inStrip.delete(e.target);
+        strip.style.opacity = inStrip.size ? '0' : '1';
+      },
+      { rootMargin: edge === 'bottom' ? `${away} 0px 0px 0px` : `0px 0px ${away} 0px` },
+    );
+    document.querySelectorAll(HOME).forEach((el) => io.observe(el));
+  }
+}
+
+function startAll() {
+  document.documentElement.classList.add('bend-all');
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
+  document.body.append(svg);
+  lens('bottom', svg);
+}
+
+if (desktop.matches && !still.matches) {
+  if (chromium) startAll();
+  else start();
+}

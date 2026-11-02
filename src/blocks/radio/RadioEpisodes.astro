@@ -62,7 +62,6 @@ const STEP = 2;
       render();
       // move focus to the first new episode so keyboard users land on it
       rows[first]?.querySelector<HTMLElement>('a')?.focus({ preventScroll: true });
-      rows[first]?.classList.add('is-revealed');
     });
     render();
   }
@@ -158,22 +157,5 @@ const STEP = 2;
   .radio-episodes__row[hidden],
   .radio-episodes__more[hidden] {
     display: none;
-  }
-  /* Newly loaded rows fade up, with the site's reveal timing */
-  .radio-episodes__row.is-revealed,
-  .radio-episodes__row.is-revealed ~ .radio-episodes__row {
-    animation: radio-reveal var(--duration-smooth) var(--ease-out) both;
-  }
-  @keyframes radio-reveal {
-    from {
-      opacity: 0;
-      transform: translateY(calc(24 * var(--px)));
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .radio-episodes__row.is-revealed,
-    .radio-episodes__row.is-revealed ~ .radio-episodes__row {
-      animation: none;
-    }
   }
 </style>

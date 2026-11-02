@@ -8,7 +8,8 @@
  * covered (html.pt-cover) before its first paint. Links to other pages of the site are
  * caught here; new tabs, downloads, the CMS, hash links and links other scripts already
  * handle (e.g. Get in touch opening the contact block) are left alone. Back / forward from
- * the browser cache uncovers too. Off for reduced motion.
+ * the browser cache uncovers too. The first page of a visit opens covered as well, with a
+ * 1px loading bar under the logo (load()). Off for reduced motion.
  */
 
 const html = document.documentElement;
@@ -30,6 +31,42 @@ async function blink() {
     logo.classList.toggle('is-blink', closed);
     await wait(ms);
   }
+}
+
+/**
+ * First page of a visit: the cover stays up while the loading bar fills with the page's
+ * fonts, the pictures it loads straight away and the page load itself (never shorter than
+ * MIN_LOAD, never longer than MAX_LOAD), then the page is revealed as after a transition
+ */
+const MIN_LOAD = 900;
+const MAX_LOAD = 8000;
+async function load() {
+  try {
+    sessionStorage.setItem('pt-loaded', '1');
+  } catch {}
+  const fill = document.querySelector<HTMLElement>('[data-pt-bar]');
+  const images = [...document.images].filter((img) => img.loading !== 'lazy' && !img.complete && !img.closest('.pt'));
+  const tasks: Promise<unknown>[] = [
+    document.fonts?.ready ?? Promise.resolve(),
+    document.readyState === 'complete' ? Promise.resolve() : new Promise((r) => addEventListener('load', r, { once: true })),
+    ...images.map(
+      (img) =>
+        new Promise((r) => {
+          img.addEventListener('load', r, { once: true });
+          img.addEventListener('error', r, { once: true });
+        }),
+    ),
+  ];
+  let done = 0;
+  const show = () => fill?.style.setProperty('--p', String(done / tasks.length));
+  show();
+  const started = performance.now();
+  await Promise.race([Promise.all(tasks.map((t) => t.then(() => (done++, show())))), wait(MAX_LOAD)]);
+  done = tasks.length;
+  show();
+  await wait(Math.max(350, MIN_LOAD - (performance.now() - started)));
+  html.classList.remove('pt-load');
+  await reveal();
 }
 
 /** The new page is in: blink, then drop the columns */
@@ -87,6 +124,8 @@ if (!reduced) {
       },
       { once: true },
     );
+  } else if (html.classList.contains('pt-load')) {
+    load();
   } else if (html.classList.contains('pt-cover')) {
     reveal();
   }
