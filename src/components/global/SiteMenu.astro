@@ -144,8 +144,9 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path === href 
     position: absolute;
     inset: 0;
     background: rgb(0 0 0 / 0.2);
-    backdrop-filter: blur(calc(100 * var(--px)));
+    /* prefixed first: the build's CSS minifier keeps only the last of the two */
     -webkit-backdrop-filter: blur(calc(100 * var(--px)));
+    backdrop-filter: blur(calc(100 * var(--px)));
     opacity: 0;
     transition: opacity 0.5s ease 0.05s;
   }

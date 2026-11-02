@@ -67,6 +67,30 @@ html:is(.pt-cover, .pt-hold) .pt__logo {
 .pt__logo.is-blink .pt__eyes-closed {
   display: block !important;
 }
+/* Loading bar, on the first page of a visit only (html.pt-load): 1px under the logo, grey,
+   filling brand orange as the page's fonts and images arrive */
+.pt__bar {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + max(48px, calc(64 * var(--px))));
+  width: max(120px, calc(160 * var(--px)));
+  height: 1px;
+  translate: -50% 0;
+  background: var(--color-grey-600);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+html.pt-load .pt__bar {
+  opacity: 1;
+}
+.pt__bar-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--color-orange);
+  transform: scaleX(var(--p, 0));
+  transform-origin: left;
+  transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+}
 
 /* Images that aren't loaded yet when the page shows fade in when they arrive, instead
    of popping in (BaseLayout marks them; without JavaScript they simply show) */
