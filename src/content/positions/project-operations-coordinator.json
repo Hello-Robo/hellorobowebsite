@@ -1,5 +1,5 @@
 {
-  "title": "Operations Coordinator",
+  "title": "Operations Manager",
   "location": "New York, NY",
   "hours": "EDT",
   "type": "Full time",
@@ -8,11 +8,11 @@
     "Our design team does its best work when nothing is in the way — no missing files, no unclear next steps, no unsigned paperwork. This role keeps projects moving and the studio running, so designers can design and clients always know what happens next."
   ],
   "workOn": [
-    "Monday kickoffs → Run the weekly kickoff. Check deadlines, flag risks, and make sure the team has everything it needs for the week.",
+    "Monday kickoffs → Set up bots to run the weekly kickoff. Check deadlines, flag risks, and make sure the team has everything it needs for the week.",
     "Client calls → Open every project call with the agenda, keep time, and close with clear next steps.",
     "Follow-ups → Send recap notes and action items to clients within hours of every call.",
     "Asset chasing → Track down the files, access, and feedback the design team needs — before anyone is blocked.",
-    "Studio admin → Send contracts, NDAs, and invoices, and keep signatures and payments on track.",
+    "Studio administrative work → Send contracts, NDAs, and invoices, and keep signatures and payments on track. All with bots.",
     "Lead follow-up → Keep new leads warm with timely, well-written follow-ups so no conversation goes quiet."
   ],
   "bring": [

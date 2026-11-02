@@ -5,6 +5,7 @@
  */
 import AdminLayout from './AdminLayout.astro';
 import { getCmsCollection, type CmsCollection } from './collections';
+import { savesToGitHub } from './repo';
 import { resolveOptions, type Entry } from './store';
 
 interface Props {
@@ -25,6 +26,8 @@ const config = JSON.stringify({
   fields: await resolveOptions(c.fields, entry?.id),
   id: entry?.id ?? null,
   data: entry?.data ?? null,
+  // on Vercel, files go from the browser to the Blob store first (src/cms/client/upload.ts)
+  directUploads: !!process.env.VERCEL && !!process.env.BLOB_READ_WRITE_TOKEN,
 });
 ---
 <AdminLayout title={title} active={c.parent ?? c.slug}>
@@ -35,7 +38,11 @@ const config = JSON.stringify({
     </div>
   </header>
 
-  {saved && <p class="cms-notice" role="status" data-saved>Saved.</p>}
+  {saved && (
+    <p class="cms-notice" role="status" data-saved>
+      {savesToGitHub ? 'Saved. The live site updates in about 2 minutes.' : 'Saved.'}
+    </p>
+  )}
   <div class="cms-notice cms-notice--error" role="alert" data-errors hidden></div>
 
   <form class="cms-editor" novalidate data-editor>

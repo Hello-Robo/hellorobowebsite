@@ -8,7 +8,7 @@ npm run build
 D=.deploy/hellorobo-preview
 mkdir -p "$D"
 find "$D" -mindepth 1 -maxdepth 1 ! -name .vercel -exec rm -rf {} +
-cp -R dist/client/. "$D/"
+cp -R .vercel/output/static/. "$D/"
 rm -rf "$D/fonts/README.md" "$D/styleguide" "$D/blocks"
 printf 'User-agent: *\nDisallow: /\n' > "$D/robots.txt"
 cat > "$D/vercel.json" <<'JSON'

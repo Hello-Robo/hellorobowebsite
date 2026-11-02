@@ -4,6 +4,7 @@
  * new images are sent as files and written into the data as "upload:<token>".
  */
 import { youtubeId, type Field } from '../collections';
+import { formValue, useDirectUploads } from './upload';
 
 type Value = unknown;
 type Data = Record<string, Value>;
@@ -21,6 +22,8 @@ interface Config {
   fields: Field[];
   id: string | null;
   data: Data | null;
+  /** On Vercel: files go to the Blob store first (see ./upload.ts) */
+  directUploads?: boolean;
 }
 
 const uploads = new Map<string, File>();
@@ -303,7 +306,7 @@ const loadLibrary = (fresh = false) => {
 
 async function uploadToLibrary(file: File): Promise<LibraryItem> {
   const body = new FormData();
-  body.set('file', file);
+  body.set('file', await formValue(file));
   const res = await fetch('/admin/api/library', { method: 'POST', body });
   const result = await res.json().catch(() => ({ error: res.statusText }));
   if (!res.ok) throw new Error(result.error ?? 'Upload failed');
@@ -1119,6 +1122,7 @@ function slugify(text: string) {
 }
 
 export function mountEditor(form: HTMLFormElement, config: Config) {
+  useDirectUploads(!!config.directUploads);
   const fieldsEl = form.querySelector<HTMLElement>('[data-fields]')!;
   const errorsEl = document.querySelector<HTMLElement>('[data-errors]')!;
   const saveBtn = form.querySelector<HTMLButtonElement>('[data-save]')!;
@@ -1167,14 +1171,14 @@ export function mountEditor(form: HTMLFormElement, config: Config) {
     const body = new FormData();
     body.set('data', JSON.stringify(data));
     if (isNew) body.set('id', idInput!.value);
-    // Send only the files this entry still uses
-    const used = JSON.stringify(data);
-    for (const [token, file] of uploads) if (used.includes(token)) body.set(token, file);
 
     saveBtn.disabled = true;
     const label = saveBtn.textContent;
     saveBtn.textContent = 'Saving…';
     try {
+      // Send only the files this entry still uses
+      const used = JSON.stringify(data);
+      for (const [token, file] of uploads) if (used.includes(token)) body.set(token, await formValue(file));
       const res = await fetch(isNew ? `/admin/api/${config.section}` : `/admin/api/${config.section}/${config.id}`, {
         method: isNew ? 'POST' : 'PUT',
         body,
@@ -1188,7 +1192,7 @@ export function mountEditor(form: HTMLFormElement, config: Config) {
       dirty = false;
       location.href = `/admin/${config.section}/${result.id}?saved`;
     } catch {
-      showErrors('Could not reach the server. Check your connection and try again.');
+      showErrors('Could not reach the server or upload the files. Check your connection and try again.');
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = label;
