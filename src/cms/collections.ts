@@ -207,9 +207,10 @@ export const CMS_COLLECTIONS: CmsCollection[] = [
         options: [{ value: '', label: 'None' }, ...TEAM_OBJECTS.map((id) => ({ value: id, label: `${id.toUpperCase()}.OBJ` }))],
       },
       {
-        kind: 'model',
-        key: 'model',
-        label: '3D object',
+        kind: 'image',
+        key: 'objectImage',
+        label: 'Object image',
+        hint: 'Optional PNG that replaces their object’s picture on the Team field. Best: 2× size, on white or a transparent background',
       },
       order,
     ],

@@ -558,13 +558,13 @@ const services = [
       show('start', false);
       // other places on the page can open a step: dispatch "contact:show" with its name
       root.addEventListener('contact:show', (e) => show((e as CustomEvent<string>).detail));
-      // "Get in touch" and the menu's "Get in touch" don't leave the page when it has this
-      // block: the menu closes, the page glides down to the block and it opens on the start
+      // "Get in touch" links don't leave the page when it has this block: the page glides
+      // down to the block and it opens on the start. The menu's "Get in touch" is the
+      // exception: it goes to the /contact page
       document.addEventListener('click', (e) => {
         const link = (e.target as Element).closest<HTMLAnchorElement>('a[href="/contact"]');
-        if (!link || root.contains(link) || e.metaKey || e.ctrlKey || e.shiftKey) return;
+        if (!link || root.contains(link) || link.closest('#site-menu') || e.metaKey || e.ctrlKey || e.shiftKey) return;
         e.preventDefault();
-        if (document.documentElement.dataset.menu === 'open') document.querySelector<HTMLElement>('[data-menu-close]')?.click();
         show('start');
         root.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
       });

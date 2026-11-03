@@ -29,8 +29,9 @@
  *   right and the canvas returns to normal. /team#<person> opens that person's card on load.
  * Objects are 2× renders on white, drawn with mix-blend-mode: multiply so the white
  * disappears into the canvas grey and only the object + its shadow remain.
- * Each object button carries data-object and, for its person, data-person / data-model
- * (a .glb set in the CMS) for the future WebGL gallery.
+ * Each object button carries data-object and, for its person, data-person. A person's
+ * "Object image" (a PNG uploaded in the CMS) replaces their object's built-in picture
+ * everywhere on the field, fitted into the same spot so the spacing stays as laid out.
  */
 import { Image } from 'astro:assets';
 import { getCollection, getEntry } from 'astro:content';
@@ -68,6 +69,8 @@ const OBJECTS: Record<string, ImageMetadata> = {
 };
 // Each object opens its person's card (CMS: Team → "Object on the Team field")
 const personByObject = new Map(people.filter((p) => p.data.object).map((p) => [p.data.object, p]));
+// The picture drawn for an object: its person's uploaded PNG, else the built-in one
+const pictureOf = (key: string) => personByObject.get(key)?.data.objectImage ?? OBJECTS[key];
 // The robot stands for the whole studio: it opens the Hello Robo card (CMS:
 // Team → Studio card, src/content/studio/hello-robo.json), not a person's
 const STUDIO_OBJECT = 'hello_robo';
@@ -135,7 +138,6 @@ const config = JSON.stringify({
               data-object={it.key}
               data-person={STUDIO_OBJECTS.has(it.key) ? undefined : owner?.id}
               data-card={STUDIO_OBJECTS.has(it.key) ? STUDIO_ID : undefined}
-              data-model={owner?.data.model}
               data-x={(tx + 1) * PERIOD_W + it.cx}
               data-y={(ty + 1) * PERIOD_H + it.cy}
               style={`--x: ${(tx + 1) * PERIOD_W + it.x}; --y: ${(ty + 1) * PERIOD_H + it.y}; --w: ${it.w}; --h: ${it.h}; --lx: ${it.labelX}; --ly: ${it.labelY}`}
@@ -144,7 +146,7 @@ const config = JSON.stringify({
               aria-label={`Meet the team — ${it.label}`}
             >
               <span class="team-obj__lens">
-                <Image src={OBJECTS[it.key]} alt="" widths={[it.w, it.w * 2]} sizes={`${it.w}px`} loading="eager" draggable="false" />
+                <Image src={pictureOf(it.key)} alt="" widths={[it.w, it.w * 2]} sizes={`${it.w}px`} loading="eager" draggable="false" />
                 <span class="team-obj__label t-button">{it.label.toLowerCase()}</span>
               </span>
             </button>
@@ -694,6 +696,7 @@ const config = JSON.stringify({
     display: block;
     width: 100%;
     height: 100%;
+    object-fit: contain; /* an uploaded picture keeps its shape inside the object's spot */
     pointer-events: none;
     transition: transform var(--duration-slow) var(--ease-out);
   }

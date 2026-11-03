@@ -71,8 +71,8 @@ const team = defineCollection({
       photo: image(),
       /** The object on the Team field that opens this card ('' = none) */
       object: z.string().default('').describe('Object id on the Team field, e.g. inner_calm_02'),
-      /** 3D model of their object for the WebGL team gallery: a .glb in public/models/team/ */
-      model: z.string().optional(),
+      /** Their own picture for that object (PNG), replacing the built-in one everywhere on the field */
+      objectImage: image().optional(),
       order: z.number().default(0),
     }),
 });
