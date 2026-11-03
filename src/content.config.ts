@@ -73,6 +73,8 @@ const team = defineCollection({
       object: z.string().default('').describe('Object id on the Team field, e.g. inner_calm_02'),
       /** Their own picture for that object (PNG), replacing the built-in one everywhere on the field */
       objectImage: image().optional(),
+      /** The file name shown under their object, without “.obj” (e.g. good_chaos_13) */
+      objectName: z.string().optional(),
       order: z.number().default(0),
     }),
 });

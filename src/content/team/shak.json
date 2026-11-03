@@ -5,5 +5,7 @@
   "quote": "I once promised my mom I’d marry a robot. Instead I settled for building a company around them. Can I also brag that I’m a former professional breakdancer?",
   "photo": "../../assets/team/shak.png",
   "object": "bright_ideas_01",
+  "objectImage": "../../assets/team/shak-object.png",
+  "objectName": "bright_ideas_01",
   "order": 1
 }

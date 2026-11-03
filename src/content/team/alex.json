@@ -5,5 +5,7 @@
   "quote": "Freedom to experiment and a new kind of challenge every few weeks. The projects keep changing shape, so getting bored would take real effort. And the team always finds a way to make my idea better than it was when I brought it in. That’s basically my dream setup, and yes, I wrote this voluntarily.",
   "photo": "../../assets/team/alex.png",
   "object": "cat_mode_active",
+  "objectImage": "../../assets/team/alex-object.png",
+  "objectName": "cat_mode_active",
   "order": 7
 }

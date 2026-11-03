@@ -453,6 +453,7 @@ function control(f: Field, value: Value, path: string): Control {
       };
     }
     case 'select': {
+      if (f.hidden) return { el: h('span', { hidden: true }), get: () => value ?? '' };
       // an empty option of the field's own ('None', 'Automatic') is a real choice: it
       // replaces the placeholder (and the browser would refuse it as `required`)
       const empty = f.options.some((o) => o.value === '');

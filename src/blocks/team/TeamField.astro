@@ -67,10 +67,21 @@ const OBJECTS: Record<string, ImageMetadata> = {
   nuts_about_details_03: nuts,
   cat_mode_active: catMode,
 };
-// Each object opens its person's card (CMS: Team → "Object on the Team field")
-const personByObject = new Map(people.filter((p) => p.data.object).map((p) => [p.data.object, p]));
+// Each object spot opens its person's card. The spot is kept in the person's entry (not
+// shown in the CMS); someone without one, e.g. added in the CMS, takes the next free spot
+const personByObject = new Map<string, (typeof people)[number]>();
+for (const p of people) if (p.data.object && p.data.object !== 'hello_robo' && !personByObject.has(p.data.object)) personByObject.set(p.data.object, p);
+for (const p of people.filter((p) => ![...personByObject.values()].includes(p))) {
+  const free = Object.keys(OBJECTS).find((k) => k !== 'hello_robo' && !personByObject.has(k));
+  if (free) personByObject.set(free, p);
+}
 // The picture drawn for an object: its person's uploaded PNG, else the built-in one
 const pictureOf = (key: string) => personByObject.get(key)?.data.objectImage ?? OBJECTS[key];
+// The label under an object: its person's file name (CMS), else the object's own
+const labelOf = (key: string, label: string) => {
+  const name = personByObject.get(key)?.data.objectName?.trim();
+  return name ? `${name.replace(/\.obj$/i, '')}.OBJ` : label;
+};
 // The robot stands for the whole studio: it opens the Hello Robo card (CMS:
 // Team → Studio card, src/content/studio/hello-robo.json), not a person's
 const STUDIO_OBJECT = 'hello_robo';
@@ -143,11 +154,11 @@ const config = JSON.stringify({
               style={`--x: ${(tx + 1) * PERIOD_W + it.x}; --y: ${(ty + 1) * PERIOD_H + it.y}; --w: ${it.w}; --h: ${it.h}; --lx: ${it.labelX}; --ly: ${it.labelY}`}
               tabindex={centre ? undefined : -1}
               aria-hidden={centre ? undefined : 'true'}
-              aria-label={`Meet the team — ${it.label}`}
+              aria-label={`Meet the team — ${labelOf(it.key, it.label)}`}
             >
               <span class="team-obj__lens">
                 <Image src={pictureOf(it.key)} alt="" widths={[it.w, it.w * 2]} sizes={`${it.w}px`} loading="eager" draggable="false" />
-                <span class="team-obj__label t-button">{it.label.toLowerCase()}</span>
+                <span class="team-obj__label t-button">{labelOf(it.key, it.label).toLowerCase()}</span>
               </span>
             </button>
           );

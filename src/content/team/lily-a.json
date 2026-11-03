@@ -5,5 +5,7 @@
   "quote": "We take the work seriously, but thankfully not ourselves. There’s always room for a weird reference, a terrible joke, or a completely unnecessary robot meme. That playfulness keeps the team close and makes even the difficult parts of a project feel lighter.",
   "photo": "../../assets/team/lily-a.png",
   "object": "inner_calm_02",
+  "objectImage": "../../assets/team/lily-a-object.png",
+  "objectName": "inner_calm_02",
   "order": 4
 }

@@ -31,6 +31,8 @@ export type Field =
       options: { value: string; label: string }[];
       optionsFrom?: string;
       hint?: string;
+      /** Kept as it is without being shown (set in code, not in the CMS) */
+      hidden?: boolean;
     }
   /**
    * A checkbox for every entry of another CMS section (`optionsFrom`), e.g. "Featured" next
@@ -203,14 +205,20 @@ export const CMS_COLLECTIONS: CmsCollection[] = [
         kind: 'select',
         key: 'object',
         label: 'Object on the Team field',
-        hint: 'The robot opens the Hello Robo card',
+        hidden: true,
         options: [{ value: '', label: 'None' }, ...TEAM_OBJECTS.map((id) => ({ value: id, label: `${id.toUpperCase()}.OBJ` }))],
       },
       {
         kind: 'image',
         key: 'objectImage',
         label: 'Object image',
-        hint: 'Optional PNG that replaces their object’s picture on the Team field. Best: 2× size, on white or a transparent background',
+        hint: 'Their object on the Team field. PNG, best at 2× size on white or a transparent background',
+      },
+      {
+        kind: 'text',
+        key: 'objectName',
+        label: 'File name',
+        hint: 'Shown under their object on the Team field, followed by .obj (e.g. good_chaos_13)',
       },
       order,
     ],
