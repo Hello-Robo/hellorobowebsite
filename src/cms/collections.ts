@@ -389,7 +389,7 @@ export const CMS_COLLECTIONS: CmsCollection[] = [
         kind: 'select',
         key: 'type',
         label: 'Type',
-        options: ['Full time', 'Contract', 'Contract to hire', 'Freelance'].map((t) => ({ value: t, label: t })),
+        options: ['Full time', 'Contract', 'Contract to hire', 'Freelance', 'Internship'].map((t) => ({ value: t, label: t })),
       },
       order,
       {

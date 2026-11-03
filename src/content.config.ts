@@ -96,7 +96,7 @@ const positions = defineCollection({
     title: z.string(),
     location: z.string(),
     hours: z.string(),
-    type: z.enum(['Full time', 'Contract', 'Contract to hire', 'Freelance']),
+    type: z.enum(['Full time', 'Contract', 'Contract to hire', 'Freelance', 'Internship']),
     intro: z.array(z.string()).default([]),
     workOn: z.array(z.string()).default([]),
     bring: z.array(z.string()).default([]),

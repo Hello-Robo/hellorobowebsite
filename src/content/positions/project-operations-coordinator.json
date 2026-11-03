@@ -1,32 +1,39 @@
 {
-  "title": "Operations Manager",
+  "title": "AI Operations",
   "location": "New York, NY",
   "hours": "EDT",
-  "type": "Full time",
+  "type": "Freelance",
   "order": 3,
   "intro": [
-    "Our design team does its best work when nothing is in the way — no missing files, no unclear next steps, no unsigned paperwork. This role keeps projects moving and the studio running, so designers can design and clients always know what happens next."
+    "We run Hello Robo as an AI-native studio, and this role is how we keep it that way. You'll find every manual step in how we run creative projects, hand it to AI agents, and keep the work moving while you do it.",
+    "Our designers should spend their time designing, and clients should always know what happens next. Because our timelines live inside our clients' build cycles, you also need to understand how robots actually get built."
   ],
   "workOn": [
-    "Monday kickoffs → Set up bots to run the weekly kickoff. Check deadlines, flag risks, and make sure the team has everything it needs for the week.",
-    "Client calls → Open every project call with the agenda, keep time, and close with clear next steps.",
-    "Follow-ups → Send recap notes and action items to clients within hours of every call.",
-    "Asset chasing → Track down the files, access, and feedback the design team needs — before anyone is blocked.",
-    "Studio administrative work → Send contracts, NDAs, and invoices, and keep signatures and payments on track. All with bots.",
-    "Lead follow-up → Keep new leads warm with timely, well-written follow-ups so no conversation goes quiet."
+    "Process mapping → Map how projects move through the studio, from first lead to final delivery, and find where the hours leak out.",
+    "AI agents → Build and run agents for the repetitive work: call notes and recaps, status updates, briefs, asset tracking, invoice reminders, and reporting.",
+    "Connected tools → Wire up Notion, Slack, Figma, Gmail, and Webflow so information moves between them without anyone copying it by hand.",
+    "Redundancy hunting → If the team does something twice, it should happen once, or on its own.",
+    "Measured gains → Track the hours each agent saves and keep a running log of what works, what broke, and what to build next.",
+    "Team enablement → Document every flow you build and teach the team to use it, so the automation sticks.",
+    "Project coordination → Run Monday kickoffs and client calls, send recaps within hours, and keep deadlines and risks visible.",
+    "Robotics timelines → Line up our design milestones with the client's build cycle — prototypes, testing, pilots, trade shows, funding rounds, and deployments — so the work lands when it matters.",
+    "Studio admin & leads → Keep contracts, NDAs, invoices, and lead follow-ups on track, run by agents wherever they can be."
   ],
   "bring": [
-    "1–3 years as a project coordinator, studio coordinator, or account coordinator — agency experience preferred.",
-    "Obsessively organized. You never let a thread drop and you follow up without being asked.",
-    "Calm, clear presence on client calls.",
-    "Excellent written English — your recap emails are short, clear, and actionable.",
-    "Comfortable with admin: contracts, invoices, and e-signature tools.",
+    "You're AI-native. Agents are how you already work every day, not something you're planning to try.",
+    "Real examples of studio or agency operations you've automated with AI agents — kickoffs, recaps, asset chasing, invoicing, lead follow-ups. Show us what you built and how many hours it saved.",
+    "Hands-on with Claude, ChatGPT, Zapier, Make, n8n, or Notion AI. Comfortable with prompts, APIs, MCP, and simple scripts.",
+    "Good judgment about which steps an agent should own and which need a human.",
+    "A working understanding of how robotics companies build products: hardware and software development cycles, prototyping, testing, pilots, and deployment. This is a must.",
+    "1–3 years in project coordination, operations, or a similar role — agency experience preferred.",
+    "Obsessively organized. You follow up without being asked.",
+    "Calm, clear presence on client calls and excellent written English.",
     "Based in New York City and able to work from our studio."
   ],
   "niceToHave": [
-    "Experience in a design or creative studio.",
-    "Familiarity with Notion, Slack, Figma, and invoicing tools.",
-    "Curiosity about robotics and AI."
+    "Some Python or JavaScript.",
+    "Experience building custom agents, GPTs, or Claude projects for a team.",
+    "Experience at a design studio, or at a robotics or hardware startup."
   ],
   "howWeWork": [
     "Weekly “Design Together” sessions with designers.",
@@ -36,7 +43,8 @@
   ],
   "applySteps": [
     "CV or LinkedIn",
-    "A short note on the most chaotic project you kept on track."
+    "Links or short walkthroughs of studio operations you've automated with AI agents, and the time each one saved.",
+    "The first process you'd hand to an agent at a design studio (tweet length)."
   ],
-  "outro": "If you’re the person who makes everyone else’s work easier, we’d love to meet you."
+  "outro": "If every repetitive task looks to you like a job for an agent, we'd love to meet you."
 }

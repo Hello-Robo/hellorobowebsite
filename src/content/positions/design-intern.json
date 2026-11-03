@@ -1,0 +1,45 @@
+{
+  "title": "Design Intern",
+  "location": "Remote",
+  "hours": "US-friendly time zones",
+  "type": "Internship",
+  "order": 8,
+  "intro": [
+    "We're an AI-native studio, and we're looking for a designer who grew up that way. You don't need Photoshop. You need to know how to get great images, video, and interfaces out of generative AI tools, and the taste to know when they're good.",
+    "You'll work alongside our designers on real client projects for robotics companies — brand identity, UX/UI, and video — and help us find new ways to make the work faster and better with AI."
+  ],
+  "workOn": [
+    "Visual exploration → Generate moodboards, concepts, and art directions with AI so the team can react to ideas in hours, not days.",
+    "Imagery & video → Create product renders, robot scenes, and motion clips with tools like Midjourney, Flux, Runway, Kling, or Veo.",
+    "Brand & social assets → Help produce campaign visuals, social posts, and presentation graphics in our clients' brand systems.",
+    "UI support → Build screens, components, and quick prototypes in Figma, using AI to move faster.",
+    "Prompt & workflow library → Keep a shared library of prompts, styles, and workflows that work, so the whole team gets better results.",
+    "Tool scouting → Try new generative tools as they come out and show the team which ones are worth using."
+  ],
+  "bring": [
+    "You're AI-native. Generative tools are how you already design, not something you're planning to learn.",
+    "A portfolio of work made with generative AI — images, video, or interfaces — and a short note on how you made each piece.",
+    "A strong eye for composition, type, and color. You can tell a good output from an almost-good one.",
+    "Comfortable with Figma.",
+    "Curious, fast, and happy to get feedback every day.",
+    "Studying design, or recently graduated — or self-taught with work to show for it.",
+    "Photoshop not required."
+  ],
+  "niceToHave": [
+    "Experience with ComfyUI, LoRAs, or custom image models.",
+    "Some 3D or motion experience.",
+    "Curiosity about robotics and hardware."
+  ],
+  "howWeWork": [
+    "Weekly “Design Together” sessions with designers.",
+    "Twice-weekly Slack updates keep pulses steady.",
+    "Small team, flat hierarchy, big ownership.",
+    "We meet once a year in different parts of the world to connect, plan, and reset."
+  ],
+  "applySteps": [
+    "CV or LinkedIn",
+    "A portfolio of work made with generative AI tools, with the tools you used for each piece.",
+    "One image or clip you're proud of, and the prompts or steps behind it."
+  ],
+  "outro": "If generative AI is your design tool of choice, we'd love to see what you make."
+}
