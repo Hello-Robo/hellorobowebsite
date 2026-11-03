@@ -125,7 +125,7 @@ const episodes = defineCollection({
     /** YouTube video id (the 11 characters after watch?v=) */
     youtube: z.string().regex(/^[\w-]{11}$/).optional(),
     portfolioUrl: z.string().optional(),
-    /** 16:9-ish cover used in "All episodes" */
+    /** Vertical poster (1082×1530) used in "All episodes" and the poster grid */
     cover: image().optional(),
     /** Tall poster used on the episode page */
     poster: image().optional(),
@@ -157,10 +157,19 @@ const home = defineCollection({
   schema: z.object({
     /** Projects (ids) in the Works wheel on Home, shown in the Projects order */
     featured: z.array(z.string()).default([]),
-    /** The Clients block's logos, in its 8 places: an SVG tile (264×355 with its own
-        background) or a PNG / WebP logo placed on a light tile; public paths */
+    /** The Clients block's logos, in its 13 places (row by row): a logo (SVG preferred,
+        or PNG / WebP; public path) and its width in px at the 1728 layout (0 = 140). A
+        place can hold a micrographic instead (decorative) */
     clients: z
-      .array(z.object({ name: z.string(), logo: z.string(), mobileScale: z.number().default(1) }))
+      .array(
+        z.object({
+          name: z.string(),
+          logo: z.string(),
+          width: z.number().default(0),
+          /** a Hello Robo micrographic in a logo's place: decoration, not a client */
+          micrographic: z.boolean().default(false),
+        }),
+      )
       .default([]),
   }),
 });

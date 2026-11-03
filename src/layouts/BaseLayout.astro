@@ -34,6 +34,19 @@ const {
   chrome = true,
   close = false,
 } = Astro.props;
+/** The loading screen's loop: 10 small, light site micrographics, shown as one-color shapes */
+const loaderGraphics = [
+  '/images/contact/dino.svg',
+  '/images/project/badge-25.svg',
+  '/images/contact/mission-interface.svg',
+  '/images/project/badge-testimonial.svg',
+  '/images/project/nda.svg',
+  '/images/services/stamp-interface.svg',
+  '/images/contact/step-globe.svg',
+  '/images/home/showcase-globe.svg',
+  '/images/contact/start-word.svg',
+  '/images/radio/badge-episode.svg',
+];
 const pageTitle = title === 'Home' ? 'Hello Robo — Make the world say yes to your robot' : `${title} — Hello Robo`;
 ---
 <!doctype html>
@@ -90,6 +103,10 @@ const pageTitle = title === 'Home' ? 'Hello Robo — Make the world say yes to y
       <span class="pt__logo" data-pt-logo>
         <img class="pt__eyes-open" src="/images/transition/logo-open.svg" alt="" width="94" height="51" />
         <img class="pt__eyes-closed" src="/images/transition/logo-blink.svg" alt="" width="94" height="51" />
+      </span>
+      {/* first visit only (html.pt-load): site micrographics flicking past in brand orange */}
+      <span class="pt__gfx">
+        {loaderGraphics.map((src, i) => <i style={`--i: ${i}; --src: url(${src})`}></i>)}
       </span>
       <span class="pt__bar"><span class="pt__bar-fill" data-pt-bar></span></span>
     </div>

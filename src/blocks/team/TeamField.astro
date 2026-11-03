@@ -555,11 +555,10 @@ const config = JSON.stringify({
     );
 
     // The text links' hover (button-hover.ts): the file name turns orange, goes to pixels and
-    // settles back through katakana, exactly like a link; the object goes to the same pixels
-    // (blocks the label's size, the same flicker) and comes back as the letters start. Not
-    // while dragging or with a card open
+    // settles back through katakana, exactly like a link (the object itself just zooms in 5%,
+    // in the CSS). Not while dragging or with a card open
     objs.forEach((el) =>
-      hoverFx(el, '.team-obj__label', { picture: 'img', enabled: () => !root.classList.contains('is-dragging') && selected < 0 }),
+      hoverFx(el, '.team-obj__label', { enabled: () => !root.classList.contains('is-dragging') && selected < 0 }),
     );
 
     // Hover focus (mouse only, not while dragging or with a card open)
@@ -709,7 +708,9 @@ const config = JSON.stringify({
     height: 100%;
     object-fit: contain; /* an uploaded picture keeps its shape inside the object's spot */
     pointer-events: none;
-    transition: transform var(--duration-slow) var(--ease-out);
+    transition:
+      transform var(--duration-slow) var(--ease-out),
+      scale var(--duration-smooth) var(--ease-out);
   }
   /* Label exactly where Figma has it: centred on its frame, 14 px, in lowercase like a file
      name (not Figma's caps; written lowercase, not transformed, so the hover's pixels and
@@ -730,6 +731,10 @@ const config = JSON.stringify({
   @media (hover: hover) and (pointer: fine) {
     .team:not(.is-dragging) .team-obj:hover .team-obj__label:not(.is-pixel) {
       color: var(--color-orange);
+    }
+    /* and the object zooms in 5% (as the Robo Radio posters) */
+    .team:not(.is-dragging) .team-obj:not(.is-selected):hover :global(img) {
+      scale: 1.05;
     }
   }
   .team-obj:focus-visible {

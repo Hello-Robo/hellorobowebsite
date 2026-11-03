@@ -12,8 +12,10 @@ const PUBLIC_DIR = 'public';
 const IMAGES_DIR = 'public/images';
 export const UPLOAD_DIR = 'images/micrographics';
 
-/** Site graphics that count as micrographics (logos, players and illustrations don't) */
+/** Site graphics that count as micrographics (players and illustrations don't) */
 const SITE_GRAPHIC = /^(stamp-|badge-)|micrographic|globe/;
+/** The Home Clients logos are in the library too, so they can be swapped back and forth */
+const CLIENT_LOGOS = 'public/images/home/clients';
 
 export interface LibraryItem {
   path: string;
@@ -40,7 +42,9 @@ export async function listLibrary(): Promise<LibraryItem[]> {
   const files = await repo.files(IMAGES_DIR);
   const uploaded = files.filter((f) => f.startsWith(uploadDir + '/') && /\.(svg|png|webp)$/i.test(f));
   const site = files.filter(
-    (f) => !f.startsWith(uploadDir + '/') && f.endsWith('.svg') && SITE_GRAPHIC.test(path.posix.basename(f)),
+    (f) =>
+      !f.startsWith(uploadDir + '/') &&
+      ((f.endsWith('.svg') && SITE_GRAPHIC.test(path.posix.basename(f))) || f.startsWith(CLIENT_LOGOS + '/')),
   );
   const items = (list: string[], group: LibraryItem['group']) =>
     list
