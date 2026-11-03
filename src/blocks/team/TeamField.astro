@@ -16,7 +16,7 @@
  *   it and toward the corners, with a lens distortion toward the screen edges.
  * - Click: the canvas glides so the object lands in the middle of the left half (beside
  *   the card), the rest stays out of focus, and the card fades in on the right. The robot
- *   (hello_robo) and the star (tiny_obsession_12) open the studio card — Hello Robo, no
+ *   (hello_robo) opens the studio card — Hello Robo, no
  *   photo (Figma 10104:398); every other object its person's card (CMS: the person's
  *   "Object on the Team field").
  * - Phones: the same canvas at 55% (touch drag with glide). Pressing an object previews
@@ -40,8 +40,10 @@ import catMode from '../../assets/team/objects/cat_mode_active.png';
 import nuts from '../../assets/team/objects/nuts_about_details_03.png';
 import goodChaos from '../../assets/team/objects/good_chaos_13.png';
 import seriouslyPlayful from '../../assets/team/objects/seriously_playful.png';
-import tinyObsession from '../../assets/team/objects/tiny_obsession_12.png';
-import biteFirst from '../../assets/team/objects/bite_first_05.png';
+import blackBox from '../../assets/team/objects/black_box.png';
+import redBox from '../../assets/team/objects/red_box.png';
+import yellowBox from '../../assets/team/objects/yellow_box.png';
+import wildIdea from '../../assets/team/objects/wild_idea_final.png';
 import helloRobo from '../../assets/team/objects/hello_robo.png';
 import innerCalm from '../../assets/team/objects/inner_calm_02.png';
 import layout from './team-layout.json';
@@ -49,14 +51,16 @@ import CrtScreen from '../../components/ui/CrtScreen.astro';
 
 const people = (await getCollection('team')).sort((a, b) => a.data.order - b.data.order);
 
-// The 9 objects (keys = the "3D object" field in the CMS). Images are 2× renders, the
+// The 11 objects (keys = the "3D object" field in the CMS). Images are 2× renders, the
 // same size as Figma's image boxes.
 const OBJECTS: Record<string, ImageMetadata> = {
   hello_robo: helloRobo,
   inner_calm_02: innerCalm,
   bright_ideas_01: brightIdeas,
-  bite_first_05: biteFirst,
-  tiny_obsession_12: tinyObsession,
+  wild_idea_final: wildIdea,
+  black_box: blackBox,
+  red_box: redBox,
+  yellow_box: yellowBox,
   seriously_playful: seriouslyPlayful,
   good_chaos_13: goodChaos,
   nuts_about_details_03: nuts,
@@ -64,10 +68,10 @@ const OBJECTS: Record<string, ImageMetadata> = {
 };
 // Each object opens its person's card (CMS: Team → "Object on the Team field")
 const personByObject = new Map(people.filter((p) => p.data.object).map((p) => [p.data.object, p]));
-// The robot and the star stand for the whole studio: they open the Hello Robo card (CMS:
+// The robot stands for the whole studio: it opens the Hello Robo card (CMS:
 // Team → Studio card, src/content/studio/hello-robo.json), not a person's
 const STUDIO_OBJECT = 'hello_robo';
-const STUDIO_OBJECTS = new Set([STUDIO_OBJECT, 'tiny_obsession_12']);
+const STUDIO_OBJECTS = new Set([STUDIO_OBJECT]);
 const STUDIO_ID = 'hello-robo';
 const studio = (await getEntry('studio', STUDIO_ID))!.data;
 
@@ -441,7 +445,7 @@ const config = JSON.stringify({
       objs.forEach((el, j) => el.classList.toggle('is-selected', j === i));
       setFocus(i);
       vx = vy = 0;
-      // The robot and the star open the studio card, every other object its person's;
+      // The robot opens the studio card, every other object its person's;
       // an object nobody has (none at the moment) a random person, not the same twice
       const pool = cfg.people.filter((p) => p !== lastPerson);
       const id = person || objs[i].dataset.card || objs[i].dataset.person || pool[Math.floor(Math.random() * pool.length)];

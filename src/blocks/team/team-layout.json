@@ -1,28 +1,28 @@
 {
- "periodW": 5994,
+ "periodW": 6024,
  "periodH": 3891,
  "items": [
   {
-   "key": "good_chaos_13",
-   "label": "BRIGHT_IDEAS_01.OBJ",
-   "x": -118,
-   "y": -77,
-   "labelX": 128,
-   "labelY": 257
+   "key": "yellow_box",
+   "label": "YELLOW_BOX.OBJ",
+   "x": -114,
+   "y": -74,
+   "labelX": 115,
+   "labelY": 225
   },
   {
-   "key": "tiny_obsession_12",
-   "label": "TINY_OBSESSION_12.OBJ",
-   "x": 653,
-   "y": -102,
-   "labelX": 92,
-   "labelY": 219
+   "key": "black_box",
+   "label": "BLACK_BOX.OBJ",
+   "x": 651,
+   "y": -103,
+   "labelX": 115,
+   "labelY": 225
   },
   {
    "key": "cat_mode_active",
    "label": "CAT_MODE_ACTIVE.OBJ",
-   "x": 1468,
-   "y": -135,
+   "x": 1469,
+   "y": -134,
    "labelX": 82,
    "labelY": 276
   },
@@ -30,7 +30,7 @@
    "key": "inner_calm_02",
    "label": "INNER_CALM_02.OBJ",
    "x": 277,
-   "y": 192,
+   "y": 189,
    "labelX": 115,
    "labelY": 212
   },
@@ -45,898 +45,898 @@
   {
    "key": "hello_robo",
    "label": "hello_robo.OBJ",
-   "x": 729,
-   "y": 344,
+   "x": 730,
+   "y": 346,
    "labelX": 100,
    "labelY": 294
   },
   {
    "key": "good_chaos_13",
    "label": "GOOD_CHAOS_13.OBJ",
-   "x": 1540,
-   "y": 331,
+   "x": 1546,
+   "y": 332,
    "labelX": 128,
    "labelY": 257
   },
   {
    "key": "cat_mode_active",
-   "label": "BITE_FIRST_05.OBJ",
-   "x": -85,
-   "y": 416,
+   "label": "CAT_MODE_ACTIVE.OBJ",
+   "x": -82,
+   "y": 420,
    "labelX": 82,
    "labelY": 276
   },
   {
    "key": "seriously_playful",
    "label": "SERIOUSLY_PLAYFUL.OBJ",
-   "x": 1232,
+   "x": 1233,
    "y": 585,
    "labelX": 88,
    "labelY": 234
   },
   {
-   "key": "bite_first_05",
+   "key": "wild_idea_final",
    "label": "WILD_IDEA_FINAL.OBJ",
-   "x": 279,
-   "y": 645,
+   "x": 282,
+   "y": 643,
    "labelX": 155,
    "labelY": 224
   },
   {
    "key": "bright_ideas_01",
    "label": "BRIGHT_IDEAS_01.OBJ",
-   "x": 867,
+   "x": 866,
+   "y": 866,
+   "labelX": 127,
+   "labelY": 262
+  },
+  {
+   "key": "red_box",
+   "label": "RED_BOX.OBJ",
+   "x": -50,
+   "y": 906,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "inner_calm_02",
+   "label": "INNER_CALM_02.OBJ",
+   "x": 1497,
+   "y": 920,
+   "labelX": 115,
+   "labelY": 212
+  },
+  {
+   "key": "wild_idea_final",
+   "label": "WILD_IDEA_FINAL.OBJ",
+   "x": 1913,
+   "y": 123,
+   "labelX": 155,
+   "labelY": 224
+  },
+  {
+   "key": "hello_robo",
+   "label": "hello_robo.OBJ",
+   "x": 2311,
+   "y": -169,
+   "labelX": 100,
+   "labelY": 294
+  },
+  {
+   "key": "black_box",
+   "label": "BLACK_BOX.OBJ",
+   "x": 3549,
+   "y": -226,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "yellow_box",
+   "label": "YELLOW_BOX.OBJ",
+   "x": 2300,
+   "y": 439,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "nuts_about_details_03",
+   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
+   "x": 3080,
+   "y": -113,
+   "labelX": 89,
+   "labelY": 209
+  },
+  {
+   "key": "good_chaos_13",
+   "label": "GOOD_CHAOS_13.OBJ",
+   "x": 2649,
+   "y": 180,
+   "labelX": 128,
+   "labelY": 257
+  },
+  {
+   "key": "red_box",
+   "label": "RED_BOX.OBJ",
+   "x": 3514,
+   "y": 215,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "black_box",
+   "label": "BLACK_BOX.OBJ",
+   "x": 1905,
+   "y": 658,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "wild_idea_final",
+   "label": "WILD_IDEA_FINAL.OBJ",
+   "x": 3059,
+   "y": 457,
+   "labelX": 155,
+   "labelY": 224
+  },
+  {
+   "key": "seriously_playful",
+   "label": "SERIOUSLY_PLAYFUL.OBJ",
+   "x": 2707,
+   "y": 711,
+   "labelX": 88,
+   "labelY": 234
+  },
+  {
+   "key": "black_box",
+   "label": "BLACK_BOX.OBJ",
+   "x": 3147,
+   "y": 917,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "nuts_about_details_03",
+   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
+   "x": 2282,
+   "y": 969,
+   "labelX": 89,
+   "labelY": 209
+  },
+  {
+   "key": "hello_robo",
+   "label": "hello_robo.OBJ",
+   "x": 3469,
+   "y": 652,
+   "labelX": 100,
+   "labelY": 294
+  },
+  {
+   "key": "good_chaos_13",
+   "label": "GOOD_CHAOS_13.OBJ",
+   "x": 3876,
+   "y": -13,
+   "labelX": 128,
+   "labelY": 257
+  },
+  {
+   "key": "yellow_box",
+   "label": "YELLOW_BOX.OBJ",
+   "x": 4375,
+   "y": -108,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "black_box",
+   "label": "BLACK_BOX.OBJ",
+   "x": 5211,
+   "y": -151,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "nuts_about_details_03",
+   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
+   "x": 4389,
+   "y": 397,
+   "labelX": 89,
+   "labelY": 209
+  },
+  {
+   "key": "wild_idea_final",
+   "label": "WILD_IDEA_FINAL.OBJ",
+   "x": 4753,
+   "y": 117,
+   "labelX": 155,
+   "labelY": 224
+  },
+  {
+   "key": "red_box",
+   "label": "RED_BOX.OBJ",
+   "x": 4749,
+   "y": 708,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "seriously_playful",
+   "label": "SERIOUSLY_PLAYFUL.OBJ",
+   "x": 5502,
+   "y": 202,
+   "labelX": 88,
+   "labelY": 234
+  },
+  {
+   "key": "cat_mode_active",
+   "label": "CAT_MODE_ACTIVE.OBJ",
+   "x": 3980,
+   "y": 411,
+   "labelX": 82,
+   "labelY": 276
+  },
+  {
+   "key": "inner_calm_02",
+   "label": "INNER_CALM_02.OBJ",
+   "x": 5102,
+   "y": 465,
+   "labelX": 115,
+   "labelY": 212
+  },
+  {
+   "key": "seriously_playful",
+   "label": "SERIOUSLY_PLAYFUL.OBJ",
+   "x": 4348,
+   "y": 1019,
+   "labelX": 88,
+   "labelY": 234
+  },
+  {
+   "key": "good_chaos_13",
+   "label": "GOOD_CHAOS_13.OBJ",
+   "x": 5140,
+   "y": 926,
+   "labelX": 128,
+   "labelY": 257
+  },
+  {
+   "key": "bright_ideas_01",
+   "label": "BRIGHT_IDEAS_01.OBJ",
+   "x": 3918,
    "y": 864,
    "labelX": 127,
    "labelY": 262
   },
   {
-   "key": "tiny_obsession_12",
-   "label": "TINY_OBSESSION_12.OBJ",
-   "x": -46,
-   "y": 908,
-   "labelX": 92,
-   "labelY": 219
-  },
-  {
-   "key": "inner_calm_02",
-   "label": "INNER_CALM_02.OBJ",
-   "x": 1495,
-   "y": 917,
-   "labelX": 115,
-   "labelY": 212
-  },
-  {
-   "key": "bite_first_05",
-   "label": "WILD_IDEA_FINAL.OBJ",
-   "x": 1901,
-   "y": 92,
-   "labelX": 155,
-   "labelY": 224
-  },
-  {
-   "key": "nuts_about_details_03",
-   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
-   "x": 2355,
-   "y": -130,
-   "labelX": 89,
-   "labelY": 209
-  },
-  {
-   "key": "bite_first_05",
-   "label": "WILD_IDEA_FINAL.OBJ",
-   "x": 3089,
-   "y": -209,
-   "labelX": 155,
-   "labelY": 224
-  },
-  {
-   "key": "tiny_obsession_12",
-   "label": "TINY_OBSESSION_12.OBJ",
-   "x": 2384,
-   "y": 332,
-   "labelX": 92,
-   "labelY": 219
-  },
-  {
-   "key": "inner_calm_02",
-   "label": "INNER_CALM_02.OBJ",
-   "x": 2752,
-   "y": 77,
-   "labelX": 115,
-   "labelY": 212
-  },
-  {
-   "key": "bright_ideas_01",
-   "label": "BRIGHT_IDEAS_01.OBJ",
-   "x": 2758,
-   "y": 537,
-   "labelX": 127,
-   "labelY": 262
-  },
-  {
-   "key": "tiny_obsession_12",
-   "label": "TINY_OBSESSION_12.OBJ",
-   "x": 3570,
-   "y": 18,
-   "labelX": 92,
-   "labelY": 219
-  },
-  {
    "key": "hello_robo",
    "label": "hello_robo.OBJ",
-   "x": 1972,
-   "y": 533,
+   "x": 5535,
+   "y": 649,
    "labelX": 100,
    "labelY": 294
   },
   {
+   "key": "seriously_playful",
+   "label": "SERIOUSLY_PLAYFUL.OBJ",
+   "x": 14,
+   "y": 1365,
+   "labelX": 88,
+   "labelY": 234
+  },
+  {
+   "key": "black_box",
+   "label": "BLACK_BOX.OBJ",
+   "x": 421,
+   "y": 1088,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
    "key": "cat_mode_active",
    "label": "CAT_MODE_ACTIVE.OBJ",
-   "x": 3199,
-   "y": 280,
+   "x": 1312,
+   "y": 1310,
    "labelX": 82,
    "labelY": 276
   },
   {
+   "key": "yellow_box",
+   "label": "YELLOW_BOX.OBJ",
+   "x": 422,
+   "y": 1554,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "nuts_about_details_03",
+   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
+   "x": 815,
+   "y": 1329,
+   "labelX": 89,
+   "labelY": 209
+  },
+  {
+   "key": "red_box",
+   "label": "RED_BOX.OBJ",
+   "x": 846,
+   "y": 1750,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "wild_idea_final",
+   "label": "WILD_IDEA_FINAL.OBJ",
+   "x": 1625,
+   "y": 1626,
+   "labelX": 155,
+   "labelY": 224
+  },
+  {
+   "key": "inner_calm_02",
+   "label": "INNER_CALM_02.OBJ",
+   "x": 38,
+   "y": 1834,
+   "labelX": 115,
+   "labelY": 212
+  },
+  {
    "key": "seriously_playful",
    "label": "SERIOUSLY_PLAYFUL.OBJ",
-   "x": 2391,
-   "y": 795,
+   "x": 1318,
+   "y": 1917,
    "labelX": 88,
    "labelY": 234
   },
   {
    "key": "good_chaos_13",
    "label": "GOOD_CHAOS_13.OBJ",
-   "x": 3055,
-   "y": 895,
+   "x": 464,
+   "y": 2010,
    "labelX": 128,
    "labelY": 257
   },
   {
-   "key": "cat_mode_active",
-   "label": "CAT_MODE_ACTIVE.OBJ",
-   "x": 1969,
-   "y": 986,
-   "labelX": 82,
-   "labelY": 276
-  },
-  {
-   "key": "hello_robo",
-   "label": "hello_robo.OBJ",
-   "x": 3494,
-   "y": 638,
-   "labelX": 100,
-   "labelY": 294
-  },
-  {
-   "key": "inner_calm_02",
-   "label": "INNER_CALM_02.OBJ",
-   "x": 4000,
-   "y": 86,
-   "labelX": 115,
-   "labelY": 212
-  },
-  {
-   "key": "nuts_about_details_03",
-   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
-   "x": 4410,
-   "y": -146,
-   "labelX": 89,
-   "labelY": 209
-  },
-  {
-   "key": "inner_calm_02",
-   "label": "INNER_CALM_02.OBJ",
-   "x": 5185,
-   "y": -168,
-   "labelX": 115,
-   "labelY": 212
-  },
-  {
-   "key": "cat_mode_active",
-   "label": "CAT_MODE_ACTIVE.OBJ",
-   "x": 4418,
-   "y": 328,
-   "labelX": 82,
-   "labelY": 276
-  },
-  {
-   "key": "bite_first_05",
-   "label": "WILD_IDEA_FINAL.OBJ",
-   "x": 4745,
-   "y": 78,
-   "labelX": 155,
-   "labelY": 224
-  },
-  {
-   "key": "tiny_obsession_12",
-   "label": "TINY_OBSESSION_12.OBJ",
-   "x": 4707,
-   "y": 733,
-   "labelX": 92,
-   "labelY": 219
-  },
-  {
-   "key": "seriously_playful",
-   "label": "SERIOUSLY_PLAYFUL.OBJ",
-   "x": 5505,
-   "y": 191,
-   "labelX": 88,
-   "labelY": 234
-  },
-  {
-   "key": "seriously_playful",
-   "label": "SERIOUSLY_PLAYFUL.OBJ",
-   "x": 3956,
-   "y": 502,
-   "labelX": 88,
-   "labelY": 234
-  },
-  {
    "key": "bright_ideas_01",
    "label": "BRIGHT_IDEAS_01.OBJ",
-   "x": 5062,
-   "y": 442,
+   "x": 902,
+   "y": 2184,
    "labelX": 127,
    "labelY": 262
   },
   {
-   "key": "bite_first_05",
+   "key": "wild_idea_final",
    "label": "WILD_IDEA_FINAL.OBJ",
-   "x": 4285,
-   "y": 1039,
+   "x": 33,
+   "y": 2307,
    "labelX": 155,
    "labelY": 224
   },
   {
+   "key": "inner_calm_02",
+   "label": "INNER_CALM_02.OBJ",
+   "x": 1706,
+   "y": 2116,
+   "labelX": 115,
+   "labelY": 212
+  },
+  {
    "key": "hello_robo",
    "label": "hello_robo.OBJ",
-   "x": 5123,
-   "y": 905,
+   "x": 1845,
+   "y": 1178,
    "labelX": 100,
    "labelY": 294
   },
   {
+   "key": "cat_mode_active",
+   "label": "CAT_MODE_ACTIVE.OBJ",
+   "x": 2798,
+   "y": 1164,
+   "labelX": 82,
+   "labelY": 276
+  },
+  {
+   "key": "yellow_box",
+   "label": "YELLOW_BOX.OBJ",
+   "x": 3537,
+   "y": 1130,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "red_box",
+   "label": "RED_BOX.OBJ",
+   "x": 2304,
+   "y": 1416,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "inner_calm_02",
+   "label": "INNER_CALM_02.OBJ",
+   "x": 3153,
+   "y": 1407,
+   "labelX": 115,
+   "labelY": 212
+  },
+  {
    "key": "bright_ideas_01",
    "label": "BRIGHT_IDEAS_01.OBJ",
-   "x": 3864,
-   "y": 922,
+   "x": 2769,
+   "y": 1640,
    "labelX": 127,
    "labelY": 262
   },
   {
    "key": "nuts_about_details_03",
    "label": "NUTS_ABOUT_DETAILS_03.OBJ",
-   "x": 5517,
-   "y": 684,
+   "x": 3622,
+   "y": 1612,
    "labelX": 89,
    "labelY": 209
   },
   {
-   "key": "inner_calm_02",
-   "label": "INNER_CALM_02.OBJ",
-   "x": 51,
-   "y": 1342,
+   "key": "yellow_box",
+   "label": "YELLOW_BOX.OBJ",
+   "x": 2102,
+   "y": 1809,
    "labelX": 115,
-   "labelY": 212
+   "labelY": 225
   },
   {
    "key": "seriously_playful",
    "label": "SERIOUSLY_PLAYFUL.OBJ",
-   "x": 482,
-   "y": 1083,
+   "x": 3231,
+   "y": 1873,
    "labelX": 88,
    "labelY": 234
   },
   {
-   "key": "tiny_obsession_12",
-   "label": "TINY_OBSESSION_12.OBJ",
-   "x": 1370,
-   "y": 1369,
-   "labelX": 92,
-   "labelY": 219
-  },
-  {
-   "key": "hello_robo",
-   "label": "hello_robo.OBJ",
-   "x": 488,
-   "y": 1518,
-   "labelX": 100,
-   "labelY": 294
-  },
-  {
-   "key": "nuts_about_details_03",
-   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
-   "x": 904,
-   "y": 1323,
-   "labelX": 89,
-   "labelY": 209
-  },
-  {
-   "key": "bite_first_05",
-   "label": "WILD_IDEA_FINAL.OBJ",
-   "x": 859,
-   "y": 1745,
-   "labelX": 155,
-   "labelY": 224
-  },
-  {
-   "key": "hello_robo",
-   "label": "hello_robo.OBJ",
-   "x": 1724,
-   "y": 1628,
-   "labelX": 100,
-   "labelY": 294
-  },
-  {
-   "key": "cat_mode_active",
-   "label": "CAT_MODE_ACTIVE.OBJ",
-   "x": 112,
-   "y": 1778,
-   "labelX": 82,
-   "labelY": 276
-  },
-  {
-   "key": "cat_mode_active",
-   "label": "CAT_MODE_ACTIVE.OBJ",
-   "x": 1354,
-   "y": 1898,
-   "labelX": 82,
-   "labelY": 276
+   "key": "black_box",
+   "label": "BLACK_BOX.OBJ",
+   "x": 2473,
+   "y": 2014,
+   "labelX": 115,
+   "labelY": 225
   },
   {
    "key": "good_chaos_13",
    "label": "GOOD_CHAOS_13.OBJ",
-   "x": 494,
-   "y": 1992,
+   "x": 2851,
+   "y": 2189,
    "labelX": 128,
    "labelY": 257
   },
   {
-   "key": "seriously_playful",
-   "label": "SERIOUSLY_PLAYFUL.OBJ",
-   "x": 966,
-   "y": 2194,
-   "labelX": 88,
-   "labelY": 234
-  },
-  {
-   "key": "nuts_about_details_03",
-   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
-   "x": 153,
+   "key": "hello_robo",
+   "label": "hello_robo.OBJ",
+   "x": 2097,
    "y": 2282,
-   "labelX": 89,
-   "labelY": 209
-  },
-  {
-   "key": "bright_ideas_01",
-   "label": "BRIGHT_IDEAS_01.OBJ",
-   "x": 1734,
-   "y": 2117,
-   "labelX": 127,
-   "labelY": 262
-  },
-  {
-   "key": "nuts_about_details_03",
-   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
-   "x": 2135,
-   "y": 1427,
-   "labelX": 89,
-   "labelY": 209
-  },
-  {
-   "key": "bite_first_05",
-   "label": "WILD_IDEA_FINAL.OBJ",
-   "x": 2624,
-   "y": 1151,
-   "labelX": 155,
-   "labelY": 224
-  },
-  {
-   "key": "tiny_obsession_12",
-   "label": "TINY_OBSESSION_12.OBJ",
-   "x": 3501,
-   "y": 1151,
-   "labelX": 92,
-   "labelY": 219
-  },
-  {
-   "key": "tiny_obsession_12",
-   "label": "TINY_OBSESSION_12.OBJ",
-   "x": 2545,
-   "y": 1610,
-   "labelX": 92,
-   "labelY": 219
-  },
-  {
-   "key": "inner_calm_02",
-   "label": "INNER_CALM_02.OBJ",
-   "x": 3077,
-   "y": 1384,
-   "labelX": 115,
-   "labelY": 212
-  },
-  {
-   "key": "bright_ideas_01",
-   "label": "BRIGHT_IDEAS_01.OBJ",
-   "x": 2906,
-   "y": 1798,
-   "labelX": 127,
-   "labelY": 262
+   "labelX": 100,
+   "labelY": 294
   },
   {
    "key": "cat_mode_active",
    "label": "CAT_MODE_ACTIVE.OBJ",
-   "x": 3587,
-   "y": 1583,
+   "x": 3737,
+   "y": 2034,
    "labelX": 82,
    "labelY": 276
   },
   {
    "key": "good_chaos_13",
    "label": "GOOD_CHAOS_13.OBJ",
-   "x": 2113,
-   "y": 1863,
+   "x": 3934,
+   "y": 1315,
    "labelX": 128,
    "labelY": 257
   },
   {
-   "key": "seriously_playful",
-   "label": "SERIOUSLY_PLAYFUL.OBJ",
-   "x": 3346,
-   "y": 1994,
-   "labelX": 88,
-   "labelY": 234
-  },
-  {
-   "key": "hello_robo",
-   "label": "hello_robo.OBJ",
-   "x": 2554,
-   "y": 2051,
-   "labelX": 100,
-   "labelY": 294
-  },
-  {
-   "key": "nuts_about_details_03",
-   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
-   "x": 2982,
-   "y": 2294,
-   "labelX": 89,
-   "labelY": 209
-  },
-  {
-   "key": "seriously_playful",
-   "label": "SERIOUSLY_PLAYFUL.OBJ",
-   "x": 2190,
-   "y": 2340,
-   "labelX": 88,
-   "labelY": 234
-  },
-  {
-   "key": "bite_first_05",
+   "key": "wild_idea_final",
    "label": "WILD_IDEA_FINAL.OBJ",
-   "x": 3687,
-   "y": 2163,
+   "x": 4785,
+   "y": 1218,
    "labelX": 155,
    "labelY": 224
   },
   {
-   "key": "nuts_about_details_03",
-   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
-   "x": 3988,
-   "y": 1388,
-   "labelX": 89,
-   "labelY": 209
-  },
-  {
-   "key": "inner_calm_02",
-   "label": "INNER_CALM_02.OBJ",
-   "x": 4752,
-   "y": 1231,
+   "key": "yellow_box",
+   "label": "YELLOW_BOX.OBJ",
+   "x": 5582,
+   "y": 1141,
    "labelX": 115,
-   "labelY": 212
+   "labelY": 225
   },
   {
-   "key": "good_chaos_13",
-   "label": "GOOD_CHAOS_13.OBJ",
-   "x": 5525,
-   "y": 1126,
-   "labelX": 128,
-   "labelY": 257
+   "key": "hello_robo",
+   "label": "hello_robo.OBJ",
+   "x": 4393,
+   "y": 1459,
+   "labelX": 100,
+   "labelY": 294
   },
   {
-   "key": "good_chaos_13",
-   "label": "GOOD_CHAOS_13.OBJ",
-   "x": 4382,
-   "y": 1516,
-   "labelX": 128,
-   "labelY": 257
+   "key": "black_box",
+   "label": "BLACK_BOX.OBJ",
+   "x": 5206,
+   "y": 1407,
+   "labelX": 115,
+   "labelY": 225
   },
   {
    "key": "cat_mode_active",
    "label": "CAT_MODE_ACTIVE.OBJ",
-   "x": 5214,
-   "y": 1386,
+   "x": 4870,
+   "y": 1659,
    "labelX": 82,
    "labelY": 276
   },
   {
-   "key": "seriously_playful",
-   "label": "SERIOUSLY_PLAYFUL.OBJ",
-   "x": 4858,
-   "y": 1694,
-   "labelX": 88,
-   "labelY": 234
+   "key": "bright_ideas_01",
+   "label": "BRIGHT_IDEAS_01.OBJ",
+   "x": 5628,
+   "y": 1608,
+   "labelX": 127,
+   "labelY": 262
   },
   {
-   "key": "bite_first_05",
-   "label": "WILD_IDEA_FINAL.OBJ",
-   "x": 5609,
-   "y": 1589,
-   "labelX": 155,
-   "labelY": 224
+   "key": "red_box",
+   "label": "RED_BOX.OBJ",
+   "x": 4047,
+   "y": 1752,
+   "labelX": 115,
+   "labelY": 225
   },
   {
-   "key": "hello_robo",
-   "label": "hello_robo.OBJ",
-   "x": 4052,
-   "y": 1805,
-   "labelX": 100,
-   "labelY": 294
-  },
-  {
-   "key": "tiny_obsession_12",
-   "label": "TINY_OBSESSION_12.OBJ",
+   "key": "nuts_about_details_03",
+   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
    "x": 5300,
-   "y": 1878,
-   "labelX": 92,
-   "labelY": 219
-  },
-  {
-   "key": "bright_ideas_01",
-   "label": "BRIGHT_IDEAS_01.OBJ",
-   "x": 4465,
-   "y": 1983,
-   "labelX": 127,
-   "labelY": 262
-  },
-  {
-   "key": "hello_robo",
-   "label": "hello_robo.OBJ",
-   "x": 4926,
-   "y": 2135,
-   "labelX": 100,
-   "labelY": 294
-  },
-  {
-   "key": "tiny_obsession_12",
-   "label": "TINY_OBSESSION_12.OBJ",
-   "x": 4175,
-   "y": 2327,
-   "labelX": 92,
-   "labelY": 219
-  },
-  {
-   "key": "bright_ideas_01",
-   "label": "BRIGHT_IDEAS_01.OBJ",
-   "x": 5689,
-   "y": 2053,
-   "labelX": 127,
-   "labelY": 262
-  },
-  {
-   "key": "bite_first_05",
-   "label": "WILD_IDEA_FINAL.OBJ",
-   "x": -287,
-   "y": 2538,
-   "labelX": 155,
-   "labelY": 224
-  },
-  {
-   "key": "hello_robo",
-   "label": "hello_robo.OBJ",
-   "x": 563,
-   "y": 2431,
-   "labelX": 100,
-   "labelY": 294
-  },
-  {
-   "key": "inner_calm_02",
-   "label": "INNER_CALM_02.OBJ",
-   "x": 1362,
-   "y": 2395,
-   "labelX": 115,
-   "labelY": 212
-  },
-  {
-   "key": "tiny_obsession_12",
-   "label": "TINY_OBSESSION_12.OBJ",
-   "x": 194,
-   "y": 2747,
-   "labelX": 92,
-   "labelY": 219
-  },
-  {
-   "key": "bright_ideas_01",
-   "label": "BRIGHT_IDEAS_01.OBJ",
-   "x": 966,
-   "y": 2642,
-   "labelX": 127,
-   "labelY": 262
-  },
-  {
-   "key": "cat_mode_active",
-   "label": "CAT_MODE_ACTIVE.OBJ",
-   "x": 616,
-   "y": 2884,
-   "labelX": 82,
-   "labelY": 276
-  },
-  {
-   "key": "hello_robo",
-   "label": "hello_robo.OBJ",
-   "x": 1411,
-   "y": 2832,
-   "labelX": 100,
-   "labelY": 294
-  },
-  {
-   "key": "seriously_playful",
-   "label": "SERIOUSLY_PLAYFUL.OBJ",
-   "x": -152,
-   "y": 3050,
-   "labelX": 88,
-   "labelY": 234
-  },
-  {
-   "key": "good_chaos_13",
-   "label": "GOOD_CHAOS_13.OBJ",
-   "x": 989,
-   "y": 3103,
-   "labelX": 128,
-   "labelY": 257
-  },
-  {
-   "key": "bite_first_05",
-   "label": "WILD_IDEA_FINAL.OBJ",
-   "x": 552,
-   "y": 3343,
-   "labelX": 155,
-   "labelY": 224
-  },
-  {
-   "key": "seriously_playful",
-   "label": "SERIOUSLY_PLAYFUL.OBJ",
-   "x": 1053,
-   "y": 3564,
-   "labelX": 88,
-   "labelY": 234
-  },
-  {
-   "key": "bright_ideas_01",
-   "label": "BRIGHT_IDEAS_01.OBJ",
-   "x": 116,
-   "y": 3400,
-   "labelX": 127,
-   "labelY": 262
-  },
-  {
-   "key": "inner_calm_02",
-   "label": "INNER_CALM_02.OBJ",
-   "x": 1425,
-   "y": 3324,
-   "labelX": 115,
-   "labelY": 212
-  },
-  {
-   "key": "nuts_about_details_03",
-   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
-   "x": 1810,
-   "y": 2616,
+   "y": 1899,
    "labelX": 89,
    "labelY": 209
   },
   {
-   "key": "bite_first_05",
-   "label": "WILD_IDEA_FINAL.OBJ",
-   "x": 2542,
-   "y": 2548,
-   "labelX": 155,
-   "labelY": 224
-  },
-  {
-   "key": "good_chaos_13",
-   "label": "GOOD_CHAOS_13.OBJ",
-   "x": 3361,
-   "y": 2456,
-   "labelX": 128,
-   "labelY": 257
-  },
-  {
-   "key": "cat_mode_active",
-   "label": "CAT_MODE_ACTIVE.OBJ",
-   "x": 2233,
-   "y": 2793,
-   "labelX": 82,
-   "labelY": 276
-  },
-  {
-   "key": "tiny_obsession_12",
-   "label": "TINY_OBSESSION_12.OBJ",
-   "x": 3036,
-   "y": 2756,
-   "labelX": 92,
-   "labelY": 219
-  },
-  {
    "key": "inner_calm_02",
    "label": "INNER_CALM_02.OBJ",
-   "x": 2632,
-   "y": 3027,
+   "x": 4449,
+   "y": 1963,
    "labelX": 115,
    "labelY": 212
   },
   {
-   "key": "cat_mode_active",
-   "label": "CAT_MODE_ACTIVE.OBJ",
-   "x": 3472,
-   "y": 2908,
-   "labelX": 82,
-   "labelY": 276
+   "key": "yellow_box",
+   "label": "YELLOW_BOX.OBJ",
+   "x": 4909,
+   "y": 2147,
+   "labelX": 115,
+   "labelY": 225
   },
   {
-   "key": "tiny_obsession_12",
-   "label": "TINY_OBSESSION_12.OBJ",
-   "x": 1847,
-   "y": 3078,
-   "labelX": 92,
-   "labelY": 219
+   "key": "bright_ideas_01",
+   "label": "BRIGHT_IDEAS_01.OBJ",
+   "x": 4087,
+   "y": 2218,
+   "labelX": 127,
+   "labelY": 262
   },
   {
    "key": "hello_robo",
    "label": "hello_robo.OBJ",
-   "x": 3086,
-   "y": 3187,
+   "x": 5697,
+   "y": 2068,
    "labelX": 100,
    "labelY": 294
   },
   {
+   "key": "black_box",
+   "label": "BLACK_BOX.OBJ",
+   "x": -301,
+   "y": 2560,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "nuts_about_details_03",
+   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
+   "x": 539,
+   "y": 2495,
+   "labelX": 89,
+   "labelY": 209
+  },
+  {
+   "key": "black_box",
+   "label": "BLACK_BOX.OBJ",
+   "x": 1328,
+   "y": 2381,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "cat_mode_active",
+   "label": "CAT_MODE_ACTIVE.OBJ",
+   "x": 154,
+   "y": 2749,
+   "labelX": 82,
+   "labelY": 276
+  },
+  {
+   "key": "hello_robo",
+   "label": "hello_robo.OBJ",
+   "x": 929,
+   "y": 2636,
+   "labelX": 100,
+   "labelY": 294
+  },
+  {
+   "key": "yellow_box",
+   "label": "YELLOW_BOX.OBJ",
+   "x": 611,
+   "y": 2922,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
    "key": "good_chaos_13",
    "label": "GOOD_CHAOS_13.OBJ",
-   "x": 2230,
-   "y": 3276,
+   "x": 1339,
+   "y": 2851,
+   "labelX": 128,
+   "labelY": 257
+  },
+  {
+   "key": "inner_calm_02",
+   "label": "INNER_CALM_02.OBJ",
+   "x": -284,
+   "y": 3047,
+   "labelX": 115,
+   "labelY": 212
+  },
+  {
+   "key": "wild_idea_final",
+   "label": "WILD_IDEA_FINAL.OBJ",
+   "x": 963,
+   "y": 3128,
+   "labelX": 155,
+   "labelY": 224
+  },
+  {
+   "key": "seriously_playful",
+   "label": "SERIOUSLY_PLAYFUL.OBJ",
+   "x": 509,
+   "y": 3365,
+   "labelX": 88,
+   "labelY": 234
+  },
+  {
+   "key": "red_box",
+   "label": "RED_BOX.OBJ",
+   "x": 1032,
+   "y": 3560,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "bright_ideas_01",
+   "label": "BRIGHT_IDEAS_01.OBJ",
+   "x": 75,
+   "y": 3367,
+   "labelX": 127,
+   "labelY": 262
+  },
+  {
+   "key": "bright_ideas_01",
+   "label": "BRIGHT_IDEAS_01.OBJ",
+   "x": 1415,
+   "y": 3308,
+   "labelX": 127,
+   "labelY": 262
+  },
+  {
+   "key": "cat_mode_active",
+   "label": "CAT_MODE_ACTIVE.OBJ",
+   "x": 1780,
+   "y": 2570,
+   "labelX": 82,
+   "labelY": 276
+  },
+  {
+   "key": "wild_idea_final",
+   "label": "WILD_IDEA_FINAL.OBJ",
+   "x": 2487,
+   "y": 2505,
+   "labelX": 155,
+   "labelY": 224
+  },
+  {
+   "key": "yellow_box",
+   "label": "YELLOW_BOX.OBJ",
+   "x": 3351,
+   "y": 2341,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "nuts_about_details_03",
+   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
+   "x": 2188,
+   "y": 2794,
+   "labelX": 89,
+   "labelY": 209
+  },
+  {
+   "key": "inner_calm_02",
+   "label": "INNER_CALM_02.OBJ",
+   "x": 2942,
+   "y": 2675,
+   "labelX": 115,
+   "labelY": 212
+  },
+  {
+   "key": "seriously_playful",
+   "label": "SERIOUSLY_PLAYFUL.OBJ",
+   "x": 2619,
+   "y": 2974,
+   "labelX": 88,
+   "labelY": 234
+  },
+  {
+   "key": "red_box",
+   "label": "RED_BOX.OBJ",
+   "x": 3424,
+   "y": 2798,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "yellow_box",
+   "label": "YELLOW_BOX.OBJ",
+   "x": 1849,
+   "y": 3055,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "bright_ideas_01",
+   "label": "BRIGHT_IDEAS_01.OBJ",
+   "x": 3041,
+   "y": 3120,
+   "labelX": 127,
+   "labelY": 262
+  },
+  {
+   "key": "red_box",
+   "label": "RED_BOX.OBJ",
+   "x": 2270,
+   "y": 3269,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "cat_mode_active",
+   "label": "CAT_MODE_ACTIVE.OBJ",
+   "x": 2724,
+   "y": 3419,
+   "labelX": 82,
+   "labelY": 276
+  },
+  {
+   "key": "inner_calm_02",
+   "label": "INNER_CALM_02.OBJ",
+   "x": 1884,
+   "y": 3551,
+   "labelX": 115,
+   "labelY": 212
+  },
+  {
+   "key": "hello_robo",
+   "label": "hello_robo.OBJ",
+   "x": 3472,
+   "y": 3200,
+   "labelX": 100,
+   "labelY": 294
+  },
+  {
+   "key": "black_box",
+   "label": "BLACK_BOX.OBJ",
+   "x": 3750,
+   "y": 2517,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "good_chaos_13",
+   "label": "GOOD_CHAOS_13.OBJ",
+   "x": 4495,
+   "y": 2416,
    "labelX": 128,
    "labelY": 257
   },
   {
    "key": "seriously_playful",
    "label": "SERIOUSLY_PLAYFUL.OBJ",
-   "x": 2728,
-   "y": 3485,
+   "x": 5303,
+   "y": 2354,
+   "labelX": 88,
+   "labelY": 234
+  },
+  {
+   "key": "nuts_about_details_03",
+   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
+   "x": 4347,
+   "y": 2863,
+   "labelX": 89,
+   "labelY": 209
+  },
+  {
+   "key": "wild_idea_final",
+   "label": "WILD_IDEA_FINAL.OBJ",
+   "x": 4868,
+   "y": 2638,
+   "labelX": 155,
+   "labelY": 224
+  },
+  {
+   "key": "cat_mode_active",
+   "label": "CAT_MODE_ACTIVE.OBJ",
+   "x": 4835,
+   "y": 3038,
+   "labelX": 82,
+   "labelY": 276
+  },
+  {
+   "key": "red_box",
+   "label": "RED_BOX.OBJ",
+   "x": 5332,
+   "y": 2832,
+   "labelX": 115,
+   "labelY": 225
+  },
+  {
+   "key": "wild_idea_final",
+   "label": "WILD_IDEA_FINAL.OBJ",
+   "x": 3854,
+   "y": 2973,
+   "labelX": 155,
+   "labelY": 224
+  },
+  {
+   "key": "hello_robo",
+   "label": "hello_robo.OBJ",
+   "x": 5164,
+   "y": 3249,
+   "labelX": 100,
+   "labelY": 294
+  },
+  {
+   "key": "seriously_playful",
+   "label": "SERIOUSLY_PLAYFUL.OBJ",
+   "x": 4388,
+   "y": 3314,
    "labelX": 88,
    "labelY": 234
   },
   {
    "key": "bright_ideas_01",
    "label": "BRIGHT_IDEAS_01.OBJ",
-   "x": 1836,
+   "x": 4769,
    "y": 3524,
    "labelX": 127,
    "labelY": 262
   },
   {
-   "key": "nuts_about_details_03",
-   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
-   "x": 3533,
-   "y": 3414,
-   "labelX": 89,
-   "labelY": 209
-  },
-  {
    "key": "inner_calm_02",
    "label": "INNER_CALM_02.OBJ",
-   "x": 3808,
-   "y": 2636,
+   "x": 3898,
+   "y": 3440,
    "labelX": 115,
    "labelY": 212
   },
   {
-   "key": "cat_mode_active",
-   "label": "CAT_MODE_ACTIVE.OBJ",
-   "x": 4599,
-   "y": 2443,
-   "labelX": 82,
-   "labelY": 276
-  },
-  {
-   "key": "inner_calm_02",
-   "label": "INNER_CALM_02.OBJ",
-   "x": 5333,
-   "y": 2346,
-   "labelX": 115,
-   "labelY": 212
-  },
-  {
-   "key": "seriously_playful",
-   "label": "SERIOUSLY_PLAYFUL.OBJ",
-   "x": 4279,
-   "y": 2793,
-   "labelX": 88,
-   "labelY": 234
-  },
-  {
-   "key": "nuts_about_details_03",
-   "label": "NUTS_ABOUT_DETAILS_03.OBJ",
-   "x": 5015,
-   "y": 2652,
-   "labelX": 89,
-   "labelY": 209
-  },
-  {
-   "key": "bite_first_05",
-   "label": "WILD_IDEA_FINAL.OBJ",
-   "x": 4698,
-   "y": 3022,
-   "labelX": 155,
-   "labelY": 224
-  },
-  {
    "key": "good_chaos_13",
    "label": "GOOD_CHAOS_13.OBJ",
-   "x": 5384,
-   "y": 2834,
+   "x": 5578,
+   "y": 3474,
    "labelX": 128,
    "labelY": 257
-  },
-  {
-   "key": "bright_ideas_01",
-   "label": "BRIGHT_IDEAS_01.OBJ",
-   "x": 3875,
-   "y": 3075,
-   "labelX": 127,
-   "labelY": 262
-  },
-  {
-   "key": "cat_mode_active",
-   "label": "CAT_MODE_ACTIVE.OBJ",
-   "x": 5193,
-   "y": 3222,
-   "labelX": 82,
-   "labelY": 276
-  },
-  {
-   "key": "hello_robo",
-   "label": "hello_robo.OBJ",
-   "x": 4347,
-   "y": 3235,
-   "labelX": 100,
-   "labelY": 294
-  },
-  {
-   "key": "tiny_obsession_12",
-   "label": "TINY_OBSESSION_12.OBJ",
-   "x": 4800,
-   "y": 3502,
-   "labelX": 92,
-   "labelY": 219
-  },
-  {
-   "key": "good_chaos_13",
-   "label": "GOOD_CHAOS_13.OBJ",
-   "x": 3937,
-   "y": 3522,
-   "labelX": 128,
-   "labelY": 257
-  },
-  {
-   "key": "hello_robo",
-   "label": "hello_robo.OBJ",
-   "x": 5600,
-   "y": 3438,
-   "labelX": 100,
-   "labelY": 294
   }
  ]
 }

@@ -20,13 +20,15 @@ import { writeFileSync } from 'node:fs';
 // Figma image box sizes (1×) — the exports in src/assets/team/objects are 2× these
 const SIZE = {
   good_chaos_13: [356, 220],
-  tiny_obsession_12: [296, 197],
+  black_box: [280, 220],
+  red_box: [280, 220],
+  yellow_box: [280, 220],
   cat_mode_active: [215, 253],
   inner_calm_02: [313, 189],
   nuts_about_details_03: [277, 171],
   hello_robo: [349, 255],
   seriously_playful: [300, 200],
-  bite_first_05: [378, 189],
+  wild_idea_final: [378, 189],
   bright_ideas_01: [293, 229],
 };
 const KEYS = Object.keys(SIZE);
@@ -34,7 +36,7 @@ const KEYS = Object.keys(SIZE);
 // the renders' sharp edges (shadows are soft, so they don't count). The images have wide,
 // uneven margins — the robot fills 50–150 of its 349 — so spacing and labels use these.
 const VISIBLE = {
-  bite_first_05: [14, 26, 295, 184],
+  wild_idea_final: [14, 26, 295, 184],
   bright_ideas_01: [25, 5, 224, 222],
   cat_mode_active: [15, 12, 157, 236],
   good_chaos_13: [36, 6, 222, 217],
@@ -42,13 +44,15 @@ const VISIBLE = {
   inner_calm_02: [8, 23, 222, 172],
   nuts_about_details_03: [14, 6, 160, 169],
   seriously_playful: [17, 16, 158, 194],
-  tiny_obsession_12: [22, 9, 152, 179],
+  black_box: [40, 35, 190, 185],
+  red_box: [40, 35, 190, 185],
+  yellow_box: [40, 35, 190, 185],
 };
 // Where each label is centred (1×): the object's visual middle, checked by eye — the box
-// middle for most, the body for the cat and the squirrel (not the tail), the star for the
-// keychain (not the ring), the standing hand for the breakdancer
+// middle for most, the body for the cat and the squirrel (not the tail), the standing hand for the
+// breakdancer, the box middle for the placeholder boxes
 const LABEL_CX = {
-  bite_first_05: 155,
+  wild_idea_final: 155,
   bright_ideas_01: 127,
   cat_mode_active: 82,
   good_chaos_13: 128,
@@ -56,14 +60,16 @@ const LABEL_CX = {
   inner_calm_02: 115,
   nuts_about_details_03: 89,
   seriously_playful: 88,
-  tiny_obsession_12: 92,
+  black_box: 115,
+  red_box: 115,
+  yellow_box: 115,
 };
 // How far each object's shadow reaches to the right (1×, measured from the renders: the
 // rightmost pixel that isn't white). It varies a lot — the robot's shadow runs 330 of its
 // 349, nearly twice the robot's width — so a fixed allowance left the robot's shadow
 // almost touching its neighbour.
 const SHADOW_RIGHT = {
-  bite_first_05: 372,
+  wild_idea_final: 372,
   bright_ideas_01: 278,
   cat_mode_active: 213,
   good_chaos_13: 342,
@@ -71,15 +77,19 @@ const SHADOW_RIGHT = {
   inner_calm_02: 300,
   nuts_about_details_03: 210,
   seriously_playful: 279,
-  tiny_obsession_12: 286,
+  black_box: 275,
+  red_box: 275,
+  yellow_box: 275,
 };
 // Each object's own label (as Figma names it on its main copy)
 const LABELS = {
   hello_robo: 'hello_robo.OBJ',
   inner_calm_02: 'INNER_CALM_02.OBJ',
   bright_ideas_01: 'BRIGHT_IDEAS_01.OBJ',
-  bite_first_05: 'WILD_IDEA_FINAL.OBJ',
-  tiny_obsession_12: 'TINY_OBSESSION_12.OBJ',
+  wild_idea_final: 'WILD_IDEA_FINAL.OBJ',
+  black_box: 'BLACK_BOX.OBJ',
+  red_box: 'RED_BOX.OBJ',
+  yellow_box: 'YELLOW_BOX.OBJ',
   seriously_playful: 'SERIOUSLY_PLAYFUL.OBJ',
   good_chaos_13: 'GOOD_CHAOS_13.OBJ',
   nuts_about_details_03: 'NUTS_ABOUT_DETAILS_03.OBJ',
@@ -88,18 +98,18 @@ const LABELS = {
 
 // The Figma frame: image top-left, label text, label frame left / top / width
 const FIGMA = [
-  ['good_chaos_13', -112, -78, 'BRIGHT_IDEAS_01.OBJ', -72, 155, 200],
-  ['tiny_obsession_12', 654, -115, 'TINY_OBSESSION_12.OBJ', 636, 86, 220],
+  ['yellow_box', -112, -78, 'YELLOW_BOX.OBJ', -72, 155, 200],
+  ['black_box', 654, -115, 'BLACK_BOX.OBJ', 636, 86, 220],
   ['cat_mode_active', 1452.6, -133, 'CAT_MODE_ACTIVE.OBJ', 1440, 118, 206],
   ['inner_calm_02', 274, 192, 'INNER_CALM_02.OBJ', 296, 391, 190],
   ['nuts_about_details_03', 1120, 156, 'NUTS_ABOUT_DETAILS_03.OBJ', 1083, 356, 258],
   ['hello_robo', 739, 336, 'hello_robo.OBJ', 764.5, 618, 167],
   ['good_chaos_13', 1539, 336, 'GOOD_CHAOS_13.OBJ', 1586, 580, 196],
-  ['cat_mode_active', -90.4, 422, 'BITE_FIRST_05.OBJ', -87, 673, 174],
+  ['cat_mode_active', -90.4, 422, 'CAT_MODE_ACTIVE.OBJ', -87, 673, 174],
   ['seriously_playful', 1244, 589, 'SERIOUSLY_PLAYFUL.OBJ', 1219, 809, 226],
-  ['bite_first_05', 277, 649, 'WILD_IDEA_FINAL.OBJ', 342.5, 857, 198],
+  ['wild_idea_final', 277, 649, 'WILD_IDEA_FINAL.OBJ', 342.5, 857, 198],
   ['bright_ideas_01', 875, 871, null, 0, 0, 0],
-  ['tiny_obsession_12', -50, 913, null, 0, 0, 0],
+  ['red_box', -50, 913, null, 0, 0, 0],
   ['inner_calm_02', 1492, 910, null, 0, 0, 0],
 ];
 
@@ -175,7 +185,7 @@ for (let H = 1117; H <= 1700 && !size; H += 10)
 if (!size) throw new Error('no repeat size found');
 console.log('tile', size.W, '×', size.H);
 
-// Versions B and C: the objects swapped around (a permutation of the 9 kinds), chosen at
+// Versions B and C: the objects swapped around (a permutation of the 11 kinds), chosen at
 // random among many for: no gap tighter than Figma's, the same object as far from itself
 // as possible across all three versions, and nothing landing on its own spot in the
 // neighbouring version
@@ -239,7 +249,7 @@ const score = (pts) => {
   const countPen = KEYS.reduce((t, k) => t + Math.max(0, Math.abs((counts[k] || 0) - even) - 1) ** 2, 0);
   return { tight, same, value: -near / 1e3 - tightPen * 50 - countPen * 40 };
 };
-// Start: every non-Figma copy gets the 9 kinds shuffled over its 13 spots, then swap the
+// Start: every non-Figma copy gets the 11 kinds shuffled over its 13 spots, then swap the
 // kinds of two objects (outside the Figma tile) whenever that improves the score
 const identity = Object.fromEntries(KEYS.map((k) => [k, k]));
 const maps = [identity];
