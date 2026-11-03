@@ -4,9 +4,11 @@
  * Figma: 1.0 home → "1 hero" (10093:119), 1728×1117
  * https://www.figma.com/design/9SsfbCUY7KcxjZpCuRpDxf/Hello-Robo-Website-2026?node-id=10093-119
  *
- * Marked "3d web gl": the sphere + robot are the static poster for the future
- * scene and sit inside a WebGLSlot. (The receipt photo under the sphere in
- * Figma is fully covered by it, so it isn't used.)
+ * Marked "3d web gl". On desktop (src/scripts/hero-sphere.ts) the receipts picture becomes
+ * the inside of a sphere, the camera at its centre, turning very slowly; the robot photo
+ * and the title stay on top. Phones, tablets and browsers without WebGL 2 keep the still
+ * picture. (The receipt photo under the sphere in Figma is fully covered by it, so it
+ * isn't used.)
  */
 import { Image } from 'astro:assets';
 import WebGLSlot from '../../components/ui/WebGLSlot.astro';
@@ -47,6 +49,10 @@ import robot from '../../assets/home/hero-robot.png';
   </svg>
 </section>
 
+<script>
+  import '../../scripts/hero-sphere';
+</script>
+
 <style>
   /* Positions are percentages of the 1728×1117 Figma frame */
   .home-hero {
@@ -58,6 +64,19 @@ import robot from '../../assets/home/hero-robot.png';
   .home-hero :global(.home-hero__scene) {
     position: absolute;
     inset: 0;
+  }
+  /* desktop: the sphere's canvas fills the hero; the still picture fades out over it once
+     the first frame is drawn (the robot stays on top) */
+  .home-hero :global(.home-hero__canvas) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .home-hero :global(.home-hero__sphere) {
+    transition: opacity var(--duration-smooth) var(--ease-out);
+  }
+  .home-hero :global(.is-live .home-hero__sphere) {
+    opacity: 0;
   }
   /* Sphere: 1784×1118, centred */
   .home-hero :global(.home-hero__sphere) {
