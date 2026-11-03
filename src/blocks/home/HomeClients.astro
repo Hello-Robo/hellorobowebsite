@@ -1,42 +1,42 @@
 ---
 /**
  * Home — Clients
- * Figma: "Frame 2147232804" (10093:577), 1728×1481
- * https://www.figma.com/design/9SsfbCUY7KcxjZpCuRpDxf/Hello-Robo-Website-2026?node-id=10093-577
- * Logo tiles and stamps are scattered on the right; positions are taken
- * from the 1728 frame and expressed as % so they scale with the page.
- * Mobile: two rows of logo tiles at 1.5× Figma's 123×69, bleeding off both edges; while
- * the block crosses the screen the rows drift sideways in opposite directions.
- * The logos come from the CMS (Home page › Client logos) and fill the 8 places in order:
- * an SVG is a whole tile with its own background, a PNG / WebP logo sits on a light tile.
+ * Figma: "Frame 2147232804" (10488:173), 1728×1481
+ * https://www.figma.com/design/9SsfbCUY7KcxjZpCuRpDxf/Hello-Robo-Website-2026?node-id=10488-173
+ * Under the text, a staggered grid of 13 logos (rows of 3, 2, 3, 2, 3): each sits centred in
+ * a 329×193 place; positions are taken from the 1728 frame and expressed as % so they scale
+ * with the page.
+ * Mobile: three rows of logo tiles bleeding off both edges; while the block crosses the
+ * screen the rows drift sideways, alternating directions.
+ * The logos come from the CMS (Home page › Client logos) and fill the 13 places in order,
+ * each at its own width (px at 1728, as in Figma). A place can hold a Hello Robo micrographic
+ * instead (CMS "Micrographic"): shown the same way, but decorative (no alt text).
  */
 import { getCollection } from 'astro:content';
 
-// The 8 places for logo tiles: x, y in the 1728×1481 frame
+// The 13 places: top-left x, y of each 329×193 place in the 1728 frame (Figma y − 100), row by row
 const places = [
-  { x: 1286, y: -10 },
-  { x: 1563, y: 168 },
-  { x: 1287, y: 357 },
-  { x: 1011, y: 535 },
-  { x: 732, y: 724 },
-  { x: 1287, y: 724 },
-  { x: 1011, y: 902 },
-  { x: 732, y: 1091 },
+  { x: 40, y: 705 }, { x: 700, y: 705 }, { x: 1359, y: 705 },
+  { x: 369, y: 818 }, { x: 1028, y: 818 },
+  { x: 40, y: 898 }, { x: 700, y: 898 }, { x: 1359, y: 898 },
+  { x: 369, y: 1011 }, { x: 1028, y: 1011 },
+  { x: 40, y: 1091 }, { x: 700, y: 1091 }, { x: 1359, y: 1091 },
 ];
-// mobileScale: logos that fill more of their tile than the rest are drawn smaller in the
-// cropped phone tiles, to match the others
+// Figma's frame is 1481 tall; the logos sit 100 higher (less space under the text)
+const FRAME_H = 1381;
+const PLACE_W = 329;
+const PLACE_H = 193;
 const clients = (await getCollection('home'))[0]?.data.clients ?? [];
+// phones: rows of 5, 4, 4
+const mobileRow = (i: number) => (i < 5 ? 0 : i < 9 ? 1 : 2);
 const tiles = clients.slice(0, places.length).map((c, i) => ({
   name: c.name,
   src: c.logo,
+  width: c.width || 140,
+  micrographic: c.micrographic,
+  row: mobileRow(i),
   ...places[i],
-  mobileScale: c.mobileScale !== 1 ? c.mobileScale : undefined,
-  raster: !/\.svg$/i.test(c.logo),
 }));
-const stamps = [
-  { src: '/images/home/stamp-human-department.svg', x: 1003, y: 226, w: 292, h: 292 },
-  { src: '/images/home/stamp-human-approved.svg', x: 1526, y: 525, w: 388, h: 651 },
-];
 const pct = (v: number, of: number) => `${(v / of) * 100}%`;
 ---
 <section class="home-clients">
@@ -52,22 +52,9 @@ const pct = (v: number, of: number) => `${(v / of) * 100}%`;
     {tiles.map((t) => (
       <li
         class="home-clients__tile"
-        style={`left:${pct(t.x, 1728)};top:${pct(t.y, 1481)}${t.mobileScale ? `;--logo-scale:${t.mobileScale}` : ''}`}
+        style={`left:${pct(t.x, 1728)};top:${pct(t.y, FRAME_H)};--logo-w:${t.width};--row:${t.row};--dir:${t.row % 2 ? -1 : 1}`}
       >
-        {t.raster ? (
-          <img class="home-clients__logo-raster" src={t.src} alt={t.name} width="165" style="--w: 165" height="22" loading="lazy" />
-        ) : (
-          <img src={t.src} alt={t.name} width="264" style="--w: 264" height="355" loading="lazy" />
-        )}
-      </li>
-    ))}
-    {stamps.map((s) => (
-      <li
-        class="home-clients__stamp"
-        aria-hidden="true"
-        style={`left:${pct(s.x, 1728)};top:${pct(s.y, 1481)};width:${pct(s.w, 1728)}`}
-      >
-        <img src={s.src} alt="" width={s.w} style={`--w: ${s.w}`} height={s.h} loading="lazy" />
+        <img src={t.src} alt={t.micrographic ? '' : t.name} loading="lazy" />
       </li>
     ))}
   </ul>
@@ -97,7 +84,7 @@ const pct = (v: number, of: number) => `${(v / of) * 100}%`;
 <style>
   .home-clients {
     position: relative;
-    aspect-ratio: 1728 / 1481;
+    aspect-ratio: 1728 / 1381;
     /* hidden first: iOS before 16 has no `clip` and would widen the page */
     overflow-x: hidden;
     overflow-x: clip;
@@ -123,38 +110,27 @@ const pct = (v: number, of: number) => `${(v / of) * 100}%`;
     position: absolute;
     inset: 0;
   }
-  .home-clients__tile,
-  .home-clients__stamp {
-    position: absolute;
-  }
+  /* A 329×193 place; the logo centred in it at its own width (Figma px, scaled with the page) */
   .home-clients__tile {
-    width: calc(264 / 1728 * 100%);
-    aspect-ratio: 264 / 355;
+    position: absolute;
+    width: calc(329 / 1728 * 100%);
+    aspect-ratio: 329 / 193;
     display: grid;
     place-items: center;
   }
   .home-clients__tile img {
-    width: 100%;
-    height: 100%;
-  }
-  /* The SVG tiles include their own light background; the PNG one doesn't */
-  .home-clients__tile:has(.home-clients__logo-raster) {
-    background: rgb(0 0 0 / 0.02);
-  }
-  .home-clients__tile .home-clients__logo-raster {
-    width: calc(165 / 264 * 100%);
+    width: calc(var(--logo-w) / 329 * 100%);
+    max-width: 90%;
+    max-height: 95%;
     height: auto;
-  }
-  .home-clients__stamp img {
-    width: 100%;
-    height: auto;
+    object-fit: contain;
   }
 
-  /* ── Mobile: Figma 10098:4018 — text, then two rows of 123×69 logo tiles bleeding off both edges ── */
+  /* ── Mobile: text, then three rows of logo tiles (5, 4, 4) bleeding off both edges ── */
   @media (max-width: 1023px) {
     .home-clients {
       aspect-ratio: auto;
-      padding-bottom: 189px;
+      padding-bottom: 160px;
     }
     .home-clients__text {
       padding-top: 188px;
@@ -173,45 +149,33 @@ const pct = (v: number, of: number) => `${(v / of) * 100}%`;
       max-width: none;
       margin-top: var(--space-24);
     }
-    /* Tiles 1.5× Figma's 123×69 → 185×104; row 2 sits half a tile to the left of row 1 */
+    /* Tiles 165×97 (Figma's 329×193 at half); rows 2 and 3 start half a tile in */
     .home-clients__wall {
-      --tile: 185px;
+      --tile: 165px;
       --shift: 0;
       position: relative;
       inset: auto;
       display: grid;
-      grid-template-columns: repeat(4, var(--tile));
-      grid-auto-rows: 104px;
-      gap: 8px;
+      grid-template-columns: repeat(5, var(--tile));
+      grid-auto-rows: 97px;
+      gap: 0;
       width: max-content;
-      margin: 64px 0 0 calc(50% - 2 * var(--tile) - 12px);
+      margin: 64px 0 0 calc(50% - 2.5 * var(--tile));
     }
     .home-clients__tile {
       position: relative;
       left: auto !important;
       top: auto !important;
       width: var(--tile);
-      aspect-ratio: auto;
-      overflow: hidden;
-      transform: translateX(calc(var(--tile) / 4 + var(--shift) * 40px));
+      grid-row: calc(var(--row) + 1);
+      transform: translateX(calc(var(--dir) * (var(--tile) / 4 + var(--shift) * 40px)));
     }
-    .home-clients__tile img:not(.home-clients__logo-raster) {
-      position: absolute;
-      inset: 0;
-      object-fit: cover;
-      scale: var(--logo-scale, 1);
+    .home-clients__tile:nth-child(6),
+    .home-clients__tile:nth-child(10) {
+      grid-column: 1;
     }
-    /* A shrunk logo leaves the tile's edges bare: a wide outline in the SVGs' own 2% grey
-       fills them right up to the image edge without overlapping it (no visible inner box);
-       the tile clips it */
-    .home-clients__tile[style*='--logo-scale'] img {
-      outline: 200px solid rgb(0 0 0 / 0.02);
-    }
-    .home-clients__tile:nth-child(n + 5) {
-      transform: translateX(calc(var(--tile) / -4 - var(--shift) * 40px));
-    }
-    .home-clients__stamp {
-      display: none;
+    .home-clients__tile img {
+      width: calc(var(--logo-w) * 0.5px);
     }
   }
 </style>

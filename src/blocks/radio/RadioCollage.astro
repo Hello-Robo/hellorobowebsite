@@ -77,11 +77,21 @@ for (let i = 0; posters.length; i++) {
     display: block;
     width: 100%;
     height: 100%;
+    overflow: hidden;
   }
   .radio-collage__poster :global(img) {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+  /* hover: the poster zooms in 5% inside its frame (mouse only) */
+  .radio-collage__poster :global(img) {
+    transition: scale var(--duration-smooth) var(--ease-out);
+  }
+  @media (hover: hover) {
+    .radio-collage__poster:hover :global(img) {
+      scale: 1.05;
+    }
   }
   .radio-collage__stamp {
     height: auto;

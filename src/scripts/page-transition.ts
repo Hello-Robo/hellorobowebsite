@@ -9,7 +9,7 @@
  * caught here; new tabs, downloads, the CMS, hash links and links other scripts already
  * handle (e.g. Get in touch opening the contact block) are left alone. Back / forward from
  * the browser cache uncovers too. The first page of a visit opens covered as well, with a
- * 1px loading bar under the logo (load()). Off for reduced motion.
+ * 1px loading bar, and a loop of site micrographics in place of the logo (load()). Off for reduced motion.
  */
 
 const html = document.documentElement;
@@ -65,19 +65,21 @@ async function load() {
   done = tasks.length;
   show();
   await wait(Math.max(350, MIN_LOAD - (performance.now() - started)));
-  html.classList.remove('pt-load');
-  await reveal();
+  await reveal(true);
 }
 
-/** The new page is in: blink, then drop the columns */
-async function reveal() {
+/**
+ * The new page is in: blink, then drop the columns. After the first-visit loading screen
+ * (`loaded`) the micrographics loop was showing instead of the logo, so no blink there.
+ */
+async function reveal(loaded = false) {
   try {
     sessionStorage.removeItem(KEY);
   } catch {}
   html.classList.add('pt-cover');
   await Promise.race([document.fonts?.ready, wait(600)]);
-  await blink();
-  html.classList.remove('pt-cover', 'pt-in', 'pt-hold');
+  if (!loaded) await blink();
+  html.classList.remove('pt-cover', 'pt-in', 'pt-hold', 'pt-load');
   html.classList.add('pt-out');
   await wait(UNCOVER_MS + 50);
   html.classList.remove('pt-out');

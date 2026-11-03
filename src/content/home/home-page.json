@@ -7,44 +7,82 @@
   ],
   "clients": [
     {
-      "name": "NYSE",
-      "logo": "/images/home/logo-nyse.svg",
-      "mobileScale": 0.6
+      "name": "Weekly Robotics",
+      "logo": "/images/home/clients/weekly-robotics.svg",
+      "width": 147,
+      "micrographic": false
     },
     {
-      "name": "Cisco",
-      "logo": "/images/home/logo-cisco.svg",
-      "mobileScale": 0.65
+      "name": "Persona AI",
+      "logo": "/images/home/clients/persona-ai.png",
+      "width": 206,
+      "micrographic": false
     },
     {
-      "name": "Pubco",
-      "logo": "/images/home/logo-pubco.svg",
-      "mobileScale": 1
+      "name": "Human. Future. With care",
+      "logo": "/images/home/clients/stamp-human-future.svg",
+      "width": 246,
+      "micrographic": true
+    },
+    {
+      "name": "Cosmic Robotics",
+      "logo": "/images/home/clients/cosmic.svg",
+      "width": 90.56,
+      "micrographic": false
+    },
+    {
+      "name": "Client",
+      "logo": "/images/home/clients/gamma.svg",
+      "width": 47,
+      "micrographic": false
     },
     {
       "name": "Surf Air",
-      "logo": "/images/home/logo-surfair.svg",
-      "mobileScale": 1
+      "logo": "/images/home/clients/surf-air.svg",
+      "width": 121,
+      "micrographic": false
     },
     {
-      "name": "Palantir",
-      "logo": "/images/home/logo-palantir.svg",
-      "mobileScale": 1
+      "name": "Bedrock Robotics",
+      "logo": "/images/home/clients/bedrock.svg",
+      "width": 124.77,
+      "micrographic": false
     },
     {
-      "name": "Bedrock",
-      "logo": "/images/home/logo-bedrock.png",
-      "mobileScale": 1
+      "name": "Intrinsic",
+      "logo": "/images/home/clients/intrinsic.svg",
+      "width": 131.15,
+      "micrographic": false
     },
     {
-      "name": "Weekly Robotics",
-      "logo": "/images/home/logo-weekly-robotics.svg",
-      "mobileScale": 1
+      "name": "Andromeda Surgical",
+      "logo": "/images/home/clients/andromeda.svg",
+      "width": 142.65,
+      "micrographic": false
     },
     {
       "name": "Geolava",
-      "logo": "/images/home/logo-geolava.svg",
-      "mobileScale": 1
+      "logo": "/images/home/clients/geolava.svg",
+      "width": 110,
+      "micrographic": false
+    },
+    {
+      "name": "Human Robot Department",
+      "logo": "/images/home/stamp-human-department.svg",
+      "width": 168,
+      "micrographic": true
+    },
+    {
+      "name": "ALM Ventures",
+      "logo": "/images/home/clients/alm-ventures.svg",
+      "width": 96,
+      "micrographic": false
+    },
+    {
+      "name": "Cybernetix Ventures",
+      "logo": "/images/home/clients/cybernetix.svg",
+      "width": 189.7,
+      "micrographic": false
     }
   ]
 }

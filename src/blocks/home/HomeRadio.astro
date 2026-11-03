@@ -104,11 +104,21 @@ for (let i = 0; posters.length; i++) {
     display: block;
     width: 100%;
     height: 100%;
+    overflow: hidden;
   }
   .home-radio :global(.home-radio__poster) {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+  /* hover: the poster zooms in 5% inside its frame (mouse only) */
+  .home-radio :global(.home-radio__poster) {
+    transition: scale var(--duration-smooth) var(--ease-out);
+  }
+  @media (hover: hover) {
+    .home-radio__link:hover :global(.home-radio__poster) {
+      scale: 1.05;
+    }
   }
   .home-radio__stamp {
     height: auto;

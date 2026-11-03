@@ -29,9 +29,10 @@ const STEP = 2;
             <p class="radio-episodes__line t-body">{e.data.guestTitle}</p>
             <Button href={`/robo-radio/${e.id}`} variant="light" icon="arrow">Watch</Button>
           </div>
-          <div class="radio-episodes__cover">
-            {e.data.cover && <Image src={e.data.cover} alt="" widths={[680, 1360]} sizes="(min-width: 1728px) 680px, 40vw" loading="lazy" />}
-          </div>
+          {/* the cover links to the episode too (Watch is the one for keyboards / screen readers) */}
+          <a class="radio-episodes__cover" href={`/robo-radio/${e.id}`} tabindex="-1" aria-hidden="true">
+            {e.data.cover && <Image src={e.data.cover} alt="" widths={[340, 680]} sizes="(min-width: 1728px) 340px, (min-width: 1024px) 20vw, 100vw" loading="lazy" />}
+          </a>
         </li>
       ))}
     </ul>
@@ -101,16 +102,27 @@ const STEP = 2;
   .radio-episodes__text :global(.button) {
     margin-top: auto;
   }
+  /* The vertical poster (1082×1530), 340 wide, at the right of the row */
   .radio-episodes__cover {
+    display: block;
     grid-column: 3;
-    aspect-ratio: 680 / 382;
+    justify-self: end;
+    width: calc(340 * var(--px));
+    aspect-ratio: 1082 / 1530;
     background: var(--color-ink);
     overflow: hidden;
   }
   .radio-episodes__cover :global(img) {
+    transition: scale var(--duration-smooth) var(--ease-out);
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+  /* hover: the cover zooms in 5% inside its frame (mouse only) */
+  @media (hover: hover) {
+    .radio-episodes__cover:hover :global(img) {
+      scale: 1.05;
+    }
   }
   .radio-episodes__more {
     display: flex;
@@ -136,6 +148,8 @@ const STEP = 2;
     }
     .radio-episodes__cover {
       grid-column: auto;
+      justify-self: stretch;
+      width: auto;
       order: -1;
     }
     .radio-episodes__line {

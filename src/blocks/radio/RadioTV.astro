@@ -26,9 +26,11 @@
  * does. Its icon in the middle (the bar's play / pause) shows what a click
  * will do — pause on hover while an episode plays, play while one is paused (also on
  * phones, which have no hover). Before the first play there's no icon; a click still starts it.
- * Side windows: the poster's two side screens are part of the same picture — the video is
- * laid out across the TV's whole width and masked to the main screen and the two side
- * screens, so they show the real left and right edges of the picture (one player).
+ * Side windows: the screen mask's two side screens are part of the same picture — the
+ * video is laid out across the mask's whole width and masked to Figma's vector screen shape
+ * (main screen + two side screens), so they show the real left and right edges of the
+ * picture (one player). The poster shows through the same shape (its noise and text), so the
+ * screen has that shape before anything plays too; outside it the TV is black.
  */
 import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
@@ -56,6 +58,40 @@ const robotTop = variant === 'hero' ? 655 : 528;
 const pct = (v: number, of: number) => `${(v / of) * 100}%`;
 // Player bar: hero (105, 843) · episode (110, 759) — Figma's controls frame + its 5px inset
 const bar = variant === 'hero' ? { x: 105, y: 843 } : { x: 110, y: 759 };
+// The TV's screen shape: Figma's vector mask (10485:112: the main screen with cut corners
+// and the two side screens), stretched across the TV's whole width and 10% taller than the
+// poster's printed screen (744, less 12 at the top and bottom), centred on it (or lower). Only the
+// mask stretches: inside it is the poster's own noise (a patch of it, tiled), and over
+// that the poster as it is (a hair wider, ~2%, so its printed edges stay outside), fading
+// out just inside its printed screen's top and bottom. The video plays through the same
+// shape.
+const MASK_W = 1728;
+const maskLeft = 0;
+const maskW = 1730;
+const fitH = 744 - 24;
+const maskH = fitH * 1.1;
+// centred on the printed screen, then 50 higher, but never closer than 8 to the TV's top
+// (so the episode TV's, which has no room above, stays at 8)
+const maskTop = Math.max(8, screenTop + 12 - (maskH - fitH) / 2 - 50);
+// the poster over the noise: shown from 14 inside its printed screen, faded in over 40
+const fadeY = (y: number) => pct(screenTop + y, h);
+const fade = `linear-gradient(to bottom, transparent ${fadeY(14)}, #000 ${fadeY(54)}, #000 ${fadeY(744 - 54)}, transparent ${fadeY(744 - 14)})`;
+// the noise patch (public/images/radio/tv-noise.jpg, 400×180 of the hero poster's screen)
+const noiseSize = `${pct(400, 1730)} auto`;
+const at = (x: number) => (x / MASK_W) * maskW; // a mask x on the TV
+// stretch the poster so its stretch [from0, from1] lands on the TV's [to0, to1]
+const fitX = (from0: number, from1: number, to0: number, to1: number) => {
+  const k = (to1 - to0) / (from1 - from0);
+  return { k, x0: to0 - from0 * k, style: `left:${pct(to0 - from0 * k, 1730)};width:${pct(1730 * k, 1730)}` };
+};
+// the printed main screen (113–1615, 8 in) onto the mask's main screen; the robot in front
+// moves with it, so it stays on the poster's own robot
+const main = fitX(121, 1607, at(108.55), at(1625.32));
+const mainFit = main.style;
+const robotX = main.x0 + 678 * main.k;
+const robotW = 442 * main.k;
+const maskSize = `100% ${pct(maskH, h)}`;
+const maskPos = `0 ${pct(maskTop, h - maskH)}`;
 // The screen's Figma settings, flat glass (curvature 0) so the video keeps square corners
 const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter: 3 };
 ---
@@ -71,13 +107,20 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
   {variant === 'hero' && <h1 class="radio-tv__heading t-h1 container">Robo Radio</h1>}
   <!-- The TV (poster + screen); on desktop the player bar sits on it, on phones under it -->
   <div class="radio-tv__stage" style={`aspect-ratio: 1730 / ${h}`}>
-  <WebGLSlot name="radio-tv" class="radio-tv__scene">
-    <Image src={poster} alt="" widths={[1730, 3460]} sizes="100vw" loading={variant === 'hero' ? 'eager' : 'lazy'} />
-  </WebGLSlot>
-  <div class="radio-tv__screen" data-screen style={`left:0;top:${pct(screenTop, h)};width:100%;height:${pct(744, h)}`}>
+  <!-- the screen, only through its shape (outside it: the TV's black): the poster's noise
+       in all of it, and the poster itself (its text) over the main screen -->
+  <div class="radio-tv__glass radio-tv__glass--noise" aria-hidden="true" style={`--mask-size:${maskSize};--mask-pos:${maskPos};--noise-size:${noiseSize}`}></div>
+  <div class="radio-tv__glass radio-tv__glass--main" style={`--mask-size:${maskSize};--mask-pos:${maskPos}`}>
+    <div class="radio-tv__fit" style={`${mainFit};--fade:${fade}`}>
+      <WebGLSlot name="radio-tv" class="radio-tv__scene">
+        <Image src={poster} alt="" widths={[1730, 3460]} sizes="100vw" loading={variant === 'hero' ? 'eager' : 'lazy'} />
+      </WebGLSlot>
+    </div>
+  </div>
+  <div class="radio-tv__screen" data-screen style={`left:${pct(maskLeft, 1730)};top:${pct(maskTop, h)};width:${pct(maskW, 1730)};height:${pct(maskH, h)}`}>
     <div class="radio-tv__frame" data-frame><div class="radio-tv__video" data-video></div></div>
-    <!-- The TV's own dark screen whenever the video isn't playing: YouTube's paused screen
-         (title, logo, "More videos") never shows -->
+    <!-- The TV's own dark screen while an episode loads (YouTube's loading screen never
+         shows); paused, the screen keeps the frame it stopped on -->
     <div class="radio-tv__standby" aria-hidden="true"></div>
     <CrtScreen overlay settings={crt} />
   </div>
@@ -93,15 +136,7 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
     </button>
   )}
   <!-- The robot stands in front of the screen, so the video plays behind it -->
-  <Image class="radio-tv__robot" src={robot} alt="" widths={[442, 884]} sizes="26vw" loading={variant === 'hero' ? 'eager' : 'lazy'} style={`left:${pct(678, 1730)};top:${pct(robotTop, h)};width:${pct(442, 1730)}`} />
-  <!-- The picture's shape, across the TV's width: the main screen (its edges bow out a
-       little, Figma's CRT curvature 10) and the two side screens (left 0–51, right
-       1669–1730; 27 below the main screen's top, 691 tall), measured from the poster -->
-  <svg class="radio-tv__clip" width="0" height="0" aria-hidden="true" focusable="false">
-    <clipPath id={`radio-tv-screen-${variant}`} clipPathUnits="objectBoundingBox">
-      <path d="M.0647 .0269Q.4994 -.0215 .9341 .0269Q.9422 .5 .9341 .9704Q.4994 1.0216 .0647 .9704Q.0556 .5 .0647 .0269Z M0 .0363H.0295V.9651H0Z M.9647 .0363H1V.9651H.9647Z" />
-    </clipPath>
-  </svg>
+  <Image class="radio-tv__robot" src={robot} alt="" widths={[442, 884]} sizes="26vw" loading={variant === 'hero' ? 'eager' : 'lazy'} style={`left:${pct(robotX, 1730)};top:${pct(robotTop, h)};width:${pct(robotW, 1730)}`} />
   </div>
 
   {playlist.length > 0 && (
@@ -277,6 +312,7 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
     // Previous / next: the other episode loads straight into the same screen
     const go = async (step: number) => {
       index = (index + step + list.length) % list.length;
+      root.classList.remove('is-paused'); // the next one loads on the dark screen
       seek.value = '0';
       pendingSeek = null;
       showProgress();
@@ -348,29 +384,55 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
     height: 100%;
     object-fit: cover;
   }
-  /* The CRT screen inside the poster: 6.25–93.5% across, 2–86.3% down. Black until the
-     first play, so the poster shows through; the video and the CRT layer fade in then */
-  /* The TV's width at the screen's height (placed inline), clipped to the main screen and
-     the two side screens */
+  /* The video window (placed inline), masked to Figma's screen shape. Its CRT layer is on
+     from the start, over the poster's dark screen and its text; the video, its black and
+     the standby screen fade in on the first play */
   .radio-tv__screen {
     position: absolute;
     overflow: hidden;
-    opacity: 0;
     pointer-events: none;
-    background: var(--color-black);
+  }
+  .radio-tv__frame,
+  .radio-tv__standby {
+    opacity: 0;
     transition: opacity var(--duration-smooth) var(--ease-out);
   }
-  .radio-tv.is-on .radio-tv__screen {
+  .radio-tv.is-on .radio-tv__frame {
     opacity: 1;
+    background: var(--color-black);
   }
-  .radio-tv--hero .radio-tv__screen {
-    clip-path: url(#radio-tv-screen-hero);
+  /* The video window's shape: Figma's vector mask, stretched to the box (which keeps its
+     proportions) */
+  .radio-tv__screen {
+    -webkit-mask: url(/images/radio/tv-screen-mask.svg) 0 0 / 100% 100% no-repeat;
+    mask: url(/images/radio/tv-screen-mask.svg) 0 0 / 100% 100% no-repeat;
   }
-  .radio-tv--episode .radio-tv__screen {
-    clip-path: url(#radio-tv-screen-episode);
-  }
-  .radio-tv__clip {
+  /* The poster through the same shape, so the screen (noise, text) has it from the start */
+  .radio-tv__glass {
     position: absolute;
+    inset: 0;
+    -webkit-mask: var(--mask) var(--mask-pos) / var(--mask-size) no-repeat;
+    mask: var(--mask) var(--mask-pos) / var(--mask-size) no-repeat;
+  }
+  .radio-tv__glass--main {
+    --mask: url(/images/radio/tv-screen-mask-main.svg);
+  }
+  .radio-tv__glass--noise {
+    --mask: url(/images/radio/tv-screen-mask.svg);
+    background: url(/images/radio/tv-noise.jpg) 0 0 / var(--noise-size) repeat;
+  }
+  /* the poster, a hair wider (placed inline), fading out at its printed screen's top / bottom */
+  .radio-tv__fit {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    -webkit-mask: var(--fade);
+    mask: var(--fade);
+  }
+  .radio-tv__fit > :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
   .radio-tv :global(.radio-tv__robot) {
     position: absolute;
@@ -428,8 +490,9 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
       #121212;
     transition: opacity var(--duration-normal) var(--ease-out);
   }
-  .radio-tv.is-playing .radio-tv__standby {
-    opacity: 0;
+  /* only while an episode loads: paused, the screen keeps the frame it stopped on */
+  .radio-tv.is-on:not(.is-playing, .is-paused) .radio-tv__standby {
+    opacity: 1;
   }
   .radio-tv__video,
   .radio-tv__screen :global(iframe) {
@@ -443,7 +506,8 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
   .radio-tv__screen :global(iframe) {
     inset: auto;
   }
-  /* ── Player bar: Figma "player nav" 504×80, black, radius 2 (sizes in --u) ── */
+  /* ── Player bar: Figma "player nav" 504×80 (sizes in --u); no box of its own, just the
+     buttons, straight on the screen ── */
   .radio-tv__bar {
     --u: var(--px);
     position: absolute;
@@ -451,8 +515,6 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
     /* Figma's 504, ending 20 after the sound button */
     width: calc(404.4 * var(--u));
     height: calc(80 * var(--u));
-    background: var(--color-black);
-    border-radius: var(--radius-ui);
     color: var(--color-white);
   }
   .radio-tv__btn {

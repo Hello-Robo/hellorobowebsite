@@ -1,6 +1,8 @@
 ---
 /**
- * Contact block — every screen of "Start a project" / "Drop a quick word" in one black block
+ * Contact block — every screen of "Start a project" / "Drop a quick word" in one plain light
+ * grey block (grey-100, black text; the white stickers drawn black on it; the "system log"
+ * text behind the printers is hidden)
  * Figma: 10412:2240 (cover) · 10412:2249 (start) · 10412:2436 / 2548 / 10419:222 (steps
  * 01–03) · 10419:276 (mission) · 10419:3537 (done) · 10412:2490 / 2602 (error states) ·
  * 10419:6147 (email copied) · 10419:6404 / 6622 (quick word, sent) ·
@@ -162,9 +164,9 @@ logs.sent = {
 };
 
 const steps = [
-  { id: 'name', n: '01', title: 'Who’s on the other side?', field: 'Your name', type: 'text', auto: 'name', cap: 'words', back: 'start' },
-  { id: 'email', n: '02', title: 'What’s your email?', field: 'Your email', type: 'email', auto: 'email', cap: 'off', back: 'name' },
-  { id: 'company', n: '03', title: 'Who are we teaming up with?', field: 'Company name', type: 'text', auto: 'organization', cap: 'words', back: 'email' },
+  { id: 'name', title: 'Who’s on the other side?', field: 'Your name', type: 'text', auto: 'name', cap: 'words', back: 'start' },
+  { id: 'email', title: 'What’s your email?', field: 'Your email', type: 'email', auto: 'email', cap: 'off', back: 'name' },
+  { id: 'company', title: 'Who are we teaming up with?', field: 'Company name', type: 'text', auto: 'organization', cap: 'words', back: 'email' },
 ];
 const services = [
   { label: 'Brand identity', sticker: 'mission-branding', w: 74, h: 75, x: 309, y: 50 },
@@ -219,10 +221,9 @@ const services = [
     </div>
   </div>
 
-  <!-- 01 Name · 02 Email · 03 Company -->
+  <!-- Name · Email · Company -->
   {steps.map((s) => (
     <form class="contact__screen contact__screen--step" data-step={s.id} action="#" novalidate>
-      <p class="contact__count t-body">[{s.n}]</p>
       <h2 class="contact__title t-h2">{s.title}</h2>
       <div class="contact__field">
         <label class="visually-hidden" for={`contact-${s.id}`}>{s.field}</label>
@@ -231,13 +232,11 @@ const services = [
       </div>
       <a class="contact__back t-button" href={`#${s.back}`} data-go={s.back}>Go back <Icon name="undo" /></a>
       <button class="contact__submit contact__submit--next t-button" type="submit">Next <Icon name="next" /></button>
-      <img class="contact__sticker" src="/images/contact/step-globe.svg" alt="" width="277" height="277" loading="lazy" />
     </form>
   ))}
 
-  <!-- 04 Mission -->
+  <!-- Mission -->
   <form class="contact__screen contact__screen--step contact__screen--mission" data-step="mission" action="#" novalidate>
-    <p class="contact__count t-body">[04]</p>
     <h2 class="contact__title t-h2">What’s the mission?</h2>
     <fieldset class="contact__cards">
       <legend class="visually-hidden">Services</legend>
@@ -271,7 +270,7 @@ const services = [
 
   <!-- Done -->
   <div class="contact__screen contact__screen--done" data-step="done">
-    <h2 class="contact__title t-h2">Beep boop. We got you.</h2>
+    <h2 class="contact__title t-h2">Beep boop.<br />We got you.</h2>
     <p class="contact__lead t-body">Your message has landed safely. Our humans are on it. Our robots are pretending to help.</p>
   </div>
 
@@ -501,26 +500,7 @@ const services = [
       }));
     };
 
-    /** The step number ([01] …) types itself in like the log behind it, cursor and all */
-    let countTimer = 0;
     let homeTimer = 0;
-    function typeCount(screen: HTMLElement) {
-      const count = screen.querySelector<HTMLElement>('.contact__count');
-      clearInterval(countTimer);
-      if (!count || reduced) return;
-      const full = (count.dataset.text ??= count.textContent ?? '');
-      let pos = 0;
-      count.textContent = '';
-      count.classList.add('is-typing');
-      // starts as the screen fades in, one character every 90ms
-      countTimer = window.setInterval(() => {
-        count.textContent = full.slice(0, ++pos);
-        if (pos >= full.length) {
-          clearInterval(countTimer);
-          setTimeout(() => count.classList.remove('is-typing'), 1600);
-        }
-      }, 90);
-    }
 
     /** Shows screen `step` (the first one for an empty / unknown step) */
     function show(step: string, focus = true) {
@@ -537,7 +517,6 @@ const services = [
         }
         write.a(fill(logs[id]?.a));
         write.b(fill(logs[id]?.b));
-        typeCount(target);
         if (seen) playText(target, prev, dir);
         // after "Beep boop" / "thanks for saying hi", the block goes back to its first screen
         clearTimeout(homeTimer);
@@ -791,14 +770,15 @@ const services = [
 </script>
 
 <style>
-  /* Figma 1728×949, black. All positions are Figma px (var(--px) = 1/1728 of the width) */
+  /* Figma 1728×949, plain light grey (grey-100) with black text. All positions are Figma px
+     (var(--px) = 1/1728 of the width) */
   .contact {
     --ease-move: cubic-bezier(0.65, 0, 0.35, 1);
     position: relative;
     width: 100%;
     aspect-ratio: 1728 / 949;
-    background: var(--color-black);
-    color: var(--color-white);
+    background: var(--color-grey-100);
+    color: var(--color-black);
     overflow: hidden;
   }
   /* On /contact it's the whole page */
@@ -812,8 +792,9 @@ const services = [
     pointer-events: none;
   }
 
-  /* ── System log: the mono text behind the printers ── */
+  /* ── System log: the mono text behind the printers (hidden: the grey stays clean) ── */
   .contact__log {
+    display: none;
     position: absolute;
     left: calc(var(--lx) * var(--px));
     top: calc(var(--ly) * var(--px));
@@ -824,7 +805,7 @@ const services = [
     font-weight: 600;
     line-height: 1.3;
     letter-spacing: 0.02em;
-    color: var(--color-white);
+    color: var(--color-black);
     opacity: 0.4;
     white-space: nowrap;
     /* a little out of focus, like the far printer */
@@ -867,14 +848,9 @@ const services = [
   .contact__log :global(.contact__line) {
     min-height: 1.3em;
   }
-  .contact__log :global(.contact__line.is-typing)::after,
-  .contact__count.is-typing::after {
+  .contact__log :global(.contact__line.is-typing)::after {
     content: '_';
     animation: contact-blink 0.8s steps(1) infinite;
-  }
-  /* the step number keeps its line while it types */
-  .contact__count {
-    min-height: 1.2em;
   }
   @keyframes contact-blink {
     50% {
@@ -1034,7 +1010,7 @@ const services = [
     transition: translate 0.7s var(--ease-move);
   }
   /* (titles and leads have their own word-by-word entrance, below) */
-  .contact__screen:not([data-active]) > :is(.contact__count, .contact__cards, .contact__field) {
+  .contact__screen:not([data-active]) > :is(.contact__cards, .contact__field) {
     translate: 0 calc(24 * var(--px));
   }
 
@@ -1136,10 +1112,10 @@ const services = [
     height: calc(140 * var(--px));
     padding: calc(20 * var(--px));
     overflow: hidden;
-    background: rgb(255 255 255 / 0.1);
+    background: rgb(0 0 0 / 0.05);
     -webkit-backdrop-filter: blur(calc(20 * var(--px)));
     backdrop-filter: blur(calc(20 * var(--px)));
-    color: var(--color-white);
+    color: var(--color-black);
     text-align: left;
     font: inherit;
     border: 0;
@@ -1159,25 +1135,25 @@ const services = [
      mission card would keep looking half-selected); a tap gets a press state instead */
   @media (hover: hover) {
     .contact__card:hover {
-      background: rgb(255 255 255 / 0.18);
+      background: rgb(0 0 0 / 0.09);
     }
     .contact__card--light:hover,
     .contact__card--check:has(input:checked):hover {
-      background: var(--color-grey-100);
+      background: var(--color-grey-50);
     }
     .contact__back:hover {
       background: var(--color-grey-600);
     }
     .contact__submit:hover {
-      background: var(--color-grey-100);
+      background: var(--color-grey-50);
     }
   }
   .contact__card:active {
-    background: rgb(255 255 255 / 0.18);
+    background: rgb(0 0 0 / 0.09);
   }
   .contact__card--light:active,
   .contact__card--check:has(input:checked):active {
-    background: var(--color-grey-100);
+    background: var(--color-grey-50);
   }
 
   /* Phone browser defaults off: the blue / grey tap flash, double-tap zoom delay, iOS
@@ -1215,8 +1191,10 @@ const services = [
     pointer-events: none;
     transition: filter 0.25s ease;
   }
-  /* white stickers turn black on a selected (white) card */
-  .contact__card--check:has(input:checked) .contact__card-sticker {
+  /* the white stickers, smiley and dinosaur are drawn black on the grey (the orange
+     "Start a project" one stays as it is) */
+  .contact__card:not(.contact__card--light) :is(.contact__card-sticker, .contact__smiley),
+  .contact__dino img {
     filter: invert(1);
   }
   /* Email copied: the stickers step aside and the dinosaur runs along the bottom of the card,
@@ -1292,22 +1270,22 @@ const services = [
     width: 100%;
     padding: 0 0 calc(10 * var(--px));
     border: 0;
-    border-bottom: var(--line-width) solid var(--color-white);
+    border-bottom: var(--line-width) solid var(--color-black);
     border-radius: 0;
     background: transparent;
-    color: var(--color-white);
+    color: var(--color-black);
     font-family: inherit;
     outline: none;
     transition: border-color 0.2s ease;
   }
-  /* Browser autofill paints the field light blue with black text: keep it black / white
+  /* Browser autofill paints the field light blue: keep it the block's grey / black
      (the inset shadow covers the fill, the long transition stops Chrome's own colour) */
   .contact__input:is(:-webkit-autofill, :autofill),
   .contact__input:is(:-webkit-autofill, :autofill):is(:hover, :focus) {
-    -webkit-text-fill-color: var(--color-white);
-    caret-color: var(--color-white);
-    -webkit-box-shadow: 0 0 0 1000px var(--color-black) inset;
-    box-shadow: 0 0 0 1000px var(--color-black) inset;
+    -webkit-text-fill-color: var(--color-black);
+    caret-color: var(--color-black);
+    -webkit-box-shadow: 0 0 0 1000px var(--color-grey-100) inset;
+    box-shadow: 0 0 0 1000px var(--color-grey-100) inset;
     transition:
       background-color 99999s ease 0s,
       border-color 0.2s ease;
@@ -1316,7 +1294,7 @@ const services = [
     -webkit-text-fill-color: var(--color-orange);
   }
   .contact__input::placeholder {
-    color: var(--color-white);
+    color: var(--color-black);
     opacity: 1;
   }
   .contact__input:focus::placeholder {
@@ -1392,7 +1370,7 @@ const services = [
     color: var(--color-black);
   }
   .contact__submit:active {
-    background: var(--color-grey-100);
+    background: var(--color-grey-50);
   }
   .contact__submit[aria-busy='true'] {
     opacity: 0.5;
@@ -1414,16 +1392,6 @@ const services = [
   .contact__back :global(.icon),
   .contact__submit :global(.icon) {
     flex: none;
-  }
-
-  /* The globe sticker between the buttons (Figma 495, 663 · 276) */
-  .contact__sticker {
-    position: absolute;
-    left: calc(495 * var(--px));
-    top: calc(663 * var(--px));
-    width: calc(277 * var(--px));
-    height: auto;
-    pointer-events: none;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -1611,9 +1579,6 @@ const services = [
     .contact__submit {
       left: auto;
       right: var(--page-margin);
-    }
-    .contact__sticker {
-      display: none;
     }
   }
 </style>
