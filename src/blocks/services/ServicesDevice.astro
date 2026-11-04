@@ -3,31 +3,25 @@
  * Services — Device visual (full width, marked "video" in Figma)
  * Figma: "Frame 2147232849" (10103:211), 1728×945
  * https://www.figma.com/design/9SsfbCUY7KcxjZpCuRpDxf/Hello-Robo-Website-2026?node-id=10103-211
- * Static still for now; swap for the video when it's ready.
+ * Plays the home page's showreel (public/videos/showreel.mp4, as in HomeShowreel): muted,
+ * looping, only while it can be seen. Phones get showreel-mobile.mp4 when it's there.
  */
-import { Image } from 'astro:assets';
-import still from '../../assets/services/device-visual.png';
+import fs from 'node:fs';
+import VideoSlot from '../../components/ui/VideoSlot.astro';
+
+const has = (f: string) => fs.existsSync(`public/videos/${f}`);
+const src = has('showreel.mp4') ? '/videos/showreel.mp4' : undefined;
+const mobileSrc = has('showreel-mobile.mp4') ? '/videos/showreel-mobile.mp4' : undefined;
+const webm = has('showreel.webm') ? '/videos/showreel.webm' : undefined;
+const poster = has('showreel-poster.jpg') ? '/videos/showreel-poster.jpg' : undefined;
 ---
-<section class="services-device" aria-label="Product interface on a robot display">
-  <Image src={still} alt="A robot display showing a fleet software interface" widths={[1728, 2600, 3456]} sizes="100vw" loading="lazy" />
+<section class="services-device" aria-label="Showreel">
+  {/* Mobile: a vertical 4:5 crop */}
+  <VideoSlot ratio="1728 / 945" mobileRatio="4 / 5" src={src} mobileSrc={mobileSrc} webm={webm} poster={poster} autoplay />
 </section>
 
 <style>
   .services-device {
-    aspect-ratio: 1728 / 945;
     background: var(--color-black);
-    overflow: hidden;
-  }
-  .services-device :global(img) {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  /* Mobile: a vertical 4:5 crop of the still */
-  @media (max-width: 1023px) {
-    .services-device {
-      aspect-ratio: 4 / 5;
-    }
   }
 </style>

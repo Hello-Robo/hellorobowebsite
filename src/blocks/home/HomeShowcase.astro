@@ -22,11 +22,16 @@
  */
 import { Image } from 'astro:assets';
 import Divider from '../../components/ui/Divider.astro';
+import CrtScreen from '../../components/ui/CrtScreen.astro';
 import world from '../../assets/home/showcase-photo.png';
 import operators from '../../assets/home/showcase-operators.jpg';
 import market from '../../assets/home/showcase-market.jpg';
 
 // Title is "Make the <word> say yes", broken as in Figma: before "say yes" on desktop, after "Make the" on mobile
+// The same CRT shader as the home Work wheel (ProjectScroller, Figma 10100:11974), laid
+// over the whole frame, text included
+const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
+
 const slides = [
   {
     word: 'world',
@@ -110,6 +115,8 @@ const slides = [
           </div>
         </div>
       </div>
+
+      <CrtScreen overlay settings={crt} />
     </div>
   </div>
 </section>
@@ -217,6 +224,10 @@ const slides = [
     left: calc(var(--page-margin) * (2 - var(--enter)));
     right: calc(var(--page-margin) * (2 - var(--enter)));
     top: calc(683 / 1117 * 100%);
+  }
+  /* the CRT layer over everything, the text too (as on the Work wheel) */
+  .home-showcase__stage :global(.crt) {
+    z-index: 11;
   }
   /* Progress: the bright segment grows with the scroll through all slides */
   .home-showcase :global(.home-showcase__rule.divider--accent)::before {

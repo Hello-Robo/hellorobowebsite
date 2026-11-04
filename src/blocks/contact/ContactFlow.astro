@@ -1351,19 +1351,26 @@ const services = [
       width: 100%;
       margin-top: 12px;
     }
+    /* Go back + Next / Submit right under the field (or the mission cards), side by side,
+       not pinned to the bottom of the screen */
+    .contact__screen--step,
+    .contact__screen--message {
+      flex-flow: row wrap;
+      align-content: flex-start;
+      column-gap: 8px;
+    }
+    .contact__screen--step > :not(.contact__back, .contact__submit, .contact__trap),
+    .contact__screen--message > :not(.contact__back, .contact__submit, .contact__trap) {
+      flex: 0 0 100%;
+    }
     .contact__back,
     .contact__submit {
-      bottom: calc(var(--page-margin) + var(--nav-height) + 8px);
-      width: calc(50% - var(--page-margin) - 4px);
+      position: static;
+      flex: 1 1 0;
+      width: auto;
       min-width: 0;
       height: 52px;
-    }
-    .contact__back {
-      left: var(--page-margin);
-    }
-    .contact__submit {
-      left: auto;
-      right: var(--page-margin);
+      margin-top: 8px;
     }
   }
 </style>

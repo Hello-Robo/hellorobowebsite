@@ -87,7 +87,7 @@ html.pt-load .pt__gfx {
   width: max(120px, calc(160 * var(--px)));
   height: 1px;
   translate: -50% 0;
-  background: var(--color-grey-600);
+  background: var(--color-grey-800);
   opacity: 0;
   transition: opacity 0.2s ease;
 }
