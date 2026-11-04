@@ -82,14 +82,19 @@ const team = defineCollection({
 /** The studio card on /team (opened by the robot); one entry, hello-robo.json */
 const studio = defineCollection({
   loader: glob({ pattern: '**/*.json', base: './src/content/studio' }),
-  schema: z.object({
-    name: z.string(),
-    nameJa: z.string(),
-    /** Stamp top right: a public path from the CMS asset library */
-    stamp: z.string().optional(),
-    heading: z.string(),
-    text: z.array(z.string()).default([]),
-  }),
+  schema: ({ image }) =>
+    z.object({
+      name: z.string(),
+      nameJa: z.string(),
+      /** Stamp top right: a public path from the CMS asset library */
+      stamp: z.string().optional(),
+      heading: z.string(),
+      text: z.array(z.string()).default([]),
+      /** Its own picture for the robot (PNG), replacing the built-in one everywhere on the field */
+      objectImage: image().optional(),
+      /** The file name shown under the robot, without “.obj” (e.g. hello_robo) */
+      objectName: z.string().optional(),
+    }),
 });
 
 const positions = defineCollection({

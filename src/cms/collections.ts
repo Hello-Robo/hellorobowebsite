@@ -268,6 +268,18 @@ export const CMS_COLLECTIONS: CmsCollection[] = [
       { kind: 'graphic', key: 'stamp', label: 'Stamp' },
       { kind: 'text', key: 'heading', label: 'Heading', required: true },
       { kind: 'strings', key: 'text', label: 'Text', item: 'paragraph', multiline: true },
+      {
+        kind: 'image',
+        key: 'objectImage',
+        label: 'Object image',
+        hint: 'The studio’s object on the Team field (the robot that opens this card). PNG, best at 2× size on white or a transparent background. Empty = the built-in robot',
+      },
+      {
+        kind: 'text',
+        key: 'objectName',
+        label: 'File name',
+        hint: 'Shown under the studio’s object on the Team field, followed by .obj (e.g. hello_robo)',
+      },
     ],
   },
   {

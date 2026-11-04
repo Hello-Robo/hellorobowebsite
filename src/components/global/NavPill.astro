@@ -221,9 +221,13 @@ const { back } = Astro.props;
       flex: 1;
       width: auto;
     }
-    /* Phones: the bar is full width, so the back button shares the row */
+    /* Phones: the bar is full width, so the back button shares the row. No offsets: the
+       hover effect (button-hover.ts) makes the button position: relative, and the desktop
+       right: 100% then threw it off the screen, so a tap on it did nothing */
     .nav-pill__back {
       position: static;
+      top: auto;
+      right: auto;
     }
     .nav-pill :global(.robo-logo) {
       width: 53px;

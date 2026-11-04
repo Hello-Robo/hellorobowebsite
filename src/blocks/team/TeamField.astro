@@ -75,19 +75,22 @@ for (const p of people.filter((p) => ![...personByObject.values()].includes(p)))
   const free = Object.keys(OBJECTS).find((k) => k !== 'hello_robo' && !personByObject.has(k));
   if (free) personByObject.set(free, p);
 }
-// The picture drawn for an object: its person's uploaded PNG, else the built-in one
-const pictureOf = (key: string) => personByObject.get(key)?.data.objectImage ?? OBJECTS[key];
-// The label under an object: its person's file name (CMS), else the object's own
-const labelOf = (key: string, label: string) => {
-  const name = personByObject.get(key)?.data.objectName?.trim();
-  return name ? `${name.replace(/\.obj$/i, '')}.OBJ` : label;
-};
 // The robot stands for the whole studio: it opens the Hello Robo card (CMS:
 // Team → Studio card, src/content/studio/hello-robo.json), not a person's
 const STUDIO_OBJECT = 'hello_robo';
 const STUDIO_OBJECTS = new Set([STUDIO_OBJECT]);
 const STUDIO_ID = 'hello-robo';
 const studio = (await getEntry('studio', STUDIO_ID))!.data;
+// Whose CMS entry sets an object's picture and file name: the studio card for the robot,
+// else the object's person
+const ownerOf = (key: string) => (key === STUDIO_OBJECT ? studio : personByObject.get(key)?.data);
+// The picture drawn for an object: its uploaded PNG (CMS), else the built-in one
+const pictureOf = (key: string) => ownerOf(key)?.objectImage ?? OBJECTS[key];
+// The label under an object: its file name (CMS), else the object's own
+const labelOf = (key: string, label: string) => {
+  const name = ownerOf(key)?.objectName?.trim();
+  return name ? `${name.replace(/\.obj$/i, '')}.OBJ` : label;
+};
 
 // Card text motion. Names: the Japanese, then each word of the name, slide up through a
 // mask (--d: its turn). Quote: the site's body-copy fade (text-reveal.ts) — every word
