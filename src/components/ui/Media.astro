@@ -3,7 +3,8 @@
  * Media — renders a CMS media value: an image (optimized by astro:assets), an
  * animated GIF (served as-is so it keeps moving), a video ({ video: "/videos/..." } or a
  * hosted "https://..." file; muted, looping, inline — it behaves like a moving image) or
- * a YouTube video ({ youtube: id }, a 16:9 player).
+ * a YouTube video ({ youtube: id }, a 16:9 player). Videos play only while they can be seen
+ * (scripts/video-play.ts), so a page full of them doesn't run a phone out of memory.
  * Style it like an image: the class lands on the <img> / <video>.
  * Videos ask for CORS (crossorigin) so bottom-bend.ts may draw them; a hosted file gets
  * ?v=2 on its address (not ?cors: S3 reads that as a request for the bucket's settings),
@@ -40,10 +41,10 @@ const videoSrc = isVideo && /^https?:/i.test(media.video) ? `${media.video}${med
     class:list={['media-video', className]}
     muted
     loop
-    autoplay
     playsinline
+    data-autoplay
     crossorigin="anonymous"
-    preload={loading === 'eager' ? 'auto' : 'metadata'}
+    preload="none"
     aria-label={alt || undefined}
     aria-hidden={alt ? undefined : 'true'}
   >
@@ -66,14 +67,6 @@ const videoSrc = isVideo && /^https?:/i.test(media.video) ? `${media.video}${med
     if (v.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) plain();
     else v.querySelector('source:last-of-type')?.addEventListener('error', plain, { once: true });
   });
-
-  // Respect reduced motion: hold videos on their first frame
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    document.querySelectorAll<HTMLVideoElement>('video.media-video').forEach((v) => {
-      v.autoplay = false;
-      v.pause();
-    });
-  }
 </script>
 
 <style>

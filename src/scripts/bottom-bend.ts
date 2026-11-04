@@ -540,6 +540,7 @@ function lens(edge: 'top' | 'bottom', svg: SVGSVGElement) {
     const w = innerWidth;
     const vh = innerHeight;
     const h = Math.ceil(vh * (BAND + 0.01));
+    if (!w || !h) return; // no screen size yet (e.g. a window being resized): try on the next resize
     const scale = 2 * FLARE * w + 4;
     const c = document.createElement('canvas');
     c.width = w;

@@ -119,6 +119,7 @@ const pageTitle = title === 'Home' ? 'Hello Robo — Make the world say yes to y
     {footer && <Footer />}
     {chrome && <NavPill back={back} />}
     <script>
+      import '../scripts/video-play'; // first: a failing effect below must never stop videos
       import '../scripts/button-hover';
       import '../scripts/headline-reveal';
       import '../scripts/text-reveal';
