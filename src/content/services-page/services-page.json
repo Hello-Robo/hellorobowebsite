@@ -2,7 +2,7 @@
   "clients": [
     {
       "name": "Palantir",
-      "logo": "/images/home/clients/palantir.svg",
+      "logo": "/images/home/clients/cosmic.svg",
       "width": 141,
       "micrographic": false
     },
@@ -20,7 +20,7 @@
     },
     {
       "name": "Surf Air",
-      "logo": "/images/home/clients/surf-air.svg",
+      "logo": "/images/home/clients/persona-ai.png",
       "width": 121,
       "micrographic": false
     },
