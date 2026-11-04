@@ -25,6 +25,8 @@ const ZOOM_TO = 1.13;
 const SOFT = 0.22;
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+/** phones: no will-change (each would keep a full-screen picture as a layer of its own) */
+const phone = matchMedia('(max-width: 1023px)').matches;
 const clamp = (v: number) => Math.min(1, Math.max(0, v));
 /** soft in and out */
 const ease = (t: number) => 0.5 - Math.cos(Math.PI * t) / 2;
@@ -45,11 +47,11 @@ export function slideScrub(layers: HTMLElement[], { frame = null, wrap = false, 
   layers.forEach((l, i) => {
     l.style.transition = 'none';
     l.style.translate = 'none';
-    l.style.willChange = 'clip-path';
+    if (!phone) l.style.willChange = 'clip-path';
     const inner = inners[i];
     if (inner) {
       inner.style.transition = 'none';
-      inner.style.willChange = 'translate, scale';
+      if (!phone) inner.style.willChange = 'translate, scale';
     }
   });
 

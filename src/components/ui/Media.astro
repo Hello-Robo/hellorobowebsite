@@ -6,6 +6,8 @@
  * a YouTube video ({ youtube: id }, a 16:9 player). Videos play only while they can be seen
  * (scripts/video-play.ts), so a page full of them doesn't run a phone out of memory.
  * Style it like an image: the class lands on the <img> / <video>.
+ * `mobileVideo`: a lighter file phones (up to 1023px wide) play instead (e.g. a project's
+ * reel cropped to portrait, 540×960 H.264: the full reels are 1080p WebM, too heavy there).
  * Videos ask for CORS (crossorigin) so bottom-bend.ts may draw them; a hosted file gets
  * ?v=2 on its address (not ?cors: S3 reads that as a request for the bucket's settings),
  * so a copy the browser saved before the bucket allowed CORS is never reused, and a video
@@ -21,8 +23,10 @@ interface Props {
   sizes?: string;
   loading?: 'eager' | 'lazy';
   class?: string;
+  /** a lighter video for phones, used in place of `media`'s on screens up to 1023px */
+  mobileVideo?: string;
 }
-const { media, alt = '', widths, sizes, loading = 'lazy', class: className } = Astro.props;
+const { media, alt = '', widths, sizes, loading = 'lazy', class: className, mobileVideo } = Astro.props;
 const isVideo = 'video' in media;
 const type = isVideo && /\.webm(\?|$)/i.test(media.video) ? 'video/webm' : 'video/mp4';
 const videoSrc = isVideo && /^https?:/i.test(media.video) ? `${media.video}${media.video.includes('?') ? '&' : '?'}v=2` : isVideo ? media.video : '';
@@ -48,6 +52,7 @@ const videoSrc = isVideo && /^https?:/i.test(media.video) ? `${media.video}${med
     aria-label={alt || undefined}
     aria-hidden={alt ? undefined : 'true'}
   >
+    {mobileVideo && <source src={mobileVideo} type="video/mp4" media="(max-width: 1023px)" />}
     <source src={videoSrc} type={type} />
   </video>
 ) : 'format' in media && media.format === 'gif' ? (

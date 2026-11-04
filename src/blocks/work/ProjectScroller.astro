@@ -33,6 +33,7 @@
  */
 import { getCollection } from 'astro:content';
 import Media from '../../components/ui/Media.astro';
+import { mobileReel } from '../../data/project-reels';
 import Button from '../../components/ui/Button.astro';
 import CrtScreen from '../../components/ui/CrtScreen.astro';
 
@@ -144,7 +145,7 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
     <div class="project-cards__bgs">
       {cards.map((c, i) => (
         <div class:list={['project-cards__bg', { 'is-current': i === 0 }]} data-index={i}>
-          <Media class="project-card__bg" media={c.data.reveal} widths={[800, 1600]} sizes="275vw" loading="lazy" />
+          <Media class="project-card__bg" media={c.data.reveal} mobileVideo={mobileReel(c.id)} widths={[800, 1600]} sizes="275vw" loading="lazy" />
         </div>
       ))}
     </div>

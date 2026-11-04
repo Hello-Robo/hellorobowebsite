@@ -130,8 +130,8 @@ const ratio = photos.reduce((sum, p) => sum + p.width / p.height, 0);
       aspect-ratio: auto;
       min-height: 100vh;
       min-height: 100svh;
-      /* the strip ends 24 above the fixed menu pill */
-      padding-bottom: calc(var(--page-margin) + var(--nav-height) + 24px);
+      /* the strip runs to the bottom edge, as on desktop (the menu pill floats over it) */
+      padding-bottom: 0;
       display: grid;
       grid-template-columns: auto auto minmax(0, 1fr);
       grid-template-rows: auto minmax(96px, 1fr) auto auto auto;
@@ -177,14 +177,14 @@ const ratio = photos.reduce((sum, p) => sum + p.width / p.height, 0);
       width: auto;
       margin: var(--space-24) var(--page-margin) 0;
     }
-    /* the strip at 2/3 size (116 tall); most of it is off screen, so it travels further as
-       the page scrolls */
+    /* the strip 180 tall, down to the bottom edge; most of it is off screen, so it travels
+       further as the page scrolls */
     .careers-hero__strip {
       position: relative;
       top: auto;
       left: auto;
-      height: auto;
-      width: 1470px;
+      height: 180px;
+      width: auto;
       margin: 64px 0 0 -120px;
       --travel: 40%;
     }

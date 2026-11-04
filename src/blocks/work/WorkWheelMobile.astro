@@ -17,6 +17,7 @@
  */
 import { getCollection } from 'astro:content';
 import Media from '../../components/ui/Media.astro';
+import { mobileReel } from '../../data/project-reels';
 
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
 // The mark: each project's first (round) micrographic from the CMS, the globe when it has none
@@ -30,7 +31,7 @@ const start = projects.length * Math.floor(LOOPS / 2); // first project of the m
   <div class="work-wheel__bgs">
     {projects.map((p, i) => (
       <div class:list={['work-wheel__bg', { 'is-current': i === 0 }]} data-index={i}>
-        <Media class="work-wheel__media" media={p.data.reveal} widths={[800, 1600]} sizes="275vw" loading={i === 0 ? 'eager' : 'lazy'} />
+        <Media class="work-wheel__media" media={p.data.reveal} mobileVideo={mobileReel(p.id)} widths={[800, 1600]} sizes="275vw" loading={i === 0 ? 'eager' : 'lazy'} />
       </div>
     ))}
   </div>
