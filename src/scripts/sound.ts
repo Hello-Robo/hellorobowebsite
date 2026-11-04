@@ -3,22 +3,18 @@
  * synthesized in the browser (Web Audio), so there are no audio files to load or license.
  *
  * Every play varies (a few takes of each, pitch / level / timing nudged at random):
- *  hover    a soft blip (double, up or down, pips, chirp…) when the mouse comes onto anything
- *           that reacts to it: buttons and links as their pixel hover starts (button-hover.ts),
- *           everything else here (pictures, cards, project names, team objects, labels…)
- *  tick     a tiny digital tick on each frame of the letters settling (very quiet, high)
  *  click    a short bright click on press
- *  error    a low two-note "nope" when the contact form shows an error
+ *  error    a low two-note "nope" when the contact form shows an error, or an NDA project is
+ *           clicked (it can't open)
  *  success  a rising three-note robot chirp when the form is sent
  *
  * Browsers only let a page make sound after the visitor has clicked, tapped or pressed a key,
  * so everything is silent until then. Off when the visitor has turned it off
- * (localStorage "sound" = "off"). Presses on buttons and links click on their own, and
- * hovers on whatever has no pixel hover blip here too (below); the pixel hover's blip, the
- * ticks and the form sounds are called by button-hover.ts and the contact block.
+ * (localStorage "sound" = "off"). Presses on buttons and links click on their own (below);
+ * the form sounds are called by the contact block. Hovering makes no sound.
  */
 
-type Name = 'hover' | 'tick' | 'click' | 'error' | 'success';
+type Name = 'click' | 'error' | 'success';
 
 const VOLUME = 0.32;
 
@@ -26,8 +22,8 @@ let ctx: AudioContext | null = null;
 let out: GainNode | null = null;
 let noise: AudioBuffer | null = null;
 const last: Partial<Record<Name, number>> = {};
-/** least ms between two of the same sound (hovering along a row of links) */
-const GAP: Record<Name, number> = { hover: 70, tick: 30, click: 40, error: 300, success: 600 };
+/** least ms between two of the same sound */
+const GAP: Record<Name, number> = { click: 40, error: 300, success: 600 };
 
 const off = () => {
   try {
@@ -100,43 +96,11 @@ export function sfx(name: Name) {
   last[name] = now;
   const t = ctx.currentTime + 0.005;
   // every play a little different: a few takes of each sound, then pitch, level and timing
-  // nudged at random — so a row of hovers never sounds like the same sample over and over
+  // nudged at random — so a run of clicks never sounds like the same sample over and over
   const p = vary(0.08); // pitch
   const v = vary(0.2); // level
   const d = vary(0.15); // timing
   switch (name) {
-    case 'hover':
-      take(name, [
-        // the double blip, down
-        () => {
-          tone(t, 1500 * p, 1400 * p, 0.012 * d, 0.12 * v, 'triangle');
-          tone(t + 0.022 * d, 1150 * p, 1050 * p, 0.04 * d, 0.22 * v, 'triangle');
-        },
-        // the double blip, up
-        () => {
-          tone(t, 1100 * p, 1050 * p, 0.012 * d, 0.12 * v, 'triangle');
-          tone(t + 0.024 * d, 1450 * p, 1550 * p, 0.035 * d, 0.2 * v, 'triangle');
-        },
-        // three quick pips
-        () => {
-          for (let i = 0; i < 3; i++) tone(t + i * 0.018 * d, (1250 + i * 120) * p, (1200 + i * 120) * p, 0.01, (0.1 + i * 0.04) * v, 'triangle');
-        },
-        // one soft chirp
-        () => tone(t, 950 * p, 1500 * p, 0.045 * d, 0.2 * v, 'sine'),
-        // a blip with a breath of noise
-        () => {
-          burst(t, 3000 * p, 0.01, 0.08 * v);
-          tone(t + 0.012, 1300 * p, 1200 * p, 0.04 * d, 0.2 * v, 'triangle');
-        },
-      ]);
-      break;
-    case 'tick':
-      take(name, [
-        () => burst(t, 4000 + Math.random() * 5000, 0.012 * d, 0.18 * v),
-        () => burst(t, 6000 + Math.random() * 4000, 0.007, 0.2 * v),
-        () => tone(t, (3500 + Math.random() * 3000) * p, 3000 * p, 0.008, 0.06 * v, 'square'),
-      ]);
-      break;
     case 'click':
       take(name, [
         () => {
@@ -189,20 +153,3 @@ addEventListener(
   { capture: true },
 );
 
-// the hover blip on everything else that reacts to the mouse: picture links, cards, the
-// project wheel's names, the Team objects, form labels… (once per element, as the mouse
-// comes onto it; the pixel hover already blips for its own buttons and links)
-const HOVERABLE =
-  'a[href], button, [role="button"], label, summary, select, .contact__card, .team-obj, .project-wheel__name.is-shown, .home-news__link';
-let hovered: Element | null = null;
-addEventListener(
-  'pointerover',
-  (e) => {
-    if (e.pointerType !== 'mouse') return;
-    const el = (e.target as Element).closest?.(HOVERABLE) ?? null;
-    if (el === hovered) return;
-    hovered = el;
-    if (el && !el.closest('.has-hover-fx')) sfx('hover');
-  },
-  { passive: true, capture: true },
-);
