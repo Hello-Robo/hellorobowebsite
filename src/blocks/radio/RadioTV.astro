@@ -119,8 +119,8 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
   </div>
   <div class="radio-tv__screen" data-screen style={`left:${pct(maskLeft, 1730)};top:${pct(maskTop, h)};width:${pct(maskW, 1730)};height:${pct(maskH, h)}`}>
     <div class="radio-tv__frame" data-frame><div class="radio-tv__video" data-video></div></div>
-    <!-- The TV's own dark screen while an episode loads (YouTube's loading screen never
-         shows); paused, the screen keeps the frame it stopped on -->
+    <!-- The TV's own dark screen while an episode loads or is paused, so YouTube's own
+         loading screen and pause button never show (only ours does) -->
     <div class="radio-tv__standby" aria-hidden="true"></div>
     <CrtScreen overlay settings={crt} />
   </div>
@@ -482,6 +482,12 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
     inset: 0;
     overflow: hidden;
   }
+  /* Episode page: the TV sits 50 higher, clear of the player bar under it */
+  @media (min-width: 1024px) {
+    .radio-tv--episode .radio-tv__stage {
+      translate: 0 calc(-50 * var(--px));
+    }
+  }
   .radio-tv__standby {
     position: absolute;
     inset: 0;
@@ -490,8 +496,8 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
       #121212;
     transition: opacity var(--duration-normal) var(--ease-out);
   }
-  /* only while an episode loads: paused, the screen keeps the frame it stopped on */
-  .radio-tv.is-on:not(.is-playing, .is-paused) .radio-tv__standby {
+  /* while an episode loads or is paused (over YouTube's own pause button) */
+  .radio-tv.is-on:not(.is-playing) .radio-tv__standby {
     opacity: 1;
   }
   .radio-tv__video,
