@@ -2,7 +2,8 @@
 /**
  * Footer + contacts — Figma "footer + contacts" (10093:2045, 1728×1995).
  *   contacts (554): Menu / Studio / Mail labels (Body), rule, links + address + email (H3)
- *   footer (1441): ハローロボ wordmark graphic, Terms / logo / Privacy (Body)
+ *   footer (1441, 10093:2054): ハローロボ wordmark graphic, Terms / logo / Privacy (Body,
+ *   underlined, level with the top of the logo)
  */
 import RoboLogo from '../icons/RoboLogo.astro';
 import FooterWordmark from './FooterWordmark.astro';
@@ -38,6 +39,12 @@ import { mainNav, studio } from '../../data/site';
 </footer>
 
 <style>
+  /* the wordmark's smallest rows run past the page edges */
+  .footer {
+    /* hidden first: iOS before 16 has no `clip` and would widen the page */
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
   .footer__contacts {
     padding-top: var(--space-40);
     padding-bottom: var(--space-60);
@@ -54,7 +61,7 @@ import { mainNav, studio } from '../../data/site';
   }
   /* hover only with a mouse: on a phone the tapped link stayed orange */
   @media (hover: hover) {
-    .footer__row a:hover {
+    .footer a:hover {
       color: var(--color-orange);
     }
   }
@@ -70,7 +77,11 @@ import { mainNav, studio } from '../../data/site';
     height: calc(50 * var(--px));
     display: grid;
     grid-template-columns: 1fr auto 1fr;
-    align-items: center;
+    align-items: start;
+  }
+  .footer__legal a {
+    text-decoration: underline;
+    text-underline-position: from-font;
   }
   .footer__legal a:last-child {
     justify-self: end;
@@ -83,11 +94,6 @@ import { mainNav, studio } from '../../data/site';
 
   /* ── Mobile: Figma "Frame 2147233084" (10098:2534), 390×1181 ── */
   @media (max-width: 1023px) {
-    .footer {
-      /* hidden first: iOS before 16 has no `clip` and would widen the page */
-      overflow-x: hidden;
-      overflow-x: clip;
-    }
     .footer__contacts {
       padding-top: 64px;
       padding-bottom: 0;

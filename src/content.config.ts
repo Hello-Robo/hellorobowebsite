@@ -151,26 +151,38 @@ const news = defineCollection({
   }),
 });
 
+/** Client logos in fixed places (Home Clients block, Services "Building toward yes"): a
+    logo (SVG preferred, or PNG / WebP; public path) and its width in px at the 1728 layout
+    (0 = 140). A place can hold a micrographic instead (decorative) */
+const clientLogos = z
+  .array(
+    z.object({
+      name: z.string(),
+      logo: z.string(),
+      width: z.number().default(0),
+      /** a Hello Robo micrographic in a logo's place: decoration, not a client */
+      micrographic: z.boolean().default(false),
+    }),
+  )
+  .default([]);
+
 /** The home page's own settings (CMS "Home page"): one entry, home-page.json */
 const home = defineCollection({
   loader: glob({ pattern: '**/*.json', base: './src/content/home' }),
   schema: z.object({
     /** Projects (ids) in the Works wheel on Home, shown in the Projects order */
     featured: z.array(z.string()).default([]),
-    /** The Clients block's logos, in its 13 places (row by row): a logo (SVG preferred,
-        or PNG / WebP; public path) and its width in px at the 1728 layout (0 = 140). A
-        place can hold a micrographic instead (decorative) */
-    clients: z
-      .array(
-        z.object({
-          name: z.string(),
-          logo: z.string(),
-          width: z.number().default(0),
-          /** a Hello Robo micrographic in a logo's place: decoration, not a client */
-          micrographic: z.boolean().default(false),
-        }),
-      )
-      .default([]),
+    /** The Clients block's logos, in its 13 places (row by row) */
+    clients: clientLogos,
+  }),
+});
+
+/** The Services page's own settings (CMS "Services page"): one entry, services-page.json */
+const servicesPage = defineCollection({
+  loader: glob({ pattern: '**/*.json', base: './src/content/services-page' }),
+  schema: z.object({
+    /** "Building toward yes": the logos in its row of six, left to right */
+    clients: clientLogos,
   }),
 });
 
@@ -181,7 +193,20 @@ const careersPage = defineCollection({
     z.object({
       /** The hero's photo strip, left to right, all shown at the same height */
       strip: z.array(z.object({ photo: image() })).default([]),
+      /** Our values, one screen each: the kanji label, the name, the description and the
+          picture on the right */
+      values: z
+        .array(
+          z.object({
+            kanji: z.string(),
+            name: z.string(),
+            text: z.string(),
+            image: image(),
+            imageAlt: z.string().default(''),
+          }),
+        )
+        .default([]),
     }),
 });
 
-export const collections = { home, 'careers-page': careersPage, projects, team, studio, positions, episodes, news };
+export const collections = { home, 'services-page': servicesPage, 'careers-page': careersPage, projects, team, studio, positions, episodes, news };

@@ -186,36 +186,47 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 /* Film grain over every page, desktop only (on phones a full-screen moving layer flickers
-   and costs too much memory). The 400×400 noise tile (public/images/noise.png) fills a
+   and costs too much memory). The 400×400 noise tile (public/images/noise.png) is drawn at
+   200×200 so each speck is one device pixel on retina screens: fine, not chunky. It fills a
    layer one tile bigger than the screen, up and to the left; the layer jumps to a new
    offset ~10 times a second (steps, no sliding between them), and since the tile repeats
-   every 400px, an offset of 0–400px always leaves the screen covered. Moving the layer
+   every 200px, an offset of 0–200px always leaves the screen covered. Moving the layer
    (transform) is done by the GPU: nothing is repainted. Holds still for reduced motion. */
 @media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
   body::after {
     content: '';
     position: fixed;
-    inset: -400px 0 0 -400px;
+    inset: -200px 0 0 -200px;
     z-index: var(--z-grain);
     pointer-events: none;
-    background: url('/images/noise.png');
-    opacity: 0.8;
+    background: url('/images/noise.png') 0 0 / 200px 200px;
+    opacity: 0.5;
     animation: grain 0.8s steps(1) infinite;
   }
 }
 @keyframes grain {
   0% { transform: translate(0, 0); }
-  12.5% { transform: translate(160px, 320px); }
-  25% { transform: translate(320px, 80px); }
-  37.5% { transform: translate(40px, 240px); }
-  50% { transform: translate(280px, 360px); }
-  62.5% { transform: translate(120px, 40px); }
-  75% { transform: translate(360px, 200px); }
-  87.5% { transform: translate(200px, 120px); }
+  12.5% { transform: translate(80px, 160px); }
+  25% { transform: translate(160px, 40px); }
+  37.5% { transform: translate(20px, 120px); }
+  50% { transform: translate(140px, 180px); }
+  62.5% { transform: translate(60px, 20px); }
+  75% { transform: translate(180px, 100px); }
+  87.5% { transform: translate(100px, 60px); }
 }
 @media (prefers-reduced-motion: reduce) {
   body::after {
     animation: none;
+  }
+}
+/* Buttons: on hover the words turn brand orange. Set on the label itself (no colour
+   transition there), so the pixel hover (button-hover.ts), which reads the colour the
+   moment it starts, draws in orange too; not while it shows its pixels, which hide the
+   words. The contact page's buttons do the same. */
+@media (hover: hover) {
+  .button:hover .button__label:not(.is-pixel),
+  :is(.nav-pill__toggle, .site-menu__talk):hover .t-button:not(.is-pixel) {
+    color: var(--color-orange);
   }
 }
 h1, h2, h3, h4, p, ul, ol, dl, dd, figure, blockquote {

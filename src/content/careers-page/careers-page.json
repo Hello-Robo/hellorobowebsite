@@ -24,5 +24,28 @@
     {
       "photo": "../../assets/careers-page/team-08.png"
     }
+  ],
+  "values": [
+    {
+      "kanji": "好奇心",
+      "name": "Curiosity",
+      "text": "We ask the extra question, look past the obvious answer and stay interested in how people and machines understand each other.",
+      "image": "../../assets/careers-page/values-robot.png",
+      "imageAlt": "Hello Robo robot in front of floating receipts"
+    },
+    {
+      "kanji": "思いやり",
+      "name": "Care",
+      "text": "We design with consideration—for the people using the product, the team building it and the world meeting it.",
+      "image": "../../assets/careers-page/values-robot.png",
+      "imageAlt": "Hello Robo robot in front of floating receipts"
+    },
+    {
+      "kanji": "技",
+      "name": "Craft",
+      "text": "We believe the details do the talking. Every word, screen and movement should feel intentional.",
+      "image": "../../assets/careers-page/values-robot.png",
+      "imageAlt": "Hello Robo robot in front of floating receipts"
+    }
   ]
 }

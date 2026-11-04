@@ -1,0 +1,40 @@
+{
+  "clients": [
+    {
+      "name": "Palantir",
+      "logo": "/images/home/clients/palantir.svg",
+      "width": 141,
+      "micrographic": false
+    },
+    {
+      "name": "Hello Robo world stamp",
+      "logo": "/images/services/stamp-world.svg",
+      "width": 230.57,
+      "micrographic": true
+    },
+    {
+      "name": "Bedrock Robotics",
+      "logo": "/images/services/logo-bedrock-white.png",
+      "width": 165.39,
+      "micrographic": false
+    },
+    {
+      "name": "Surf Air",
+      "logo": "/images/home/clients/surf-air.svg",
+      "width": 121,
+      "micrographic": false
+    },
+    {
+      "name": "Human approved stamp",
+      "logo": "/images/home/stamp-human-approved.svg",
+      "width": 238.89,
+      "micrographic": true
+    },
+    {
+      "name": "Weekly Robotics",
+      "logo": "/images/home/clients/weekly-robotics.svg",
+      "width": 147,
+      "micrographic": false
+    }
+  ]
+}

@@ -1,7 +1,9 @@
 ---
 /**
- * Footer wordmark — Figma "graphic" (10093:2055), 1648 wide; rows 46 apart (tighter than
- * Figma's 50–86, and the same proportion as on phones), so 835.35 tall.
+ * Footer wordmark — Figma "graphic" (10093:2055): rows of ハローロボ, each row smaller,
+ * at Figma's own positions (1648 wide = the page between its 40 margins, 1020 tall).
+ * The two smallest rows run past the page edges (the footer clips them): the 7th starts
+ * 129 left of the margin, the 8th runs off the right.
  * ハローロボ is one vector word ("japanese hor") drawn once as a <symbol>
  * and reused at the 8 row sizes, so the whole graphic stays a few KB.
  * The source vector is mirrored in Figma (rotate 180° + flip Y), so the
@@ -10,9 +12,24 @@
  * Phones get their own composition (fewer per row, see below), from the same symbol.
  */
 const slots = {
-  design: { x: 549.94, y: 320.52, w: 543.78, h: 127.9 },
-  badge: { x: 0.01, y: 586.74, w: 246, h: 49.03 },
+  design: { x: 549.94, y: 366.03, w: 543.78, h: 127.9 },
+  badge: { x: 0.01, y: 663.54, w: 246, h: 49.03 },
 };
+
+// Desktop rows (Figma): top, word size, and where each word starts
+const wordW = (h: number) => (h * 766.997) / 142.033;
+const every = (first: number, step: number, n: number) => Array.from({ length: n }, (_, i) => first + i * step);
+const wide = [
+  { y: 0, h: 142.03, xs: [0, 878.74] },
+  { y: 223.84, h: 86.49, xs: [0.01, 588.92, 1177.83] },
+  { y: 397.69, h: 64.64, xs: [0.01, 1294.6] },
+  { y: 543.56, h: 46.32, xs: every(0.01, 464.75, 4) },
+  { y: 671.45, h: 33.24, xs: every(346.46, 279.94, 5) },
+  { y: 790.72, h: 24.5, xs: every(0.01, 252.61, 7) },
+  { y: 901.03, h: 21.23, xs: every(-129, 256.2, 8) },
+  { y: 1004.11, h: 15.85, xs: every(0, 256.05, 9) },
+];
+const WIDE_H = 1019.96;
 
 // Phones: the same idea with fewer per row — one big word, then 2, word · DESIGN stamp ·
 // word (as desktop row 3), 4, the badge + 4, 6, 7 — each row smaller, the same gap
@@ -60,48 +77,10 @@ const r2 = (v: number) => Math.round(v * 100) / 100;
     <symbol id="hr-word" viewBox="0 0 766.997 142.033" fill="currentColor"><g transform="matrix(-1 0 0 1 766.997 0)"><path d="M709.357 22.783C709.961 24.6188 710.258 26.2984 711.312 34.5567C714.322 55.3478 718.084 72.3222 723.203 86.8469C729.974 105.651 737.647 119.412 749.839 134.093C757.061 127.062 759.472 125.226 766.996 120.946C757.967 111.773 751.8 102.449 745.479 88.3814C739.009 74.1636 733.742 55.2027 731.331 35.9406C730.43 29.6743 729.974 24.4737 729.974 21.109V18.9662L709.357 22.7885V22.783ZM666.618 18.9607C666.168 27.5204 663.757 40.6724 660.297 54.1258C653.075 82.1039 643.14 101.673 626.74 120.176C634.715 125.377 637.274 127.514 643.293 134.243C653.975 121.097 661.802 107.337 668.875 89.2909C675.345 73.2373 680.612 52.7475 683.171 33.636C684.072 27.8273 684.528 24.9201 685.28 22.6267L666.618 18.9551V18.9607Z"/><path d="M582.504 124.61V135.312H601.918C601.468 131.64 601.314 127.974 601.314 122.166V34.5541C601.314 28.7454 601.462 25.8382 601.918 21.709C598.304 22.0159 595.147 22.1665 589.127 22.1665H503.654C497.185 22.1665 494.477 22.0159 491.012 21.709C491.314 25.6819 491.462 28.7398 491.462 34.3979V121.853C491.462 127.511 491.314 131.64 490.858 135.156H510.272V124.604H582.504V124.61ZM510.267 39.4478H582.498V107.178H510.267V39.4478Z"/><path d="M451.602 64.2168C444.978 65.1319 442.123 65.2882 427.223 65.2882H347.017C332.117 65.2882 329.261 65.1375 322.637 64.2168V85.471C328.657 84.7065 330.31 84.7065 347.165 84.7065H427.074C443.929 84.7065 445.583 84.7065 451.602 85.471V64.2168Z"/><path d="M266.502 124.61V135.312H285.916C285.466 131.64 285.312 127.974 285.312 122.166V34.5541C285.312 28.7454 285.46 25.8382 285.916 21.709C282.303 22.0159 279.145 22.1665 273.125 22.1665H187.652C181.183 22.1665 178.475 22.0159 175.01 21.709C175.312 25.6819 175.46 28.7398 175.46 34.3979V121.853C175.46 127.511 175.312 131.64 174.856 135.156H194.27V124.604H266.502V124.61ZM194.27 39.4478H266.502V107.178H194.27V39.4478Z"/><path d="M99.17 66.3573C99.4721 67.4287 99.6203 68.3438 99.7741 68.6507C99.7741 68.8013 100.076 69.722 100.378 71.251C105.195 93.5709 114.674 115.59 125.658 130.572C132.732 125.371 135.89 123.541 143.112 120.785C131.524 108.096 119.787 80.7258 117.678 61.7705L99.17 66.3573ZM31.1509 33.7869C35.215 23.6982 38.675 17.4263 44.244 9.63107L33.1061 5.65812C27.235 13.6096 23.7751 19.7253 19.711 29.8139L30.0964 33.7869C19.5627 33.7869 16.4047 33.6362 11.2861 32.7155V51.5201C16.2509 50.9063 18.5082 50.7556 30.3985 50.7556H65.1578V124.908C65.1578 133.317 65.0094 137.904 64.4053 142.033H84.8687C84.2646 137.904 83.968 133.317 83.968 124.758V50.7612H117.376C129.113 50.7612 131.37 50.9119 136.335 51.5257V32.7211C131.068 33.6362 128.206 33.7925 117.074 33.7925H83.968V25.2327C83.968 16.3661 84.27 13.0014 84.8687 9.32975H64.5536C65.0039 13.4589 65.1578 15.903 65.1578 25.6903V33.7925H31.1509V33.7869ZM32.3536 61.7705C27.6909 81.6465 15.6523 108.252 5.71718 120.02C13.3896 123.993 16.2509 125.829 23.0227 130.723C33.8585 113.447 40.6302 97.8508 47.704 73.5388C48.9067 69.4096 49.0605 68.6451 50.1095 66.3517L32.3536 61.765V61.7705ZM10.9841 27.6712C14.5979 18.6483 18.9585 10.8531 23.9234 3.97296L13.2413 0C7.07376 8.10215 3.60828 14.2178 0 23.2407L10.9841 27.6768V27.6712Z"/></g></symbol>
   </defs>
 </svg>
-<svg class="footer-wordmark footer-wordmark--wide" viewBox="0 0 1648 835.35" role="img" aria-label="ハローロボ — Hello Robo" xmlns="http://www.w3.org/2000/svg">
+<svg class="footer-wordmark footer-wordmark--wide" viewBox={`0 0 1648 ${WIDE_H}`} role="img" aria-label="ハローロボ — Hello Robo" xmlns="http://www.w3.org/2000/svg">
 
   
-  <use href="#hr-word" x="0" y="0" width="767" height="142.03"/>
-  <use href="#hr-word" x="878.74" y="0" width="767" height="142.03"/>
-  <use href="#hr-word" x="0.01" y="188.03" width="467.06" height="86.49"/>
-  <use href="#hr-word" x="588.92" y="188.03" width="467.06" height="86.49"/>
-  <use href="#hr-word" x="1177.83" y="188.03" width="467.06" height="86.49"/>
-  <use href="#hr-word" x="0.01" y="352.15" width="349.05" height="64.64"/>
-  <use href="#hr-word" x="1294.6" y="352.15" width="349.04" height="64.64"/>
-  <use href="#hr-word" x="0.01" y="494.42" width="250.15" height="46.32"/>
-  <use href="#hr-word" x="464.76" y="494.42" width="250.15" height="46.32"/>
-  <use href="#hr-word" x="929.52" y="494.42" width="250.15" height="46.32"/>
-  <use href="#hr-word" x="1394.27" y="494.42" width="250.15" height="46.32"/>
-  <use href="#hr-word" x="346.46" y="594.64" width="179.49" height="33.24"/>
-  <use href="#hr-word" x="626.4" y="594.64" width="179.49" height="33.24"/>
-  <use href="#hr-word" x="906.34" y="594.64" width="179.49" height="33.24"/>
-  <use href="#hr-word" x="1186.28" y="594.64" width="179.49" height="33.24"/>
-  <use href="#hr-word" x="1466.22" y="594.64" width="179.49" height="33.24"/>
-  <use href="#hr-word" x="0.01" y="681.77" width="132.31" height="24.5"/>
-  <use href="#hr-word" x="252.62" y="681.77" width="132.31" height="24.5"/>
-  <use href="#hr-word" x="505.24" y="681.77" width="132.31" height="24.5"/>
-  <use href="#hr-word" x="757.85" y="681.77" width="132.31" height="24.5"/>
-  <use href="#hr-word" x="1010.46" y="681.77" width="132.31" height="24.5"/>
-  <use href="#hr-word" x="1263.08" y="681.77" width="132.31" height="24.5"/>
-  <use href="#hr-word" x="1515.69" y="681.77" width="132.31" height="24.5"/>
-  <use href="#hr-word" x="2.01" y="752.27" width="114.62" height="21.23"/>
-  <use href="#hr-word" x="220.74" y="752.27" width="114.62" height="21.23"/>
-  <use href="#hr-word" x="439.47" y="752.27" width="114.62" height="21.23"/>
-  <use href="#hr-word" x="658.2" y="752.27" width="114.62" height="21.23"/>
-  <use href="#hr-word" x="876.93" y="752.27" width="114.62" height="21.23"/>
-  <use href="#hr-word" x="1095.66" y="752.27" width="114.62" height="21.23"/>
-  <use href="#hr-word" x="1314.38" y="752.27" width="114.62" height="21.23"/>
-  <use href="#hr-word" x="1533.11" y="752.27" width="114.62" height="21.23"/>
-  <use href="#hr-word" x="0.01" y="819.5" width="85.57" height="15.85"/>
-  <use href="#hr-word" x="222.62" y="819.5" width="85.57" height="15.85"/>
-  <use href="#hr-word" x="445.22" y="819.5" width="85.57" height="15.85"/>
-  <use href="#hr-word" x="667.83" y="819.5" width="85.57" height="15.85"/>
-  <use href="#hr-word" x="890.44" y="819.5" width="85.57" height="15.85"/>
-  <use href="#hr-word" x="1113.05" y="819.5" width="85.57" height="15.85"/>
-  <use href="#hr-word" x="1335.65" y="819.5" width="85.57" height="15.85"/>
-  <use href="#hr-word" x="1558.26" y="819.5" width="85.57" height="15.85"/>
+  {wide.flatMap((row) => row.xs.map((x) => <use href="#hr-word" x={r2(x)} y={row.y} width={r2(wordW(row.h))} height={row.h} />))}
   <image href="/images/shell/stamp-design.svg" x={slots.design.x} y={slots.design.y} width={slots.design.w} height={slots.design.h} />
   <image href="/images/shell/stamp-human-future.svg" x={slots.badge.x} y={slots.badge.y} width={slots.badge.w} height={slots.badge.h} />
 </svg>

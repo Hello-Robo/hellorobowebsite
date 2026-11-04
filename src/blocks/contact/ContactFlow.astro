@@ -7,8 +7,8 @@
  * 01–03) · 10419:276 (mission) · 10419:3537 (done) · 10412:2490 / 2602 (error states) ·
  * 10419:6147 (email copied) · 10419:6404 / 6622 (quick word, sent) ·
  * mobile 10419:5894 (cover) / 10419:5961 (start).
- * Screens switch in place (data-step on the block); the printers move and the faint mono
- * "system log" behind them retypes itself with new words on every screen — partly built
+ * Screens switch in place (data-step on the block); one printer stands still on the right
+ * (a placeholder for now) and the faint mono "system log" behind it retypes itself with new words on every screen — partly built
  * from the site's projects / episodes, partly from what the visitor has typed so far.
  * `embedded` = the pre-footer block on every page: opens straight on the start screen (the
  * three ways in show right away), never touches the URL.
@@ -180,23 +180,11 @@ const services = [
   data-contact={embedded ? 'embedded' : 'page'}
   data-step="start"
 >
-  <!-- Background: printers and the system log; each screen moves / swaps them in CSS -->
+  <!-- Background: the printer and the system log -->
   <div class="contact__bg" aria-hidden="true">
     <div class="contact__log contact__log--a" data-log="a"></div>
     <div class="contact__log contact__log--b" data-log="b"></div>
-    <img class="contact__printer contact__printer--back" src="/images/shell/prefooter-printer-dark.png" alt="" width="1024" height="1535" loading="lazy" decoding="async" />
-    <img class="contact__printer contact__printer--front" src="/images/shell/prefooter-printer-dark.png" alt="" width="1024" height="1535" loading="lazy" decoding="async" />
-    <!-- The kiosk prints the visitor's own receipt: name, company, picked services and the
-         thanks line go over the sample ones on the paper as soon as they're typed / chosen -->
-    <div class="contact__kiosk">
-      <img src="/images/contact/printer-kiosk.png" alt="" width="1024" height="1535" loading="lazy" decoding="async" />
-      <div class="contact__receipt" data-receipt>
-        <p class="contact__receipt-name" data-r="name" hidden></p>
-        <p class="contact__receipt-company" data-r="company" hidden></p>
-        <ul class="contact__receipt-services" data-r="services" hidden></ul>
-        <p class="contact__receipt-thanks" data-r="thanks" hidden></p>
-      </div>
-    </div>
+    <img class="contact__printer" src="/images/shell/prefooter-printer-dark.png" alt="" width="1024" height="1535" loading="lazy" decoding="async" />
   </div>
 
   <!-- Start: three ways in -->
@@ -455,36 +443,6 @@ const services = [
     const field = (id: string) => root.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#contact-${id}`)!;
     const value = (id: string) => field(id)?.value.trim() ?? '';
     const chosen = () => [...root.querySelectorAll<HTMLInputElement>('input[name=services]:checked')].map((i) => i.value);
-
-    /** The receipt in the kiosk: the visitor's name, company and services over the sample */
-    const receipt = root.querySelector<HTMLElement>('[data-receipt]');
-    const printReceipt = () => {
-      if (!receipt) return;
-      const slot = (k: string) => receipt.querySelector<HTMLElement>(`[data-r=${k}]`)!;
-      // long words get smaller type instead of running off the paper
-      const put = (k: string, text: string, fits: number) => {
-        const el = slot(k);
-        el.hidden = !text;
-        el.textContent = text;
-        el.style.setProperty('--fit', String(Math.min(1, fits / Math.max(1, text.length))));
-      };
-      const name = value('name');
-      put('name', name, 11);
-      put('company', value('company'), 20);
-      put('thanks', name ? `***Thanks, ${name}***` : '', 19);
-      const list = slot('services');
-      const picked = chosen().slice(0, 3);
-      list.hidden = !picked.length;
-      list.replaceChildren(
-        ...picked.map((sv) => {
-          const li = document.createElement('li');
-          li.textContent = sv.toUpperCase();
-          return li;
-        }),
-      );
-    };
-    root.addEventListener('input', printReceipt);
-    root.addEventListener('change', printReceipt);
 
     /** The log groups of `step`, with what the visitor has typed filled in */
     const fill = (groups: Group[] = []) => {
@@ -751,14 +709,13 @@ const services = [
         setError(form, '');
         go(type === 'message' ? 'sent' : 'done');
         sfx('success');
-        // the done screen's log and receipt have used the answers; the forms are cleared
+        // the done screen's log has used the answers; the forms are cleared
         // once the block has gone back to its first screen
         setTimeout(() => {
           root.querySelectorAll<HTMLFormElement>('form').forEach((f) => {
             f.reset();
             f.classList.remove('is-filled');
           });
-          printReceipt();
         }, 7000);
       } catch (err) {
         setError(form, `Couldn’t send: ${(err as Error).message}. Please try again or email info@hellorobo.co`);
@@ -858,130 +815,14 @@ const services = [
     }
   }
 
-  /* ── Printers: the sharp one, a blurred mirrored one far left, and the kiosk with the
-     receipt on the form screens ── */
-  .contact__printer,
-  .contact__kiosk {
+  /* ── Printer: one picture, still, on the right of every screen (a placeholder) ── */
+  .contact__printer {
     position: absolute;
-    max-width: none;
-    height: auto;
-    transition:
-      left 0.9s var(--ease-move),
-      top 0.9s var(--ease-move),
-      width 0.9s var(--ease-move),
-      opacity 0.6s ease,
-      translate 0.9s var(--ease-move);
-  }
-  .contact__printer--front {
-    left: calc(642 * var(--px));
-    top: calc(-352 * var(--px));
-    width: calc(1009 * var(--px));
-  }
-  .contact__printer--back {
-    left: calc(-430 * var(--px));
-    top: calc(91 * var(--px));
-    width: calc(796 * var(--px));
-    transform: scaleX(-1);
-    filter: blur(calc(14 * var(--px)));
-  }
-  .contact:is([data-step='start'], [data-step='message']) .contact__printer--front {
     left: calc(900 * var(--px));
     top: calc(-280 * var(--px));
     width: calc(796 * var(--px));
-  }
-  .contact:is([data-step='start'], [data-step='message']) .contact__printer--back {
-    left: calc(-659 * var(--px));
-    top: calc(67 * var(--px));
-  }
-  .contact__kiosk {
-    left: calc(762 * var(--px));
-    top: calc(-342 * var(--px));
-    width: calc(890 * var(--px));
-    opacity: 0;
-    translate: 0 calc(-80 * var(--px));
-  }
-  /* the form screens swap the printers for the kiosk printing the receipt */
-  .contact:not([data-step='start'], [data-step='message']) .contact__printer {
-    opacity: 0;
-  }
-  .contact:not([data-step='start'], [data-step='message']) .contact__printer--front {
-    translate: 0 calc(-80 * var(--px));
-  }
-  .contact:not([data-step='start'], [data-step='message']) .contact__kiosk {
-    opacity: 1;
-    translate: none;
-  }
-
-  /* The kiosk image (1024×1535) with the receipt over it; --u = one image pixel */
-  .contact__kiosk {
-    container-type: inline-size;
-  }
-  .contact__kiosk > img {
-    display: block;
-    width: 100%;
+    max-width: none;
     height: auto;
-  }
-  .contact__receipt {
-    --u: calc(100cqw / 1024);
-    position: absolute;
-    inset: 0;
-    font-family: var(--font-mono);
-    color: #232323;
-    pointer-events: none;
-  }
-  /* Each line sits on a patch of the paper's grey (with soft edges) over the sample text */
-  .contact__receipt > * {
-    position: absolute;
-    left: calc(340 * var(--u));
-    width: calc(216 * var(--u));
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-align: center;
-    background: linear-gradient(90deg, rgb(210 208 207), rgb(205 202 201) 50%, rgb(200 198 196));
-    box-shadow: 0 0 calc(4 * var(--u)) calc(3 * var(--u)) rgb(205 202 201);
-    font-size: calc(var(--size) * var(--u) * var(--fit, 1));
-    letter-spacing: 0.02em;
-  }
-  .contact__receipt-name {
-    --size: 30;
-    top: calc(762 * var(--u));
-    height: calc(38 * var(--u));
-    line-height: calc(38 * var(--u));
-  }
-  .contact__receipt-company {
-    --size: 17;
-    top: calc(801 * var(--u));
-    height: calc(25 * var(--u));
-    line-height: calc(25 * var(--u));
-  }
-  .contact__receipt-services {
-    --size: 12;
-    left: calc(332 * var(--u));
-    width: calc(226 * var(--u));
-    top: calc(866 * var(--u));
-    height: calc(80 * var(--u));
-    list-style: none;
-    text-align: left;
-    letter-spacing: 0.06em;
-  }
-  .contact__receipt-services :global(li) {
-    position: relative;
-    height: calc(27 * var(--u));
-    line-height: calc(25 * var(--u));
-    padding-left: calc(31 * var(--u));
-  }
-  .contact__receipt-services :global(li)::before {
-    content: '<<';
-    position: absolute;
-    left: calc(6 * var(--u));
-  }
-  .contact__receipt-thanks {
-    --size: 18;
-    top: calc(1252 * var(--u));
-    height: calc(25 * var(--u));
-    line-height: calc(25 * var(--u));
   }
 
   /* ── Screens: one at a time, fading over each other ── */
@@ -1112,9 +953,8 @@ const services = [
     height: calc(140 * var(--px));
     padding: calc(20 * var(--px));
     overflow: hidden;
-    background: rgb(0 0 0 / 0.05);
-    -webkit-backdrop-filter: blur(calc(20 * var(--px)));
-    backdrop-filter: blur(calc(20 * var(--px)));
+    /* plain grey, no glass */
+    background: var(--color-grey-300);
     color: var(--color-black);
     text-align: left;
     font: inherit;
@@ -1134,26 +974,19 @@ const services = [
   /* hover only with a mouse — on a phone it would stay "stuck" after the tap (a deselected
      mission card would keep looking half-selected); a tap gets a press state instead */
   @media (hover: hover) {
-    .contact__card:hover {
-      background: rgb(0 0 0 / 0.09);
-    }
-    .contact__card--light:hover,
-    .contact__card--check:has(input:checked):hover {
-      background: var(--color-grey-50);
-    }
-    .contact__back:hover {
-      background: var(--color-grey-600);
-    }
+    /* every card and button: the words turn orange (set on the words themselves, which
+       have no colour transition: the pixel hover reads the colour the moment it starts;
+       not while it shows its pixels, which hide the words — this rule would outrank that) */
+    .contact__card:hover > .t-body:not(.is-pixel),
+    .contact__back:hover,
     .contact__submit:hover {
-      background: var(--color-grey-50);
+      color: var(--color-orange);
     }
   }
-  .contact__card:active {
-    background: rgb(0 0 0 / 0.09);
-  }
-  .contact__card--light:active,
-  .contact__card--check:has(input:checked):active {
-    background: var(--color-grey-50);
+  .contact__card:active > .t-body:not(.is-pixel),
+  .contact__back:active,
+  .contact__submit:active {
+    color: var(--color-orange);
   }
 
   /* Phone browser defaults off: the blue / grey tap flash, double-tap zoom delay, iOS
@@ -1468,47 +1301,21 @@ const services = [
       display: none;
     }
 
-    /* Printer 510×765 from the top, its centre 76 right of the screen's (Figma mob) */
-    .contact__printer--front,
-    .contact:is([data-step='start'], [data-step='message']) .contact__printer--front {
+    /* Printer 510×765 from the top, its centre 76 right of the screen's (Figma mob); on
+       the form screens the fields would sit on its white paper, so it shows on the start
+       screen only */
+    .contact__printer {
       left: calc(50% + 76px - 255px);
       top: 0;
       width: 510px;
     }
-    .contact__printer--back,
-    .contact:is([data-step='start'], [data-step='message']) .contact__printer--back {
-      left: -300px;
-      top: 40%;
-      width: 360px;
-    }
-    /* Quick word on a phone: the field would sit on the printer's white paper, so it gets
-       the form screens' kiosk instead, low on the right */
-    .contact[data-step='message'] .contact__printer {
-      opacity: 0;
-    }
-    .contact[data-step='message'] .contact__kiosk {
-      opacity: 1;
-      translate: none;
+    .contact:not([data-step='start']) .contact__printer {
+      display: none;
     }
     /* error text a step under the 16px field text, as 18 is under 20 on desktop */
     .contact__error {
       font-size: 14px;
     }
-    /* the kiosk sits low on the right, its receipt clear of the field */
-    .contact__kiosk {
-      left: auto;
-      right: -96px;
-      top: auto;
-      bottom: -150px;
-      width: 300px;
-    }
-    /* done: the kiosk comes up so its receipt shows above the menu bar */
-    .contact:is([data-step='done'], [data-step='sent']) .contact__kiosk {
-      right: calc(50% - 190px);
-      bottom: -40px;
-      width: 380px;
-    }
-
     /* Cards: 358×120, 10 apart, from y 294 */
     .contact__cards,
     .contact__screen--mission .contact__cards {

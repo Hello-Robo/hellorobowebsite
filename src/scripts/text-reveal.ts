@@ -24,7 +24,7 @@ const FLOOR = 0.15;
 /** share of the reveal each word takes (the rest is the stagger) */
 const SPAN = 0.3;
 /** how long a paragraph takes to light up */
-const DURATION = 1400;
+const DURATION = 1000;
 /** on screen when the page opens: it starts a moment after the headlines */
 const LOAD_DELAY = 350;
 

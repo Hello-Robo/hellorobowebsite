@@ -25,7 +25,7 @@ const SELECTOR = [
   '.button',
   '.get-in-touch',
   '.site-menu__talk',
-  '.nav-pill__menu',
+  '.nav-pill__toggle',
   '.nav-pill__back',
   '.nav-pill__close',
   '.contact__back',
