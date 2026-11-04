@@ -17,7 +17,7 @@ const featured = (await getCollection('episodes', (e) => e.data.featured && e.da
 // x / y: where Figma puts the stamp inside its 541×765 cell (desktop); none = centred
 const stamps: Record<number, { src: string; w: number; h: number; x?: number; y?: number }> = {
   2: { src: '/images/home/stamp-radio-handmade.svg', w: 404, h: 222, x: 78, y: 272 },
-  3: { src: '/images/home/stamp-radio-yes-on-dark.svg', w: 290, h: 111, x: 117, y: 328 },
+  3: { src: '/images/home/stamp-radio-yes.svg', w: 290, h: 111, x: 117, y: 328 },
   7: { src: '/images/radio/stamp-departure.png', w: 126, h: 82 },
 };
 const posters = [...featured];
