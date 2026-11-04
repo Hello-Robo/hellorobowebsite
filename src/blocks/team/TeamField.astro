@@ -986,8 +986,12 @@ const config = JSON.stringify({
     .team-card > * {
       flex-shrink: 0;
     }
+    /* in the flow, not in the corner: relative with no offsets (the press effect needs a
+       positioned box; plain static let it switch to relative, and the desktop corner offsets
+       then shifted the × 40px onto the names) */
     .team-card__close {
-      position: static;
+      position: relative;
+      inset: auto;
       flex: none;
       width: 32px;
       height: 32px;
