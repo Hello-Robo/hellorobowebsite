@@ -5,7 +5,12 @@
  * eases after the cursor and drifts back to the middle when the cursor leaves the window.
  * Now and then it blinks (Figma "robo blinks": every part closes to a slit, ~21% high),
  * sometimes twice. Off on touch screens, phones and for reduced motion.
+ * On a "nope" (a contact form error, a click on an NDA project) it blinks 4 times in a
+ * row: blinkLogo() below, on every screen size (still not with reduced motion).
  */
+
+/** Blink the nav robot `times` times, one blink every 250 ms (the NDA tag's rhythm) */
+export const blinkLogo = (times = 4) => dispatchEvent(new CustomEvent('robo:blink', { detail: times }));
 
 const logo = document.querySelector<SVGSVGElement>('[data-robo-alive]');
 const face = logo?.querySelector<SVGGElement>('.robo-logo__face');
@@ -77,6 +82,7 @@ if (logo && face && !reduced) {
   addEventListener('blur', rest);
 
   // blink every 2.5–6 s, now and then twice
+  let busy = false; // a "nope" run of blinks: the idle blinks wait
   const blinkOnce = (then?: () => void) => {
     face.style.setProperty('--blink', String(BLINK));
     setTimeout(() => {
@@ -86,8 +92,17 @@ if (logo && face && !reduced) {
   };
   const next = () =>
     setTimeout(() => {
-      if (desktop.matches && !document.hidden) blinkOnce(Math.random() < 0.3 ? () => blinkOnce() : undefined);
+      if (desktop.matches && !document.hidden && !busy) blinkOnce(Math.random() < 0.3 ? () => blinkOnce() : undefined);
       next();
     }, 2500 + Math.random() * 3500);
   next();
+
+  // "nope": `times` blinks in a row (blinkLogo); a new one while it runs is ignored
+  addEventListener('robo:blink', (e) => {
+    if (busy) return;
+    busy = true;
+    let left = Math.max(1, Number((e as CustomEvent).detail) || 4);
+    const again = () => (--left > 0 ? blinkOnce(again) : setTimeout(() => (busy = false), 140));
+    blinkOnce(again);
+  });
 }

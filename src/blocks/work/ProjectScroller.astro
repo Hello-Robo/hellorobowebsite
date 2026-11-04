@@ -182,6 +182,7 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
 <script>
   import { slideScrub } from '../../scripts/slide-scrub';
   import { sfx } from '../../scripts/sound';
+  import { blinkLogo } from '../../scripts/robo-logo';
 
   // NDA projects don't open: a click on one blinks its NDA tag instead — 100% → 30% → 100%,
   // 4 times in 1s — with the contact form's "nope" sound. Covers the desktop wheel, the phone
@@ -194,6 +195,7 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
     tag.getAnimations().forEach((a) => a.cancel());
     tag.animate([{ opacity: 1 }, { opacity: 0.3 }, { opacity: 1 }], { duration: 250, iterations: 4, easing: 'ease-in-out' });
     sfx('error');
+    blinkLogo();
   });
 
   // Turns page scroll into the drum's rotation: one pass through every project while
