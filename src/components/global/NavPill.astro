@@ -200,11 +200,23 @@ const { back } = Astro.props;
     margin-right: calc(8 * var(--px));
     opacity: 1;
   }
-  /* The close button takes the back button's place while the menu is open */
+  /* The close button takes the back button's place while the menu is open. The back
+     button goes at once (no shrinking cross-fade: for half a second the two squares
+     overlapped and slid with the re-centring bar, a flicker left of the menu) and comes
+     back only once the close button has folded away */
+  .nav-pill__back {
+    transition:
+      width 0.5s cubic-bezier(0.65, 0, 0.35, 1),
+      margin 0.5s cubic-bezier(0.65, 0, 0.35, 1),
+      opacity 0.3s ease 0.45s,
+      visibility 0s linear 0.45s;
+  }
   :global(html[data-menu='open']) .nav-pill__back {
     width: 0;
     margin-right: 0;
     opacity: 0;
+    visibility: hidden;
+    transition: none;
   }
 
   /* Mobile (Figma 10101:6488): full width 358×64, 16 from the sides, 20 from the bottom */

@@ -273,6 +273,7 @@ const services = [
 
 <script>
   import { sfx } from '../../scripts/sound';
+  import { blinkLogo } from '../../scripts/robo-logo';
 
   type Group = { x: number; y: number; n?: string; lines: string[]; m?: [number, number] };
   type Logs = Record<string, { a: Group[]; b?: Group[] }>;
@@ -533,7 +534,10 @@ const services = [
     const setError = (form: HTMLElement, text: string) => {
       const out = form.querySelector<HTMLElement>('[data-error]');
       if (out) out.textContent = text;
-      if (text) sfx('error');
+      if (text) {
+        sfx('error');
+        blinkLogo();
+      }
       form.classList.toggle('has-error', !!text);
     };
     const check: Record<string, () => string> = {
