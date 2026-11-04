@@ -89,7 +89,7 @@ export interface CmsCollection {
   /** URL segment under /admin */
   slug: string;
   /** Folder name in src/content/ and src/assets/ */
-  collection: 'home' | 'careers-page' | 'team' | 'studio' | 'news' | 'projects' | 'episodes' | 'positions';
+  collection: 'home' | 'services-page' | 'careers-page' | 'team' | 'studio' | 'news' | 'projects' | 'episodes' | 'positions';
   label: string;
   singular: string;
   /** Field used as the list title and to suggest the file name of a new entry */
@@ -138,6 +138,40 @@ const TEAM_OBJECTS = [
   'cat_mode_active',
 ];
 
+// Client logos in fixed places: Home's Clients block and the Services page's logo row
+const clientLogos = (max: number, hint: string): Field => ({
+  kind: 'list',
+  key: 'clients',
+  label: 'Client logos',
+  item: 'logo',
+  max,
+  hint,
+  fields: [
+    { kind: 'text', key: 'name', label: 'Client name', required: true },
+    {
+      kind: 'graphic',
+      key: 'logo',
+      label: 'Logo',
+      required: true,
+      hint: 'A black logo on a transparent background (the Services page shows it white): SVG preferred, or PNG / WebP. It is centred in its place.',
+    },
+    {
+      kind: 'number',
+      key: 'width',
+      label: 'Logo width (px)',
+      sizeOf: { field: 'logo', dimension: 'width' },
+      hint: 'How wide the logo shows on a 1728px-wide screen (the others are 45–205). Empty = the SVG’s own width; 140 for a PNG.',
+    },
+    {
+      kind: 'boolean',
+      key: 'micrographic',
+      label: 'Micrographic (not a client)',
+      default: false,
+      hint: 'A Hello Robo stamp in this place instead of a client logo: shown as decoration, not read out as a client.',
+    },
+  ],
+});
+
 export const CMS_COLLECTIONS: CmsCollection[] = [
   // The home page's own settings: one fixed entry (src/content/home/home-page.json)
   {
@@ -158,38 +192,26 @@ export const CMS_COLLECTIONS: CmsCollection[] = [
         min: 1,
         hint: 'The projects in the Works wheel on the home page, in the order of the Projects list. The Work page always shows every project.',
       },
-      {
-        kind: 'list',
-        key: 'clients',
-        label: 'Client logos',
-        item: 'logo',
-        max: 13,
-        hint: 'The logos in the Clients block, in its 13 places, row by row from the top left (3, 2, 3, 2, 3). Click a logo to swap it, or upload a new one. A place can hold a micrographic instead.',
-        fields: [
-          { kind: 'text', key: 'name', label: 'Client name', required: true },
-          {
-            kind: 'graphic',
-            key: 'logo',
-            label: 'Logo',
-            required: true,
-            hint: 'A black logo on a transparent background: SVG preferred, or PNG / WebP. It is centred in its place.',
-          },
-          {
-            kind: 'number',
-            key: 'width',
-            label: 'Logo width (px)',
-            sizeOf: { field: 'logo', dimension: 'width' },
-            hint: 'How wide the logo shows on a 1728px-wide screen (the others are 45–205). Empty = the SVG’s own width; 140 for a PNG.',
-          },
-          {
-            kind: 'boolean',
-            key: 'micrographic',
-            label: 'Micrographic (not a client)',
-            default: false,
-            hint: 'A Hello Robo stamp in this place instead of a client logo: shown as decoration, not read out as a client.',
-          },
-        ],
-      },
+      clientLogos(
+        13,
+        'The logos in the Clients block, in its 13 places, row by row from the top left (3, 2, 3, 2, 3). Click a logo to swap it, or upload a new one. A place can hold a micrographic instead.',
+      ),
+    ],
+  },
+  // The Services page's own settings
+  {
+    slug: 'services-page',
+    collection: 'services-page',
+    label: 'Services page',
+    singular: 'services page',
+    titleField: 'title',
+    siteUrl: () => '/services',
+    fixed: true,
+    fields: [
+      clientLogos(
+        6,
+        'The logos in the “Building toward yes” row, left to right (on phones: two per row). They show white on the black block; a micrographic keeps its own colours. Click a logo to swap it, or upload a new one.',
+      ),
     ],
   },
   {
@@ -450,6 +472,22 @@ export const CMS_COLLECTIONS: CmsCollection[] = [
         sortable: true,
         hint: 'The photos across the bottom of the Careers hero, left to right, all at the same height (any width). The first starts a little off the left edge; the last ones slide in as the page scrolls.',
         fields: [{ kind: 'image', key: 'photo', label: 'Photo', required: true }],
+      },
+      {
+        kind: 'list',
+        key: 'values',
+        label: 'Our values',
+        item: 'value',
+        max: 3,
+        sortable: true,
+        hint: 'The values under “Our values”, one screen each as you scroll, in this order: the orange kanji, the name, the line under it and the picture on the right.',
+        fields: [
+          { kind: 'text', key: 'kanji', label: 'Kanji', required: true, lang: 'ja', hint: 'The orange label above the name, e.g. 技' },
+          { kind: 'text', key: 'name', label: 'Name', required: true },
+          { kind: 'textarea', key: 'text', label: 'Description', required: true },
+          { kind: 'image', key: 'image', label: 'Picture', required: true, hint: 'Fills the right half of the screen, cropped to fit (tall).' },
+          { kind: 'text', key: 'imageAlt', label: 'Picture description', hint: 'What the picture shows, for screen readers.' },
+        ],
       },
     ],
   },

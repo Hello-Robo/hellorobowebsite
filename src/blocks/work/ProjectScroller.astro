@@ -349,6 +349,22 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
       if (!running) running = requestAnimationFrame(tick);
     };
 
+    // A click on a name away from the front turns it to the front (the short way round)
+    // instead of opening it. Work page: the drum turns. Home: the page scrolls to where that
+    // project is at the front, and the drum turns with it.
+    let turnTo = (to: number) => {
+      target = to;
+      follow();
+    };
+    root.querySelector('.project-wheel__names')?.addEventListener('click', (e) => {
+      const row = (e.target as HTMLElement).closest<HTMLElement>('.project-wheel__name');
+      if (!row || row.classList.contains('is-front')) return;
+      e.preventDefault();
+      let d = mod(rows.indexOf(row) - Math.round(target), F);
+      if (d > F / 2) d -= F;
+      turnTo(Math.round(target) + d);
+    });
+
     if (root.hasAttribute('data-infinite')) {
       let idle = 0;
       const perProject = () => window.innerHeight * 0.7;
@@ -385,17 +401,6 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
         { passive: false },
       );
       root.addEventListener('touchend', () => (touchY = null));
-      // a click on a name away from the front turns it to the front (the short way round)
-      // instead of opening it
-      root.querySelector('.project-wheel__names')?.addEventListener('click', (e) => {
-        const row = (e.target as HTMLElement).closest<HTMLElement>('.project-wheel__name');
-        if (!row || row.classList.contains('is-front')) return;
-        e.preventDefault();
-        let d = mod(rows.indexOf(row) - Math.round(target), F);
-        if (d > F / 2) d -= F;
-        target = Math.round(target) + d;
-        follow();
-      });
       window.addEventListener('keydown', (e) => {
         if ((e.target as HTMLElement).closest('input, textarea, select, [contenteditable]')) return;
         if (document.documentElement.dataset.menu === 'open') return;
@@ -409,12 +414,21 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
       place(0);
     } else {
       // ── Home: the wheel turns with the page scroll while the block is pinned ──
+      // Framed (Home): the first part of the scroll widens the block to full screen
+      const expandOf = () => stage.offsetHeight * (Number(getComputedStyle(root).getPropertyValue('--expand')) || 0);
+      // the drum runs 0 → N (N is project 0 again) over the scroll after the widening
+      turnTo = (to: number) => {
+        if (to < 0 || to > N) to = mod(to, N);
+        const rect = root.getBoundingClientRect();
+        const expand = expandOf();
+        const travel = rect.height - stage.offsetHeight - expand;
+        window.scrollTo({ top: window.scrollY + rect.top + expand + (to / N) * travel, behavior: reduceMotion ? 'auto' : 'smooth' });
+      };
       const update = () => {
         frame = 0;
         const rect = root.getBoundingClientRect();
         const travel = rect.height - stage.offsetHeight;
-        // Framed (Home): the first part of the scroll widens the block to full screen
-        const expand = stage.offsetHeight * (Number(getComputedStyle(root).getPropertyValue('--expand')) || 0);
+        const expand = expandOf();
         const clamp = (v: number) => Math.min(1, Math.max(0, v));
         stage.style.setProperty('--enter', String(expand > 0 ? clamp(-rect.top / expand) : 1));
         const progress = travel - expand > 0 ? clamp((-rect.top - expand) / (travel - expand)) : 0;
@@ -652,8 +666,8 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
   .project-wheel__name:not(.is-front) {
     pointer-events: none;
   }
-  /* Work page: the names in sight can be clicked to turn them to the front */
-  .project-wheel--infinite .project-wheel__name.is-shown {
+  /* the names in sight can be clicked to turn them to the front */
+  .project-wheel__name.is-shown {
     pointer-events: auto;
     cursor: pointer;
   }

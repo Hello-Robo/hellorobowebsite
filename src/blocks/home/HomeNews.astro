@@ -7,6 +7,8 @@
  * edge and scrolls sideways: trackpad / shift + wheel, arrow keys when focused, and
  * click-and-drag with a mouse. Cards snap to the page margin. Every card is the same size
  * (the narrow one, 537 × 610 in Figma), whatever size the CMS gives it; no View links.
+ * A card opens its link (CMS `href`; "#" = no link yet) and shows the pointing hand; the
+ * rest of the row shows the grab hand only when there is more to drag to.
  */
 import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
@@ -19,25 +21,33 @@ const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.
   </header>
 
   <ul class="home-news__row" tabindex="0" aria-label="Latest news — scroll sideways" data-drag-scroll>
-    {news.map((item) => (
-      <li class="home-news__card">
-        <div class="home-news__media">
-          <Image src={item.data.image} alt="" widths={[537, 1074]} sizes="537px" loading="lazy" />
-        </div>
-        <p class="home-news__text t-body t-body2-mobile">{item.data.text}</p>
-      </li>
-    ))}
+    {news.map((item) => {
+      const Tag = item.data.href && item.data.href !== '#' ? 'a' : 'div';
+      return (
+        <li class="home-news__card">
+          <Tag class="home-news__link" href={Tag === 'a' ? item.data.href : undefined}>
+            <div class="home-news__media">
+              <Image src={item.data.image} alt="" widths={[537, 1074]} sizes="537px" loading="lazy" />
+            </div>
+            <p class="home-news__text t-body t-body2-mobile">{item.data.text}</p>
+          </Tag>
+        </li>
+      );
+    })}
   </ul>
 </section>
 
 <script>
   // Click-and-drag scrolling for mouse users (touch and trackpads scroll natively)
   for (const row of document.querySelectorAll<HTMLElement>('[data-drag-scroll]')) {
+    // the grab hand only when the cards run past the screen
+    const fit = () => row.classList.toggle('is-draggable', row.scrollWidth > row.clientWidth + 1);
+    new ResizeObserver(fit).observe(row);
     let startX = 0;
     let startScroll = 0;
     let dragged = false;
     row.addEventListener('pointerdown', (e) => {
-      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      if (e.pointerType !== 'mouse' || e.button !== 0 || !row.classList.contains('is-draggable')) return;
       startX = e.clientX;
       startScroll = row.scrollLeft;
       dragged = false;
@@ -90,6 +100,8 @@ const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.
     scroll-snap-type: x proximity;
     scroll-padding-inline: var(--page-margin);
     scrollbar-width: none;
+  }
+  .home-news__row.is-draggable {
     cursor: grab;
   }
   .home-news__row::-webkit-scrollbar {
@@ -109,6 +121,17 @@ const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.
     justify-items: start;
     width: calc(537 * var(--px));
     scroll-snap-align: start;
+  }
+  .home-news__link {
+    display: grid;
+    justify-items: start;
+    width: 100%;
+  }
+  a.home-news__link {
+    cursor: pointer;
+  }
+  .home-news__row.is-dragging a.home-news__link {
+    cursor: grabbing;
   }
   .home-news__media {
     width: 100%;
@@ -139,7 +162,18 @@ const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.
     .home-news__card {
       width: 212px;
     }
-    .home-news__media {
+    .home-news__link {
+    display: grid;
+    justify-items: start;
+    width: 100%;
+  }
+  a.home-news__link {
+    cursor: pointer;
+  }
+  .home-news__row.is-dragging a.home-news__link {
+    cursor: grabbing;
+  }
+  .home-news__media {
       aspect-ratio: 184 / 208;
     }
     .home-news__text {

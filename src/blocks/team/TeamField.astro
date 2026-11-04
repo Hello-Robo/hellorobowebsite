@@ -91,13 +91,13 @@ const studio = (await getEntry('studio', STUDIO_ID))!.data;
 
 // Card text motion. Names: the Japanese, then each word of the name, slide up through a
 // mask (--d: its turn). Quote: the site's body-copy fade (text-reveal.ts) — every word
-// lights up from dim, word i starting at i / n of 70% of 1.4s (--t), across all paragraphs.
+// lights up from dim, word i starting at i / n of 70% of 1s (--t), across all paragraphs.
 const nameWords = (name: string) => name.split(' ').map((w, i) => ({ w, d: i + 1 }));
 const quoteWords = (paragraphs: string[]) => {
   const total = paragraphs.reduce((n, para) => n + para.split(' ').length, 0);
   let i = 0;
   return paragraphs.map((para) =>
-    para.split(' ').map((w) => ({ w, t: ((i++ / total) * 0.7 * 1.4).toFixed(3) })),
+    para.split(' ').map((w) => ({ w, t: ((i++ / total) * 0.7 * 1).toFixed(3) })),
   );
 };
 
@@ -756,8 +756,13 @@ const config = JSON.stringify({
   .team-obj__label {
     transition: transform var(--duration-slow) var(--ease-out);
   }
+  /* ...and stays orange while its card is open (not while the hover effect shows its
+     pixels, as on hover) */
   .team-obj.is-selected .team-obj__label {
     transform: translate(-50%, calc(var(--h) * 0.075 * var(--px) * var(--s)));
+  }
+  .team-obj.is-selected .team-obj__label:not(.is-pixel) {
+    color: var(--color-orange);
   }
 
   /* ── Card: 819×1037 white panel, 40 from the top and right. Flies in from beyond the
@@ -842,7 +847,7 @@ const config = JSON.stringify({
     opacity: 0.15;
   }
   .team-card.is-open .team-card__word {
-    animation: card-light 0.42s linear both;
+    animation: card-light 0.3s linear both;
     animation-delay: calc(0.6s + var(--t));
   }
   @keyframes card-light {

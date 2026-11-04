@@ -8,6 +8,8 @@
  * widens to 1006, a close button takes the back button's place (80 + 8 + 1006
  * = the 1094 menu width). State lives on <html data-menu="open">.
  * On desktop the robot in the bar looks toward the cursor and blinks (robo-logo.ts).
+ * The bar is the Menu button, except the robot: it's a link to the home page (a link can't
+ * sit inside a button, so the bar holds both: the button fills it up to the robot).
  */
 import Icon from '../icons/Icon.astro';
 import RoboLogo from '../icons/RoboLogo.astro';
@@ -33,13 +35,17 @@ const { back } = Astro.props;
       <path d="M6.39844 6.3999L25.5984 25.5999" stroke="currentColor" stroke-width="1.28" />
     </svg>
   </button>
-  <button class="nav-pill__menu" type="button" aria-expanded="false" aria-controls="site-menu" data-menu-toggle>
-    <span class="nav-pill__label">
-      <Icon name="dots" class="nav-pill__dots" />
-      <span class="t-button">Menu</span>
-    </span>
-    <RoboLogo alive />
-  </button>
+  <div class="nav-pill__menu">
+    <button class="nav-pill__toggle" type="button" aria-expanded="false" aria-controls="site-menu" data-menu-toggle>
+      <span class="nav-pill__label">
+        <Icon name="dots" class="nav-pill__dots" />
+        <span class="t-button">Menu</span>
+      </span>
+    </button>
+    <a class="nav-pill__home" href="/" aria-label="Hello Robo — home">
+      <RoboLogo alive />
+    </a>
+  </div>
 </nav>
 
 <script>
@@ -130,7 +136,6 @@ const { back } = Astro.props;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 var(--space-20);
   }
   /* Desktop: the back button sits just left of the bar, outside it, so the menu stays
      centred in exactly the same place on pages with and without it (no jump between
@@ -140,6 +145,23 @@ const { back } = Astro.props;
     position: absolute;
     top: 0;
     right: 100%;
+  }
+  /* the Menu button fills the bar up to the robot (the home link), the bar's side
+     padding included, so the whole bar but the robot opens the menu */
+  .nav-pill__toggle {
+    flex: 1;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    padding: 0 0 0 var(--space-20);
+    border: 0;
+    cursor: pointer;
+  }
+  .nav-pill__home {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-20) 0 var(--space-12);
   }
   .nav-pill__label {
     display: inline-flex;

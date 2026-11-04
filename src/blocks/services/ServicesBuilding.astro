@@ -3,9 +3,16 @@
  * Services — Building toward yes
  * Figma: "Frame 2147232853" (10103:1223), 1728×1035, black
  * https://www.figma.com/design/9SsfbCUY7KcxjZpCuRpDxf/Hello-Robo-Website-2026?node-id=10103-1223
- * The logo row is one SVG (six 264×355 tiles, 12 apart); the Bedrock logo only exists as a PNG
- * in Figma and sits on top of it. Phones: the six tiles as a 2-column grid.
+ * The logos come from the CMS ("Services page"): a row of six 264×355 tiles, 12 apart, each
+ * logo centred in its tile at its width (px at 1728). Client logos show white; a
+ * micrographic keeps its own colours (and may run past its tile, as the stamps do in Figma).
+ * Phones: the tiles in two columns.
  */
+import { getEntry } from 'astro:content';
+
+const page = await getEntry('services-page', 'services-page');
+const tiles = page?.data.clients ?? [];
+const clients = tiles.filter((t) => !t.micrographic).map((t) => t.name);
 ---
 <section class="services-building theme-dark">
   <div class="services-building__head container">
@@ -14,19 +21,10 @@
       We work with teams building new ways to move, work and live — from robotics and autonomy to the technology around them. Together, we turn complex ideas into brands, products and stories people can understand, trust and say yes to.
     </p>
   </div>
-  <div class="services-building__logos container only-desktop">
-    <div class="services-building__row">
-      <img src="/images/services/logos-building.svg" alt="Palantir, Bedrock, Surf Air, Weekly Robotics" width="1644" style="--w: 1644" height="355" loading="lazy" />
-      <img class="services-building__bedrock" src="/images/services/logo-bedrock-white.png" alt="" width="165" style="--w: 165" height="22" loading="lazy" />
-    </div>
-  </div>
-  <!-- Phones: the six 264×355 tiles of the row as a 2-column grid (each cell shows its part
-       of the same image) -->
-  <ul class="services-building__grid container only-mobile" aria-label="Palantir, Bedrock, Surf Air, Weekly Robotics">
-    {[0, 1, 2, 3, 4, 5].map((i) => (
-      <li class="services-building__cell" style={`--i: ${i}`} aria-hidden="true">
-        <img src="/images/services/logos-building.svg" alt="" width="1644" height="355" loading="lazy" />
-        {i === 2 && <img class="services-building__cell-bedrock" src="/images/services/logo-bedrock-white.png" alt="" width="165" height="22" loading="lazy" />}
+  <ul class="services-building__logos container" aria-label={clients.join(', ')}>
+    {tiles.map((t) => (
+      <li class:list={['services-building__tile', { 'is-micro': t.micrographic }]} style={`--w: ${t.width || 140}`} aria-hidden="true">
+        <img src={t.logo} alt="" loading="lazy" decoding="async" />
       </li>
     ))}
   </ul>
@@ -50,23 +48,28 @@
     margin-top: calc(16 * var(--px));
   }
   .services-building__logos {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: calc(12 * var(--px));
     margin-top: calc(292 * var(--px));
   }
-  .services-building__row {
+  .services-building__tile {
     position: relative;
-    width: calc(1644 / 1648 * 100%);
+    aspect-ratio: 264 / 355;
   }
-  .services-building__row img:first-child {
-    width: 100%;
-    height: auto;
-  }
-  /* Bedrock PNG at (601, 166) in the 1644×355 row */
-  .services-building__bedrock {
+  /* centred at its width (px of the 264-wide tile at 1728); may run past the tile */
+  .services-building__tile img {
     position: absolute;
-    left: calc(601 / 1644 * 100%);
-    top: calc(166 / 355 * 100%);
-    width: calc(165 / 1644 * 100%);
+    left: 50%;
+    top: 50%;
+    width: calc(var(--w) / 264 * 100%);
+    max-width: none;
     height: auto;
+    translate: -50% -50%;
+  }
+  /* client logos are uploaded black: white on the black block */
+  .services-building__tile:not(.is-micro) img {
+    filter: brightness(0) invert(1);
   }
 
   /* ── Mobile: stacked head, straight after the block above (no white gap); the logo
@@ -82,33 +85,10 @@
     .services-building__text {
       margin-top: var(--space-24);
     }
-    .services-building__grid {
-      display: grid;
+    .services-building__logos {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
       margin-top: 64px;
-    }
-    .services-building__cell {
-      position: relative;
-      aspect-ratio: 264 / 355;
-      overflow: hidden;
-    }
-    /* the whole row, scaled so one tile fills the cell, shifted to tile --i (276 apart) */
-    .services-building__cell img:first-child {
-      position: absolute;
-      top: 0;
-      left: calc(var(--i) * -276 / 264 * 100%);
-      width: calc(1644 / 264 * 100%);
-      max-width: none;
-      height: 100%;
-    }
-    /* Bedrock PNG at (49, 166) in its tile */
-    .services-building__cell-bedrock {
-      position: absolute;
-      left: calc(49 / 264 * 100%);
-      top: calc(166 / 355 * 100%);
-      width: calc(165 / 264 * 100%);
-      height: auto;
     }
   }
 </style>
