@@ -4,6 +4,7 @@
  * Figma: "3 video" (10093:183), 1728×1005 — a 1648×925 video area
  * https://www.figma.com/design/9SsfbCUY7KcxjZpCuRpDxf/Hello-Robo-Website-2026?node-id=10093-183
  * Plays public/videos/showreel.mp4 (muted, looping). Drop the file in and it appears.
+ * Phones get showreel-mobile.mp4 (720p, much lighter) when it's there.
  * Desktop: the block pins while you scroll and the video opens up from its Figma size
  * (page margins, 1648×925) to the full screen — the video fills the screen underneath and a
  * clip around it widens, so nothing is resized frame by frame. Phones: full-bleed as before.
@@ -13,13 +14,14 @@ import VideoSlot from '../../components/ui/VideoSlot.astro';
 
 const has = (f: string) => fs.existsSync(`public/videos/${f}`);
 const src = has('showreel.mp4') ? '/videos/showreel.mp4' : undefined;
+const mobileSrc = has('showreel-mobile.mp4') ? '/videos/showreel-mobile.mp4' : undefined;
 const webm = has('showreel.webm') ? '/videos/showreel.webm' : undefined;
 const poster = has('showreel-poster.jpg') ? '/videos/showreel-poster.jpg' : undefined;
 ---
 <section class="home-showreel" aria-label="Showreel" data-showreel>
   <div class="home-showreel__stage">
     <div class="home-showreel__frame container">
-      <VideoSlot class="home-showreel__video" ratio="1648 / 925" mobileRatio="390 / 694" src={src} webm={webm} poster={poster} autoplay />
+      <VideoSlot class="home-showreel__video" ratio="1648 / 925" mobileRatio="390 / 694" src={src} mobileSrc={mobileSrc} webm={webm} poster={poster} autoplay />
     </div>
   </div>
 </section>

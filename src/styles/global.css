@@ -217,6 +217,13 @@ body::after {
     animation: none;
   }
 }
+/* Phones and tablets: no grain. On a phone the moving full-screen layer flickers hard and
+   costs a lot of memory (with the videos it could crash the tab). */
+@media (hover: none), (pointer: coarse), (max-width: 1023px) {
+  body::after {
+    content: none;
+  }
+}
 h1, h2, h3, h4, p, ul, ol, dl, dd, figure, blockquote {
   margin: 0;
 }

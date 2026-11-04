@@ -6,8 +6,8 @@
  * Under the text, a staggered grid of 13 logos (rows of 3, 2, 3, 2, 3): each sits centred in
  * a 329×193 place; positions are taken from the 1728 frame and expressed as % so they scale
  * with the page.
- * Mobile: three rows of logo tiles bleeding off both edges; while the block crosses the
- * screen the rows drift sideways, alternating directions.
+ * Mobile: the same staggered rows of 3, 2, 3, 2, 3, scaled to fit the screen so every logo
+ * shows; no motion.
  * The logos come from the CMS (Home page › Client logos) and fill the 13 places in order,
  * each at its own width (px at 1728, as in Figma). A place can hold a Hello Robo micrographic
  * instead (CMS "Micrographic"): shown the same way, but decorative (no alt text).
@@ -27,14 +27,20 @@ const FRAME_H = 1381;
 const PLACE_W = 329;
 const PLACE_H = 193;
 const clients = (await getCollection('home'))[0]?.data.clients ?? [];
-// phones: rows of 5, 4, 4
-const mobileRow = (i: number) => (i < 5 ? 0 : i < 9 ? 1 : 2);
+// phones: the same rows of 3, 2, 3, 2, 3 on a 6-column grid (a tile spans 2 columns;
+// rows of 2 start one column in, so they sit between the tiles above)
+const ROWS = [3, 2, 3, 2, 3];
+const mobileSpot = (i: number) => {
+  let r = 0;
+  while (r < ROWS.length - 1 && i >= ROWS[r]) i -= ROWS[r++];
+  return { mrow: r + 1, mcol: (ROWS[r] === 3 ? 1 : 2) + 2 * i };
+};
 const tiles = clients.slice(0, places.length).map((c, i) => ({
   name: c.name,
   src: c.logo,
   width: c.width || 140,
   micrographic: c.micrographic,
-  row: mobileRow(i),
+  ...mobileSpot(i),
   ...places[i],
 }));
 const pct = (v: number, of: number) => `${(v / of) * 100}%`;
@@ -52,34 +58,13 @@ const pct = (v: number, of: number) => `${(v / of) * 100}%`;
     {tiles.map((t) => (
       <li
         class="home-clients__tile"
-        style={`left:${pct(t.x, 1728)};top:${pct(t.y, FRAME_H)};--logo-w:${t.width};--row:${t.row};--dir:${t.row % 2 ? -1 : 1}`}
+        style={`left:${pct(t.x, 1728)};top:${pct(t.y, FRAME_H)};--logo-w:${t.width};--mrow:${t.mrow};--mcol:${t.mcol}`}
       >
         <img src={t.src} alt={t.micrographic ? '' : t.name} loading="lazy" />
       </li>
     ))}
   </ul>
 </section>
-
-<script>
-  // Scroll drift for the mobile logo rows: --shift goes from +1 to -1 as the wall
-  // crosses the screen (the CSS turns it into px and only uses it on phones)
-  const wall = document.querySelector<HTMLElement>('[data-clients-wall]');
-  if (wall && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const r = wall.getBoundingClientRect();
-      const p = Math.min(1, Math.max(0, (innerHeight - r.top) / (innerHeight + r.height)));
-      wall.style.setProperty('--shift', (1 - 2 * p).toFixed(4));
-    };
-    const request = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    addEventListener('scroll', request, { passive: true });
-    addEventListener('resize', request);
-    update();
-  }
-</script>
 
 <style>
   .home-clients {
@@ -126,7 +111,7 @@ const pct = (v: number, of: number) => `${(v / of) * 100}%`;
     object-fit: contain;
   }
 
-  /* ── Mobile: text, then three rows of logo tiles (5, 4, 4) bleeding off both edges ── */
+  /* ── Mobile: text, then the staggered rows (3, 2, 3, 2, 3), all on screen ── */
   @media (max-width: 1023px) {
     .home-clients {
       aspect-ratio: auto;
@@ -149,33 +134,26 @@ const pct = (v: number, of: number) => `${(v / of) * 100}%`;
       max-width: none;
       margin-top: var(--space-24);
     }
-    /* Tiles 165×97 (Figma's 329×193 at half); rows 2 and 3 start half a tile in */
     .home-clients__wall {
-      --tile: 165px;
-      --shift: 0;
       position: relative;
       inset: auto;
       display: grid;
-      grid-template-columns: repeat(5, var(--tile));
-      grid-auto-rows: 97px;
-      gap: 0;
-      width: max-content;
-      margin: 64px 0 0 calc(50% - 2.5 * var(--tile));
+      grid-template-columns: repeat(6, 1fr);
+      margin: 48px var(--page-margin) 0;
     }
     .home-clients__tile {
       position: relative;
       left: auto !important;
       top: auto !important;
-      width: var(--tile);
-      grid-row: calc(var(--row) + 1);
-      transform: translateX(calc(var(--dir) * (var(--tile) / 4 + var(--shift) * 40px)));
+      width: auto;
+      grid-row: var(--mrow);
+      grid-column: var(--mcol) / span 2;
     }
-    .home-clients__tile:nth-child(6),
-    .home-clients__tile:nth-child(10) {
-      grid-column: 1;
-    }
+    /* each logo at its Figma width relative to its place, a bit larger so it reads on a phone */
     .home-clients__tile img {
-      width: calc(var(--logo-w) * 0.5px);
+      width: calc(var(--logo-w) / 329 * 120%);
+      max-width: 85%;
+      max-height: 80%;
     }
   }
 </style>
