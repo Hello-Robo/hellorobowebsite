@@ -151,9 +151,10 @@ const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.
 
   /* ── Mobile: Figma 10098:1661 — cards 276 / 184 wide in a sideways row ── */
   @media (max-width: 1023px) {
+    /* about half Figma's 188 / 175: they read as empty screens */
     .home-news {
-      padding-top: 188px;
-      padding-bottom: 175px;
+      padding-top: 96px;
+      padding-bottom: 88px;
     }
     .home-news__row {
       margin-top: 64px;

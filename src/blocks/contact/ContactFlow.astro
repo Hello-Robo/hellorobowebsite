@@ -460,8 +460,13 @@ const services = [
 
     let homeTimer = 0;
 
+    // Phones and tablets: no focusing a field for the visitor. Its keyboard opening made the
+    // page scroll to the field while the screens were still changing over (a jump to
+    // another part of the page); there they tap the field to type
+    const touch = matchMedia('(pointer: coarse)').matches;
+
     /** Shows screen `step` (the first one for an empty / unknown step) */
-    function show(step: string, focus = true) {
+    function show(step: string, focus = !touch) {
       const target = screens.find((s) => s.dataset.step === step) ?? screens[0];
       const id = target.dataset.step!;
       const prev = root.dataset.shown ? screens.find((s) => s.dataset.step === root.dataset.step) : null;
@@ -577,7 +582,7 @@ const services = [
         if (nextOf[step]) {
           const err = check[step]();
           setError(form, err);
-          if (err) return input?.focus({ preventScroll: true });
+          if (err) return touch ? undefined : input?.focus({ preventScroll: true });
           go(nextOf[step]);
         } else {
           send(form);
@@ -1280,36 +1285,9 @@ const services = [
       margin-top: 16px;
     }
 
-    /* Log: a box in the lower middle, four groups down the left */
-    .contact__log {
-      left: var(--page-margin);
-      right: var(--page-margin);
-      top: 54%;
-      width: auto;
-      height: 32%;
-      font-size: 9px;
-      filter: blur(0.7px);
-    }
-    .contact__log--b {
-      display: none;
-    }
-    .contact__log :global(.contact__group) {
-      left: var(--mx);
-      top: var(--my);
-    }
-    .contact__log :global(.contact__group--desktop) {
-      display: none;
-    }
-
-    /* Printer 510×765 from the top, its centre 76 right of the screen's (Figma mob); on
-       the form screens the fields would sit on its white paper, so it shows on the start
-       screen only */
-    .contact__printer {
-      left: calc(50% + 76px - 255px);
-      top: 0;
-      width: 510px;
-    }
-    .contact:not([data-step='start']) .contact__printer {
+    /* Phones: just the screens (title, buttons, fields) on the plain grey, no printer or
+       log behind them */
+    .contact__bg {
       display: none;
     }
     /* error text a step under the 16px field text, as 18 is under 20 on desktop */

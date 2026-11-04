@@ -153,8 +153,9 @@ import robot from '../../assets/home/hero-robot.png';
       top: var(--space-20);
       width: calc(100% - 2 * var(--page-margin));
     }
+    /* no corner notches: the robot is wider than the screen here, and they cut its arms */
     .home-hero__notch {
-      width: calc(88 / 390 * 100%);
+      display: none;
     }
   }
 </style>
