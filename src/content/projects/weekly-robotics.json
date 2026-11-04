@@ -9,7 +9,7 @@
   "reveal": {
     "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/Weekly+Robotics+Reel+Final.webm"
   },
-  "background": "#1D1D1F",
+  "background": "#151518",
   "micrographics": {
     "left": "/images/services/stamp-branding.svg",
     "right": "/images/home/stamp-radio-yes.svg"
