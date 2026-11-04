@@ -340,12 +340,23 @@ void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
       paint.width = w;
       paint.height = h;
       for (const img of imgs) {
+        const x = img.offsetLeft * k;
+        const y = img.offsetTop * k;
         const bw = img.offsetWidth * k;
         const bh = img.offsetHeight * k;
+        // the whole image, scaled to cover its box and clipped to it. Not a source crop:
+        // naturalWidth is corrected for the srcset density (a photo smaller than its srcset
+        // width reads bigger than its pixels), so a crop in those numbers grabbed the
+        // wrong part of the picture
         const s = Math.max(bw / img.naturalWidth, bh / img.naturalHeight);
-        const sw = bw / s;
-        const sh = bh / s;
-        ctx.drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, img.offsetLeft * k, img.offsetTop * k, bw, bh);
+        const dw = img.naturalWidth * s;
+        const dh = img.naturalHeight * s;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, y, bw, bh);
+        ctx.clip();
+        ctx.drawImage(img, x + (bw - dw) / 2, y + (bh - dh) / 2, dw, dh);
+        ctx.restore();
       }
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, paint);
       sourceKey = key;

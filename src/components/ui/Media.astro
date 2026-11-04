@@ -70,9 +70,12 @@ const videoSrc = isVideo && /^https?:/i.test(media.video) ? `${media.video}${med
 </script>
 
 <style>
+  /* 16:9 until the video's own shape is known (videos load only near the screen, and
+     before that the browser would give the box a 2:1 placeholder) */
   .media-video {
     display: block;
     max-width: 100%;
+    aspect-ratio: auto 16 / 9;
   }
   .media-youtube {
     display: block;

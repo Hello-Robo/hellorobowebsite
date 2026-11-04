@@ -3,11 +3,11 @@
  * Project — Hero
  * Figma: "Frame 2147232848" (10100:12388, 1728×814) and "Frame 2147232797" (10100:12374, 1728×944)
  * https://www.figma.com/design/9SsfbCUY7KcxjZpCuRpDxf/Hello-Robo-Website-2026?node-id=10100-12388
- * Micrographics: a round badge + a wide stamp, one of five sets from the Figma covers
- * (10100:12388, 13836, 14089, 14115, 14141), each placed as in its cover. A random set is
- * picked on every visit (before the first paint, so nothing swaps in view); without
- * JavaScript each project shows a fixed set. If a project's micrographics are changed in
- * the CMS (anything but the default pair), that project always shows its own pair.
+ * Micrographics: a round badge + a wide stamp, both standing on one bottom line. A project
+ * with micrographics in the CMS always shows that pair. One without gets one of five sets
+ * from the Figma covers (10100:12388, 13836, 14089, 14115, 14141), picked at random on
+ * every visit (before the first paint, so nothing swaps in view); without JavaScript it
+ * shows a fixed set.
  * The project's cover (`reveal`) isn't shown here: it's only the Work wheel background.
  */
 import type { CollectionEntry } from 'astro:content';
@@ -18,18 +18,18 @@ interface Props {
 const { id, data } = Astro.props.project;
 const { micrographics } = data;
 
-// Badge (200×200 at x 40) + stamp: src, width, left and bottom edge in the 1728×814 cover
+// Badge (200×200 at x 40) + stamp: src, width and left edge in the 1728×814 cover; both
+// stand on the badge's bottom line (770)
 const SETS = [
-  { badge: '/images/project/badge-25.svg', stamp: { src: '/images/project/stamp-project-hero.svg', w: 238, x: 286, bottom: 774 } },
-  { badge: '/images/project/hero/badge-wild.svg', stamp: { src: '/images/project/hero/label-upgrade.svg', w: 407, x: 278, bottom: 767 } },
-  { badge: '/images/project/hero/badge-humanoids.svg', stamp: { src: '/images/project/hero/label-signal.svg', w: 503, x: 264, bottom: 765 } },
-  { badge: '/images/project/hero/badge-autonomous.svg', stamp: { src: '/images/project/hero/label-human-factor.svg', w: 264, x: 300, bottom: 759 } },
-  { badge: '/images/project/hero/badge-strike.svg', stamp: { src: '/images/project/hero/label-made-together.svg', w: 271, x: 289, bottom: 773 } },
+  { badge: '/images/project/badge-25.svg', stamp: { src: '/images/project/stamp-project-hero.svg', w: 238, x: 286 } },
+  { badge: '/images/project/hero/badge-wild.svg', stamp: { src: '/images/project/hero/label-upgrade.svg', w: 407, x: 278 } },
+  { badge: '/images/project/hero/badge-humanoids.svg', stamp: { src: '/images/project/hero/label-signal.svg', w: 503, x: 264 } },
+  { badge: '/images/project/hero/badge-autonomous.svg', stamp: { src: '/images/project/hero/label-human-factor.svg', w: 264, x: 300 } },
+  { badge: '/images/project/hero/badge-strike.svg', stamp: { src: '/images/project/hero/label-made-together.svg', w: 271, x: 289 } },
 ];
-// a pair chosen in the CMS (other than the default one) replaces the random sets
-const custom =
-  (micrographics.left && micrographics.left !== SETS[0].badge) || (micrographics.right && micrographics.right !== SETS[0].stamp.src);
-if (custom) SETS.splice(0, SETS.length, { badge: micrographics.left ?? SETS[0].badge, stamp: { ...SETS[0].stamp, src: micrographics.right ?? SETS[0].stamp.src } });
+// a pair set in the CMS is the only set (a missing side takes the first set's)
+if (micrographics.left || micrographics.right)
+  SETS.splice(0, SETS.length, { badge: micrographics.left ?? SETS[0].badge, stamp: { ...SETS[0].stamp, src: micrographics.right ?? SETS[0].stamp.src } });
 // fixed set per project for the first paint without JavaScript
 const fallback = [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % SETS.length;
 ---
@@ -45,7 +45,7 @@ const fallback = [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) %
         src={set.stamp.src}
         alt=""
         width={set.stamp.w}
-        style={`--x: ${set.stamp.x}; --w: ${set.stamp.w}; --bottom: ${set.stamp.bottom}`}
+        style={`--x: ${set.stamp.x}; --w: ${set.stamp.w}`}
         loading={i === fallback ? 'eager' : 'lazy'}
       />
     </div>
@@ -92,15 +92,17 @@ const fallback = [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) %
   .project-hero[data-hero-set='4'] .project-hero__set[data-set='4'] {
     display: contents;
   }
-  /* Anchored by their bottom edge (770 / 774 in Figma) so taller graphics grow upwards */
+  /* Both stand on one bottom line (770 in Figma), so taller graphics grow upwards */
+  .project-hero__badge,
+  .project-hero__stamp {
+    bottom: calc((814 - 770) / 814 * 100%);
+  }
   .project-hero__badge {
     left: var(--page-margin);
-    bottom: calc((814 - 770) / 814 * 100%);
     width: calc(200 / 1728 * 100%);
   }
   .project-hero__stamp {
     left: calc(var(--x) / 1728 * 100%);
-    bottom: calc((814 - var(--bottom)) / 814 * 100%);
     width: calc(var(--w) / 1728 * 100%);
   }
   .project-hero__intro {
