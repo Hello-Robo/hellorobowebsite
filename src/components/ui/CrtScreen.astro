@@ -13,7 +13,9 @@
  * vignette 13, brightness 0, speed 1.01. Pixel sizes are design pixels (CSS px), as Figma
  * renders them at 1×.
  * Animates only while visible; with reduced motion it draws one still frame. Without
- * WebGL the canvas hides and the plain image shows.
+ * WebGL the canvas hides and the plain image shows. Phones and tablets (no mouse, or up to
+ * 1023px wide) get the plain image too: each canvas is a WebGL context of its own, and a
+ * few of them (the menu's two, the Careers strip…) were enough for iOS to drop the tab.
  * `overlay`: for content the page can't read (a YouTube player) — the effect runs on a
  * plain white signal and the canvas lays the result over whatever is underneath as black
  * of varying transparency (no blend mode: Chrome draws mix-blend-mode over a video frame
@@ -268,10 +270,12 @@ varying vec2 vUv;
 void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
 
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // desktop only (see above): elsewhere no WebGL at all, the plain image shows
+  const desktop = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px)').matches;
 
   for (const canvas of document.querySelectorAll<HTMLCanvasElement>('canvas[data-crt]')) {
     const box = canvas.parentElement;
-    const gl = canvas.getContext('webgl', { premultipliedAlpha: true, alpha: true });
+    const gl = desktop ? canvas.getContext('webgl', { premultipliedAlpha: true, alpha: true }) : null;
     if (!box || !gl) {
       canvas.hidden = true;
       continue;
