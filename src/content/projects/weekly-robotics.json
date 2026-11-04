@@ -9,6 +9,7 @@
   "reveal": {
     "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/Weekly+Robotics+Reel+Final.webm"
   },
+  "background": "#1D1D1F",
   "micrographics": {
     "left": "/images/project/badge-25.svg",
     "right": "/images/project/stamp-project-hero.svg"
