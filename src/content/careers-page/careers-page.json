@@ -4,46 +4,46 @@
       "photo": "../../assets/careers-page/team-01.png"
     },
     {
-      "photo": "../../assets/careers-page/team-02.png"
+      "photo": "../../assets/careers-page/rectangle-240657345-57d9d7.png"
     },
     {
-      "photo": "../../assets/careers-page/team-03.png"
+      "photo": "../../assets/careers-page/rectangle-240657339-6dfc71.png"
     },
     {
-      "photo": "../../assets/careers-page/team-04.png"
+      "photo": "../../assets/careers-page/rectangle-240657340-c0f0d9.png"
     },
     {
-      "photo": "../../assets/careers-page/team-05.png"
+      "photo": "../../assets/careers-page/rectangle-240657342-7963f9.png"
     },
     {
-      "photo": "../../assets/careers-page/team-06.png"
+      "photo": "../../assets/careers-page/rectangle-240657341-29f9c9.png"
     },
     {
-      "photo": "../../assets/careers-page/team-07.png"
+      "photo": "../../assets/careers-page/rectangle-240657343-34b385.png"
     },
     {
-      "photo": "../../assets/careers-page/team-08.png"
+      "photo": "../../assets/careers-page/rectangle-240657344-432bf2.png"
     }
   ],
   "values": [
     {
-      "kanji": "好奇心",
-      "name": "Curiosity",
-      "text": "We ask the extra question, look past the obvious answer and stay interested in how people and machines understand each other.",
+      "kanji": "探索者",
+      "name": "Explorer",
+      "text": "We embrace the mindset of constant discovery and growth. We believe there’s always a way to become better, both as individuals and as a team.",
       "image": "../../assets/careers-page/values-robot.png",
       "imageAlt": "Hello Robo robot in front of floating receipts"
     },
     {
-      "kanji": "思いやり",
+      "kanji": "集合知",
+      "name": "Collective Intelligence",
+      "text": "We never work in silos. We tap into the collective genius of peers, clients, and users. Collaboration isn’t optional—it’s how we thrive.",
+      "image": "../../assets/careers-page/values-robot.png",
+      "imageAlt": "Hello Robo robot in front of floating receipts"
+    },
+    {
+      "kanji": "配慮",
       "name": "Care",
-      "text": "We design with consideration—for the people using the product, the team building it and the world meeting it.",
-      "image": "../../assets/careers-page/values-robot.png",
-      "imageAlt": "Hello Robo robot in front of floating receipts"
-    },
-    {
-      "kanji": "技",
-      "name": "Craft",
-      "text": "We believe the details do the talking. Every word, screen and movement should feel intentional.",
+      "text": "We care and respect each other, our clients and our work. If we do that, we will have highest quality of work, best work environment and team of like minded people who support each other.",
       "image": "../../assets/careers-page/values-robot.png",
       "imageAlt": "Hello Robo robot in front of floating receipts"
     }
