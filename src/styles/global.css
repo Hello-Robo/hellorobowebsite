@@ -3,8 +3,9 @@
 
 /* ── Page transitions (src/scripts/page-transition.ts) ───────────────────────────────
    Black columns rise from the bottom (left to right, a beat apart) until the screen is
-   black, the Hello Robo logo in the middle; the new page opens covered, the robot blinks,
-   the columns drop back down. 8 columns, 5 on phones. Sits under the film grain. */
+   black, the loading screen shows in the middle (as on the first page of a visit) while
+   the new page loads, then the columns drop back down. 8 columns, 5 on phones. Sits under
+   the film grain. */
 .pt {
   position: fixed;
   inset: 0;
@@ -32,49 +33,21 @@ html:is(.pt-cover, .pt-hold) .pt__col {
 }
 html.pt-in .pt__col {
   transform: none;
-  transition: transform 0.55s cubic-bezier(0.76, 0, 0.24, 1) calc(var(--i) * 50ms);
+  transition: transform 0.63s cubic-bezier(0.76, 0, 0.24, 1) calc(var(--i) * 58ms);
 }
 html.pt-out .pt__col {
-  transition: transform 0.65s cubic-bezier(0.76, 0, 0.24, 1) calc(var(--i) * 55ms);
+  transition: transform 0.75s cubic-bezier(0.76, 0, 0.24, 1) calc(var(--i) * 63ms);
 }
 @media (max-width: 1023px) {
   .pt__col:nth-child(n + 6) {
     display: none;
   }
 }
-/* Logo 94×51 (Figma 120×69 frame), centred; two frames for the blink */
-.pt__logo {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: max(64px, calc(94 * var(--px)));
-  translate: -50% -50%;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-html:is(.pt-cover, .pt-hold) .pt__logo {
-  opacity: 1;
-}
-.pt__logo img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.pt__eyes-closed,
-.pt__logo.is-blink .pt__eyes-open {
-  display: none !important;
-}
-.pt__logo.is-blink .pt__eyes-closed {
-  display: block !important;
-}
-/* First page of a visit (html.pt-load): instead of the logo, 10 site micrographics flick
-   past one at a time, all in brand orange (each SVG used as a mask), ~72px, in the logo's
-   spot. Not rendered on other pages, so the files only load for the loading screen. */
+/* Loading screen (html.pt-load), on the first page of a visit and between pages: 10 site
+   micrographics flick past one at a time in the middle, all in brand orange (each SVG used
+   as a mask), ~72px. Not rendered otherwise, so the files only load for the loading screen. */
 .pt__gfx {
   display: none;
-}
-html.pt-load .pt__logo {
-  visibility: hidden;
 }
 html.pt-load .pt__gfx {
   display: block;
@@ -92,9 +65,9 @@ html.pt-load .pt__gfx {
   -webkit-mask: var(--src) center / contain no-repeat;
   mask: var(--src) center / contain no-repeat;
   opacity: 0;
-  /* 10 frames × 160ms, a hard cut from one to the next */
-  animation: pt-gfx 1.6s steps(1, end) infinite;
-  animation-delay: calc((var(--i) - 10) * 160ms);
+  /* 10 frames × 184ms, a hard cut from one to the next */
+  animation: pt-gfx 1.84s steps(1, end) infinite;
+  animation-delay: calc((var(--i) - 10) * 184ms);
 }
 @keyframes pt-gfx {
   0% {
@@ -105,8 +78,8 @@ html.pt-load .pt__gfx {
     opacity: 0;
   }
 }
-/* Loading bar, on the first page of a visit only (html.pt-load): 1px under the logo, grey,
-   filling brand orange as the page's fonts and images arrive */
+/* Loading bar (html.pt-load): 1px under the micrographics, grey, filling brand orange as
+   the page's fonts and images arrive */
 .pt__bar {
   position: absolute;
   left: 50%;
@@ -226,6 +199,10 @@ body {
 @media (hover: hover) {
   .button:hover .button__label:not(.is-pixel),
   :is(.nav-pill__toggle, .site-menu__talk):hover .t-button:not(.is-pixel) {
+    color: var(--color-orange);
+  }
+  /* and their icons (drawn in currentColor; the pixel hover draws them in orange too) */
+  :is(.button, .get-in-touch, .site-menu__talk, .nav-pill__toggle, .nav-pill__back, .nav-pill__close, .radio-tv__btn, .team-card__close):hover svg {
     color: var(--color-orange);
   }
 }

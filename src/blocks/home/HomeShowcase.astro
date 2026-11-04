@@ -1,7 +1,7 @@
 ---
 /**
- * Home — Showcase ("What it took those founders…" + "Make the … say yes")
- * Figma: intro + slides, each 1728×1117 full screen:
+ * Home — Showcase ("Make the … say yes")
+ * Figma: slides, each 1728×1117 full screen:
  *   1 "Make the world say yes"     — 10093:250 (photo block)
  *   2 "Make the operators say yes" — 10203:131
  *   3 "Make the market say yes"    — 10203:481
@@ -56,7 +56,6 @@ const slides = [
 ];
 ---
 <section class="home-showcase">
-  <h2 class="home-showcase__intro t-h3 container">What it took those founders to be ready for that moment.</h2>
 
   <div class="home-showcase__scroller" style={`--slides: ${slides.length}`} data-showcase>
     <div class="home-showcase__stage" data-active="0">
@@ -165,18 +164,12 @@ const slides = [
   .home-showcase {
     padding-top: calc(160 * var(--px));
   }
-  .home-showcase__intro {
-    width: calc(818 * var(--px) + 2 * var(--page-margin));
-    max-width: 100%;
-    margin-inline: 0;
-  }
 
   /* Half a screen to widen + one screen per slide; the stage stays pinned meanwhile */
   .home-showcase__scroller {
     --expand: 0.5;
     position: relative;
     height: calc((var(--slides) + var(--expand)) * 100vh);
-    margin-top: calc(80 * var(--px));
   }
   .home-showcase__stage {
     position: sticky;
@@ -321,19 +314,15 @@ const slides = [
     }
   }
 
-  /* ── Mobile: intro (Figma 10098:3679) + slides "block 1 / 2 / block" (390×694).
+  /* ── Mobile: slides "block 1 / 2 / block" (390×694).
      Content sits at the bottom: rule, title 24 below, services 44 below ── */
   @media (max-width: 1023px) {
     .home-showcase {
       padding-top: 164px;
     }
-    .home-showcase__intro {
-      width: auto;
-    }
     .home-showcase__scroller {
       --expand: 0;
       height: calc(var(--slides) * 100svh);
-      margin-top: 40px;
     }
     .home-showcase__stage {
       height: 100svh;

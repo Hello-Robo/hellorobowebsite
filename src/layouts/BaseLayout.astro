@@ -58,9 +58,9 @@ const pageTitle = title === 'Home' ? 'Hello Robo — Make the world say yes to y
     <meta name="description" content={description} />
     <link rel="preload" href="/fonts/AllianceNo2-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <!-- Page transition (src/scripts/page-transition.ts): a page reached through it opens
-         covered by the black columns, before its first paint; one being prepared in the
-         background while hovering a link does too (uncovered on arrival if it wasn't).
-         The first page of a visit opens covered too, with the loading bar (pt-load). -->
+         covered by the black columns with the loading screen (pt-load), before its first
+         paint; one being prepared in the background while hovering a link does too
+         (uncovered on arrival if it wasn't). The first page of a visit opens the same way. -->
     <script is:inline>
       (() => {
         if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -71,8 +71,7 @@ const pageTitle = title === 'Home' ? 'Hello Robo — Make the world say yes to y
           came = sessionStorage.getItem('pt') === '1';
           first = !sessionStorage.getItem('pt-loaded');
         } catch {}
-        if (came || document.prerendering) html.classList.add('pt-cover');
-        else if (first) html.classList.add('pt-cover', 'pt-load');
+        if (came || first || document.prerendering) html.classList.add('pt-cover', 'pt-load');
       })();
     </script>
     <!-- Hovering a link to another page of the site (~200ms) prepares that page in the
@@ -100,11 +99,7 @@ const pageTitle = title === 'Home' ? 'Hello Robo — Make the world say yes to y
   <body>
     <div class="pt" aria-hidden="true">
       <span class="pt__col" style="--i: 0"></span><span class="pt__col" style="--i: 1"></span><span class="pt__col" style="--i: 2"></span><span class="pt__col" style="--i: 3"></span><span class="pt__col pt__col--wide" style="--i: 4"></span><span class="pt__col pt__col--wide" style="--i: 5"></span><span class="pt__col pt__col--wide" style="--i: 6"></span><span class="pt__col pt__col--wide" style="--i: 7"></span>
-      <span class="pt__logo" data-pt-logo>
-        <img class="pt__eyes-open" src="/images/transition/logo-open.svg" alt="" width="94" height="51" />
-        <img class="pt__eyes-closed" src="/images/transition/logo-blink.svg" alt="" width="94" height="51" />
-      </span>
-      {/* first visit only (html.pt-load): site micrographics flicking past in brand orange */}
+      {/* the loading screen (html.pt-load): site micrographics flicking past in brand orange */}
       <span class="pt__gfx">
         {loaderGraphics.map((src, i) => <i style={`--i: ${i}; --src: url(${src})`}></i>)}
       </span>

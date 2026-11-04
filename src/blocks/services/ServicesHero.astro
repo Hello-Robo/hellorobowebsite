@@ -7,13 +7,14 @@
 ---
 <section class="services-hero container">
   <h1 class="services-hero__title t-h1">
-    We design every reason<br /> to say yes
+    Building the robot was never the hard&nbsp;part.
     <img class="services-hero__stamp" src="/images/services/stamp-thinkers.svg" alt="" width="252" style="--w: 252" height="82" />
   </h1>
   <div class="services-hero__intro">
     <p class="t-body">Our services</p>
     <p class="services-hero__text t-body">
-      We start with what people need to understand, trust and believe before they say yes. Then we bring brand, product and film together as one system — grounded in real behavior, made clear through design and built for operators, the market and the world.
+      The hard part was building for humans, so the world says yes to your robot.<br />
+      We design for that moment.
     </p>
   </div>
 </section>
@@ -23,20 +24,20 @@
     padding-top: var(--space-40);
     padding-bottom: calc(39 * var(--px));
   }
+  /* Figma's 1233 wide, the two lines balanced */
   .services-hero__title {
-    position: relative;
     width: calc(1233 * var(--px));
     max-width: 100%;
+    text-wrap: balance;
   }
-  /* Stamp after "to say yes" exactly where Figma has it (539, 174 in the frame = 499, 135
-     from the title), not flowed after the text: the browser sets the line a little wider
-     or narrower than Figma, which left the stamp 12px from "yes" instead of Figma's 22 */
+  /* the stamp follows the last word, 22 after it (as Figma has it after "yes"), and
+     drops to the next line with it if the line runs out */
   .services-hero__stamp {
-    position: absolute;
-    left: calc(499 * var(--px));
-    top: calc(135 * var(--px));
+    display: inline-block;
     width: calc(252 * var(--px));
     height: auto;
+    margin-left: calc(22 * var(--px));
+    vertical-align: calc(0.1em);
   }
   .services-hero__intro {
     display: grid;
@@ -48,9 +49,6 @@
   @media (max-width: 1023px) {
     .services-hero {
       padding-top: var(--space-20);
-    }
-    .services-hero__title br {
-      display: none;
     }
     .services-hero__stamp {
       position: static;

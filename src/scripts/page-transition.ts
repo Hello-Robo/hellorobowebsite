@@ -1,44 +1,34 @@
 /**
  * Page to page transition — after the reference: black columns rise from the bottom, a beat
- * apart left to right, until the screen is black; the Hello Robo logo sits in the middle
- * (Figma "transition" 10434:7805 / 10434:7902). The new page opens covered, the robot blinks
- * twice, then the columns drop back down, left to right, and the page shows.
+ * apart left to right, until the screen is black (Figma "transition" 10434:7805). Then the
+ * loading screen shows, the same as on the first page of a visit: site micrographics
+ * flicking past and a 1px loading bar that fills as the new page loads (load()); then the
+ * columns drop back down, left to right, and the page shows.
  *
  * The overlay is in BaseLayout; an inline script in <head> marks a page that should open
- * covered (html.pt-cover) before its first paint. Links to other pages of the site are
- * caught here; new tabs, downloads, the CMS, hash links and links other scripts already
+ * covered (html.pt-cover pt-load) before its first paint. Links to other pages of the site
+ * are caught here; new tabs, downloads, the CMS, hash links and links other scripts already
  * handle (e.g. Get in touch opening the contact block) are left alone. Back / forward from
- * the browser cache uncovers too. The first page of a visit opens covered as well, with a
- * 1px loading bar, and a loop of site micrographics in place of the logo (load()). Off for reduced motion.
+ * the browser cache uncovers too. Off for reduced motion.
  */
 
 const html = document.documentElement;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const KEY = 'pt';
 
-/** columns rise: 0.55s each, 50ms apart; logo shows once they're all up */
-const COVER_MS = 550 + 7 * 50;
+/** columns rise: 0.63s each, 58ms apart (keep in step with .pt__col in global.css) */
+const COVER_MS = 630 + 7 * 58;
 /** columns drop back down */
-const UNCOVER_MS = 650 + 7 * 55;
+const UNCOVER_MS = 750 + 7 * 63;
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** eyes: open → closed → open → closed → open */
-async function blink() {
-  const logo = document.querySelector<HTMLElement>('[data-pt-logo]');
-  if (!logo) return;
-  for (const [closed, ms] of [[false, 200], [true, 320], [false, 300], [true, 320], [false, 220]] as const) {
-    logo.classList.toggle('is-blink', closed);
-    await wait(ms);
-  }
-}
-
 /**
- * First page of a visit: the cover stays up while the loading bar fills with the page's
+ * A page opened covered: the cover stays up while the loading bar fills with the page's
  * fonts, the pictures it loads straight away and the page load itself (never shorter than
- * MIN_LOAD, never longer than MAX_LOAD), then the page is revealed as after a transition
+ * MIN_LOAD, never longer than MAX_LOAD), then the page is revealed
  */
-const MIN_LOAD = 900;
+const MIN_LOAD = 1035;
 const MAX_LOAD = 8000;
 async function load() {
   try {
@@ -65,32 +55,28 @@ async function load() {
   done = tasks.length;
   show();
   await wait(Math.max(350, MIN_LOAD - (performance.now() - started)));
-  await reveal(true);
+  await reveal();
 }
 
-/**
- * The new page is in: blink, then drop the columns. After the first-visit loading screen
- * (`loaded`) the micrographics loop was showing instead of the logo, so no blink there.
- */
-async function reveal(loaded = false) {
+/** The new page is in: drop the columns */
+async function reveal() {
   try {
     sessionStorage.removeItem(KEY);
   } catch {}
   html.classList.add('pt-cover');
-  await Promise.race([document.fonts?.ready, wait(600)]);
-  if (!loaded) await blink();
   html.classList.remove('pt-cover', 'pt-in', 'pt-hold', 'pt-load');
   html.classList.add('pt-out');
   await wait(UNCOVER_MS + 50);
   html.classList.remove('pt-out');
 }
 
-/** Cover the page, then go to `url` */
+/** Cover the page, show the loading screen, then go to `url` */
 async function leave(url: string) {
   html.classList.remove('pt-out');
   html.classList.add('pt-in');
   await wait(COVER_MS);
-  html.classList.add('pt-hold');
+  document.querySelector<HTMLElement>('[data-pt-bar]')?.style.setProperty('--p', '0');
+  html.classList.add('pt-hold', 'pt-load');
   try {
     sessionStorage.setItem(KEY, '1');
   } catch {}
@@ -121,15 +107,13 @@ if (!reduced) {
         try {
           came = sessionStorage.getItem(KEY) === '1';
         } catch {}
-        if (came) reveal();
-        else html.classList.remove('pt-cover');
+        if (came) load();
+        else html.classList.remove('pt-cover', 'pt-load');
       },
       { once: true },
     );
   } else if (html.classList.contains('pt-load')) {
     load();
-  } else if (html.classList.contains('pt-cover')) {
-    reveal();
   }
 
   // links to other pages: cover first (bubble phase, after other scripts had their say)

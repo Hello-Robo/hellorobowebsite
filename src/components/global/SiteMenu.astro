@@ -18,7 +18,7 @@ import RoboLogo from '../icons/RoboLogo.astro';
 import CrtScreen from '../ui/CrtScreen.astro';
 import { mainNav, socials } from '../../data/site';
 import type { ImageMetadata } from 'astro';
-import robot from '../../assets/menu/menu-robot.png';
+import robot from '../../assets/menu/menu-hello.png'; // Figma 10507:91: the robot in front of the micrographic
 
 // Studio photos, exported from Figma at the card's 2× size (1082×674)
 const photos = Object.values(
@@ -66,7 +66,7 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path === href 
       </div>
       <section class="site-menu__panel site-menu__hello">
         <Image class="site-menu__robot" src={robot} alt="" widths={[541, 1082]} sizes="(min-width: 1728px) 541px, 32vw" loading="lazy" />
-        <img class="site-menu__micro" src="/images/menu/menu-micrographic.svg" alt="" width="380" height="224" />
+        <CrtScreen />
         <p class="site-menu__hello-title t-body">Say hello</p>
         <ul class="site-menu__socials t-body">
           {socials.map((s, i) => <li><a href={s.href} target="_blank" rel="noopener"><span class="site-menu__mask"><span style={`--d: ${i}`}>{s.label}</span></span></a></li>)}
@@ -200,11 +200,11 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path === href 
       opacity 0.3s ease;
     transition-delay: calc(var(--p) * 0.04s);
   }
-  .site-menu :is(.site-menu__head, .site-menu__talk > *, .site-menu__micro, .site-menu__hello-title) {
+  .site-menu :is(.site-menu__head, .site-menu__talk > *, .site-menu__hello-title) {
     opacity: 0;
     transition: opacity 0.22s ease;
   }
-  :global(html[data-menu='open']) .site-menu :is(.site-menu__head, .site-menu__talk > *, .site-menu__micro, .site-menu__hello-title) {
+  :global(html[data-menu='open']) .site-menu :is(.site-menu__head, .site-menu__talk > *, .site-menu__hello-title) {
     opacity: 1;
     transition: opacity 0.4s ease 0.22s;
   }
@@ -327,18 +327,15 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path === href 
     height: 100%;
     object-fit: cover;
   }
-  /* The studio photos are stacked; only the current one shows (CrtScreen draws it
-     through Figma's CRT shader on top) */
+  /* The studio photos are stacked; only the current one shows. CrtScreen draws it (and the
+     Say hello picture) through Figma's CRT shader on top */
   .site-menu__photo :global(img:not(.is-current)) {
     visibility: hidden;
   }
-  /* Micrographic 380×224 at (154, -7) on the card */
-  .site-menu__micro {
-    position: absolute;
-    left: calc(154 / 541 * 100%);
-    top: calc(-7 * var(--px));
-    width: calc(380 / 541 * 100%);
-    height: auto;
+  /* the text sits over the picture's CRT layer */
+  .site-menu__hello-title,
+  .site-menu__socials {
+    z-index: 3;
   }
   .site-menu__hello-title {
     position: absolute;

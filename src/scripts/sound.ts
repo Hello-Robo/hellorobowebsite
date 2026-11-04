@@ -3,7 +3,9 @@
  * synthesized in the browser (Web Audio), so there are no audio files to load or license.
  *
  * Every play varies (a few takes of each, pitch / level / timing nudged at random):
- *  hover    a soft blip (double, up or down, pips, chirp…) as a button / link starts its pixel hover
+ *  hover    a soft blip (double, up or down, pips, chirp…) when the mouse comes onto anything
+ *           that reacts to it: buttons and links as their pixel hover starts (button-hover.ts),
+ *           everything else here (pictures, cards, project names, team objects, labels…)
  *  tick     a tiny digital tick on each frame of the letters settling (very quiet, high)
  *  click    a short bright click on press
  *  error    a low two-note "nope" when the contact form shows an error
@@ -11,8 +13,9 @@
  *
  * Browsers only let a page make sound after the visitor has clicked, tapped or pressed a key,
  * so everything is silent until then. Off when the visitor has turned it off
- * (localStorage "sound" = "off"). Presses on buttons and links click on their own (below);
- * the hover, the ticks and the form sounds are called by button-hover.ts and the contact block.
+ * (localStorage "sound" = "off"). Presses on buttons and links click on their own, and
+ * hovers on whatever has no pixel hover blip here too (below); the pixel hover's blip, the
+ * ticks and the form sounds are called by button-hover.ts and the contact block.
  */
 
 type Name = 'hover' | 'tick' | 'click' | 'error' | 'success';
@@ -184,4 +187,22 @@ addEventListener(
     if ((e.target as Element).closest?.('a[href], button, [role="button"], .contact__card')) sfx('click');
   },
   { capture: true },
+);
+
+// the hover blip on everything else that reacts to the mouse: picture links, cards, the
+// project wheel's names, the Team objects, form labels… (once per element, as the mouse
+// comes onto it; the pixel hover already blips for its own buttons and links)
+const HOVERABLE =
+  'a[href], button, [role="button"], label, summary, select, .contact__card, .team-obj, .project-wheel__name.is-shown, .home-news__link';
+let hovered: Element | null = null;
+addEventListener(
+  'pointerover',
+  (e) => {
+    if (e.pointerType !== 'mouse') return;
+    const el = (e.target as Element).closest?.(HOVERABLE) ?? null;
+    if (el === hovered) return;
+    hovered = el;
+    if (el && !el.closest('.has-hover-fx')) sfx('hover');
+  },
+  { passive: true, capture: true },
 );

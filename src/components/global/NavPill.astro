@@ -172,6 +172,11 @@ const { back } = Astro.props;
   .nav-pill :global(.nav-pill__dots) {
     color: var(--color-grey-400);
   }
+  @media (hover: hover) {
+    .nav-pill__toggle:hover :global(.nav-pill__dots) {
+      color: var(--color-orange);
+    }
+  }
 
   /* ── Open / closed (placeholder transitions — motion step refines them) ── */
   .nav-pill__menu,

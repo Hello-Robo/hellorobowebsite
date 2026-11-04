@@ -58,14 +58,14 @@ const robotTop = variant === 'hero' ? 655 : 528;
 const pct = (v: number, of: number) => `${(v / of) * 100}%`;
 // Player bar: hero (105, 843) · episode (110, 759) — Figma's controls frame + its 5px inset
 const bar = variant === 'hero' ? { x: 105, y: 843 } : { x: 110, y: 759 };
-// The TV's screen shape: Figma's vector mask (10485:112: the main screen with cut corners
-// and the two side screens), stretched across the TV's whole width and 10% taller than the
+// The TV's screen shape: Figma's vector mask (10499:212, 1812×752: the main screen with
+// its top and bottom curving in and the two side screens), stretched across the TV's whole width and 10% taller than the
 // poster's printed screen (744, less 12 at the top and bottom), centred on it (or lower). Only the
 // mask stretches: inside it is the poster's own noise (a patch of it, tiled), and over
 // that the poster as it is (a hair wider, ~2%, so its printed edges stay outside), fading
 // out just inside its printed screen's top and bottom. The video plays through the same
 // shape.
-const MASK_W = 1728;
+const MASK_W = 1812;
 const maskLeft = 0;
 const maskW = 1730;
 const fitH = 744 - 24;
@@ -84,9 +84,9 @@ const fitX = (from0: number, from1: number, to0: number, to1: number) => {
   const k = (to1 - to0) / (from1 - from0);
   return { k, x0: to0 - from0 * k, style: `left:${pct(to0 - from0 * k, 1730)};width:${pct(1730 * k, 1730)}` };
 };
-// the printed main screen (113–1615, 8 in) onto the mask's main screen; the robot in front
-// moves with it, so it stays on the poster's own robot
-const main = fitX(121, 1607, at(108.55), at(1625.32));
+// the printed main screen (113–1615, 8 in) onto the mask's main screen (x 119.7–1692.4 at
+// its widest); the robot in front moves with it, so it stays on the poster's own robot
+const main = fitX(121, 1607, at(119.7), at(1692.4));
 const mainFit = main.style;
 const robotX = main.x0 + 678 * main.k;
 const robotW = 442 * main.k;
