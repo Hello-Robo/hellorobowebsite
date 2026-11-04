@@ -185,43 +185,37 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-/* Film grain over every page, after codepen.io/komarovdesign/pen/VwVgLMw (abjt.dev, MIT):
-   its noise tile (public/images/noise.png, 400×400) at 80%, sliding about the screen in
-   a one-second loop. Moved with transform rather than the pen's background-position, so
-   it isn't repainted every frame; the tile repeats every 400px, so the layer only needs
-   that much spare on each side. Never takes clicks; holds still for reduced motion. */
-body::after {
-  content: '';
-  position: fixed;
-  inset: -400px;
-  z-index: var(--z-grain);
-  pointer-events: none;
-  background: url('/images/noise.png') repeat 0 0;
-  opacity: 0.8;
-  animation: grain 1s infinite;
+/* Film grain over every page, desktop only (on phones a full-screen moving layer flickers
+   and costs too much memory). The 400×400 noise tile (public/images/noise.png) fills a
+   layer one tile bigger than the screen, up and to the left; the layer jumps to a new
+   offset ~10 times a second (steps, no sliding between them), and since the tile repeats
+   every 400px, an offset of 0–400px always leaves the screen covered. Moving the layer
+   (transform) is done by the GPU: nothing is repainted. Holds still for reduced motion. */
+@media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
+  body::after {
+    content: '';
+    position: fixed;
+    inset: -400px 0 0 -400px;
+    z-index: var(--z-grain);
+    pointer-events: none;
+    background: url('/images/noise.png');
+    opacity: 0.8;
+    animation: grain 0.8s steps(1) infinite;
+  }
 }
 @keyframes grain {
-  0%, 100% { transform: translate(0, 0); }
-  10% { transform: translate(-80px, -160px); }
-  20% { transform: translate(-240px, 80px); }
-  30% { transform: translate(112px, -400px); }
-  40% { transform: translate(320px, 400px); }
-  50% { transform: translate(-400px, 160px); }
-  60% { transform: translate(240px, 80px); }
-  70% { transform: translate(0, 240px); }
-  80% { transform: translate(400px, 360px); }
-  90% { transform: translate(-160px, 160px); }
+  0% { transform: translate(0, 0); }
+  12.5% { transform: translate(160px, 320px); }
+  25% { transform: translate(320px, 80px); }
+  37.5% { transform: translate(40px, 240px); }
+  50% { transform: translate(280px, 360px); }
+  62.5% { transform: translate(120px, 40px); }
+  75% { transform: translate(360px, 200px); }
+  87.5% { transform: translate(200px, 120px); }
 }
 @media (prefers-reduced-motion: reduce) {
   body::after {
     animation: none;
-  }
-}
-/* Phones and tablets: no grain. On a phone the moving full-screen layer flickers hard and
-   costs a lot of memory (with the videos it could crash the tab). */
-@media (hover: none), (pointer: coarse), (max-width: 1023px) {
-  body::after {
-    content: none;
   }
 }
 h1, h2, h3, h4, p, ul, ol, dl, dd, figure, blockquote {
