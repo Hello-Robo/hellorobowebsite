@@ -19,7 +19,6 @@
  */
 
 import { makeCanvas, pixelFrame } from './pixel';
-import { sfx } from './sound';
 
 const SELECTOR = [
   '.button',
@@ -306,8 +305,6 @@ function setup(btn: HTMLElement, labelSelector?: string, opts: Options = {}) {
           release(lbl);
           return;
         }
-        // a tiny digital tick as the letters change (not on the last, settled frame)
-        if (f < frames) sfx('tick');
         lbl.textContent =
           f === frames
             ? word
@@ -397,10 +394,8 @@ function setup(btn: HTMLElement, labelSelector?: string, opts: Options = {}) {
     };
   };
 
-  const play = (mouse = true) => {
+  const play = () => {
     settle();
-    // a press already clicks (sound.ts): the hover blip only for a mouse
-    if (mouse) sfx('hover');
     const look = variation([...(label?.textContent?.trim() ?? '')].length);
     if (label) playText(label, look);
     playIcon(look);
@@ -415,7 +410,7 @@ function setup(btn: HTMLElement, labelSelector?: string, opts: Options = {}) {
   });
   // phones and tablets: on press (it plays out even after the finger lifts)
   btn.addEventListener('pointerdown', (e) => {
-    if (e.pointerType !== 'mouse' && !running && enabled()) play(false);
+    if (e.pointerType !== 'mouse' && !running && enabled()) play();
   });
 }
 
