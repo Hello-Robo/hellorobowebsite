@@ -29,6 +29,10 @@
  * (main screen + two side screens), so they show the real left and right edges of the
  * picture (one player). The poster shows through the same shape (its noise and text), so the
  * screen has that shape before anything plays too; outside it the TV is black.
+ * Robot: on desktop the photo in front of the screen is replaced by the 3D model, seen from
+ * behind, his head tilted up to the screen and following the picture side to side (it
+ * doesn't follow the mouse); the screen's light on him flickers while an episode plays.
+ * Phones keep the photo.
  */
 import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
@@ -88,6 +92,21 @@ const main = fitX(121, 1607, at(119.7), at(1692.4));
 const mainFit = main.style;
 const robotX = main.x0 + 678 * main.k;
 const robotW = 442 * main.k;
+// Desktop: the robot is a live 3D model seen from behind (src/scripts/tv-robot.ts), on a
+// canvas round the photo's place — half its width more on each side and a third of its
+// height above, down to the TV's bottom — with his head where the photo's is (its middle
+// 45% across and 29% down the 442×405 picture, 55% of its width)
+const robotH = 405 * main.k;
+const box = { x: robotX - robotW * 0.5, y: robotTop - robotH / 3, w: robotW * 2 };
+const boxH = h - box.y;
+// the poster has the photo robot printed into it too: on desktop a soft hole round its
+// head lets the screen's plain noise (underneath) show there instead (fractions of the poster)
+const posterRobot = variant === 'hero' ? '13% 21% at 50.75% 82%' : '13% 19% at 50.75% 79%';
+const head3d = {
+  x: (robotX + robotW * 0.45 - box.x) / box.w,
+  y: (robotTop + robotH * 0.29 - box.y) / boxH,
+  share: (robotW * 0.55) / box.w,
+};
 const maskSize = `100% ${pct(maskH, h)}`;
 const maskPos = `0 ${pct(maskTop, h - maskH)}`;
 // The screen's Figma settings, flat glass (curvature 0) so the video keeps square corners
@@ -109,7 +128,7 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
        in all of it, and the poster itself (its text) over the main screen -->
   <div class="radio-tv__glass radio-tv__glass--noise" aria-hidden="true" style={`--mask-size:${maskSize};--mask-pos:${maskPos};--noise-size:${noiseSize}`}></div>
   <div class="radio-tv__glass radio-tv__glass--main" style={`--mask-size:${maskSize};--mask-pos:${maskPos}`}>
-    <div class="radio-tv__fit" style={`${mainFit};--fade:${fade}`}>
+    <div class="radio-tv__fit" style={`${mainFit};--fade:${fade};--poster-robot:${posterRobot}`}>
       <WebGLSlot name="radio-tv" class="radio-tv__scene">
         <Image src={poster} alt="" widths={[1730, 3460]} sizes="100vw" loading={variant === 'hero' ? 'eager' : 'lazy'} />
       </WebGLSlot>
@@ -130,6 +149,7 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
     </button>
   )}
   <!-- The robot stands in front of the screen, so the video plays behind it -->
+ <div class="radio-tv__robot-3d" data-tv-robot data-head-x={head3d.x} data-head-y={head3d.y} data-head-share={head3d.share} style={`left:${pct(box.x, 1730)};top:${pct(box.y, h)};width:${pct(box.w, 1730)};height:${pct(boxH, h)}`}></div>
   <Image class="radio-tv__robot" src={robot} alt="" widths={[442, 884]} sizes="26vw" loading={variant === 'hero' ? 'eager' : 'lazy'} style={`left:${pct(robotX, 1730)};top:${pct(robotTop, h)};width:${pct(robotW, 1730)}`} />
   </div>
 
@@ -159,6 +179,13 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
 </section>
 
 <script>
+  // the 3D robot: three.js and the model are only fetched on desktop
+  if (matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px)').matches) {
+    import('../../scripts/tv-robot').catch(() =>
+      document.querySelectorAll('[data-tv]').forEach((tv) => tv.classList.add('is-robot-fallback')),
+    );
+  }
+
   type Item = { id: string; title: string };
   type YTPlayer = {
     playVideo(): void;
@@ -433,6 +460,39 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
     z-index: 2;
     height: auto;
     pointer-events: none;
+  }
+  /* Desktop: the 3D robot (seen from behind) replaces the photo, fading in once drawn; the
+     photo only shows if the model can't */
+  .radio-tv__robot-3d {
+    position: absolute;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .radio-tv__robot-3d :global(canvas) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity var(--duration-smooth) var(--ease-out);
+  }
+  .radio-tv__robot-3d:global(.is-live) :global(canvas) {
+    opacity: 1;
+  }
+  @media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
+    .radio-tv:not(:global(.is-robot-fallback)) :global(.radio-tv__robot) {
+      visibility: hidden;
+    }
+    .radio-tv:not(:global(.is-robot-fallback)) .radio-tv__fit {
+      -webkit-mask: var(--fade), radial-gradient(var(--poster-robot), transparent 78%, #000 100%);
+      -webkit-mask-composite: source-in;
+      mask: var(--fade), radial-gradient(var(--poster-robot), transparent 78%, #000 100%);
+      mask-composite: intersect;
+    }
+  }
+  @media not ((hover: hover) and (pointer: fine) and (min-width: 1024px)) {
+    .radio-tv__robot-3d {
+      display: none;
+    }
   }
   /* ── The screen as a button: no icon, a click plays / pauses ── */
   .radio-tv__toggle {
