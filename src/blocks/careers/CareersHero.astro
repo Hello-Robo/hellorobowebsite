@@ -188,6 +188,10 @@ const ratio = photos.reduce((sum, p) => sum + p.width / p.height, 0);
       width: auto;
       margin: 64px 0 0 -120px;
       --travel: 40%;
+      /* no standing layer on phones: the strip is ~2,100px wide (6,000+ device px on an
+         iPhone), and big always-on layers are what made iOS drop this site's tabs before */
+      will-change: auto;
+      transform: translateX(calc(var(--shift) * var(--travel) * -1));
     }
   }
 </style>
