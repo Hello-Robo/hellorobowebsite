@@ -239,6 +239,7 @@ const config = JSON.stringify({
 </section>
 
 <script>
+  import { sfx } from '../../scripts/sound';
   import { hoverFx } from '../../scripts/button-hover';
 
   type Point = { x: number; y: number };
@@ -544,8 +545,13 @@ const config = JSON.stringify({
         if (selected < 0) setFocus(-1);
         return;
       }
-      if (hit >= 0) select(hit);
-      else if (selected >= 0) deselect(); // a tap outside the card closes it
+      if (hit >= 0) {
+        // the field captures the pointer (to tell a click from a drag), so the browser's
+        // click lands on the field, not the button, and the site's click sound (sound.ts)
+        // never heard it: play it here
+        sfx('click');
+        select(hit);
+      } else if (selected >= 0) deselect(); // a tap outside the card closes it
     };
 
     viewport.addEventListener('pointerup', end);
