@@ -173,7 +173,7 @@ function makeBeam() {
     uTime: { value: 0 },
     uGlow: { value: 1 },
     uColor: { value: [1, 0.88, 0.74] as number[] },
-    uStrength: { value: 0.42 },
+    uStrength: { value: 0.55 },
     uAspect: { value: 1 },
     uFrom: { value: new Vector2() },
     uTo: { value: new Vector2() },
