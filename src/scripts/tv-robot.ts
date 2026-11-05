@@ -4,13 +4,17 @@
  * turns slowly side to side, now and then a little quicker, as if following the picture.
  * It doesn't follow the mouse. Lit only by the screen, so from behind he's a silhouette
  * with bright edges, like the photo; a soft, wide, diffuse projector light spreads from his
- * face to the screen. It doesn't flicker or react to the sound; every 8–10 s he blinks and
+ * face to the screen. It doesn't flicker or react to the sound; now and then, at random
+ * (every 2–8 s, sometimes twice quickly), he blinks and
  * the light goes out for a moment.
  *
- * Screen colour: the page can't read the YouTube picture itself, so while an episode plays
- * the light on him (and the rays) takes its colours from the episode's thumbnail (YouTube
- * serves those readable): every few seconds it eases to another part of the thumbnail, as
- * if the scene changed — a dark episode lights him dimly, a yellow one tints him yellow.
+ * Screen colour: the page can't read the YouTube picture itself (another site's video), but
+ * YouTube makes three frames of every video, at about a quarter, half and three quarters
+ * through (i.ytimg.com/vi/<id>/1.jpg, 2.jpg, 3.jpg), and serves those readable. So while an
+ * episode plays, the light on him (and the rays) takes its colour from the frame nearest the
+ * point the player is at (RadioTV writes it to data-progress), blending from one frame to
+ * the next as the episode goes on; every few seconds it eases to another part of that frame,
+ * as if the scene changed. A dark stretch lights him dimly, a yellow one tints him yellow.
  * Idle (nothing playing) it's the TV's warm white.
  *
  * Desktop only (RadioTV imports this only there); if WebGL or the model fails, the photo
@@ -25,41 +29,52 @@ const SCENE = 3; // s between "scene changes" (a new part of the thumbnail)
 type RGB = [number, number, number];
 const toLinear = (v: number) => Math.pow(v / 255, 2.2);
 
-/** An episode's light colours: the thumbnail's average and its 3×3 parts, each as a light
- * (linear RGB: its hue, a little more saturated, at a brightness that follows the
- * picture's: dim for a dark picture, never quite off) */
-const palettes = new Map<string, { avg: RGB; parts: RGB[] } | null>();
-function palette(id: string) {
-  if (palettes.has(id)) return palettes.get(id);
-  palettes.set(id, null); // loading
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    try {
-      const c = document.createElement('canvas');
-      c.width = c.height = 3;
-      const ctx = c.getContext('2d', { willReadFrequently: true })!;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, 0, 0, 3, 3);
-      const px = ctx.getImageData(0, 0, 3, 3).data;
-      const parts: RGB[] = [];
-      for (let i = 0; i < 9; i++) parts.push([toLinear(px[i * 4]), toLinear(px[i * 4 + 1]), toLinear(px[i * 4 + 2])]);
-      const avg = [0, 1, 2].map((k) => parts.reduce((a, p) => a + p[k], 0) / 9) as RGB;
-      const light = (c: RGB): RGB => {
-        const l = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
-        const sat = c.map((v) => Math.max(0, l + (v - l) * 1.5));
-        const peak = Math.max(...sat, 1e-4);
-        const level = Math.min(1.3, 0.22 + l * 3);
-        return sat.map((v) => (v / peak) * level) as RGB;
-      };
-      palettes.set(id, { avg: light(avg), parts: parts.map(light) });
-    } catch {
-      /* unreadable: keep the idle light */
-    }
+type Look = { avg: RGB; parts: RGB[] };
+/** a picture's light colours: its average and its 3×3 parts, each as a light (linear RGB: its
+ * hue, a little more saturated, at a brightness that follows the picture's: dim for a dark
+ * picture, never quite off) */
+function look(img: HTMLImageElement): Look {
+  const c = document.createElement('canvas');
+  c.width = c.height = 3;
+  const ctx = c.getContext('2d', { willReadFrequently: true })!;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, 0, 0, 3, 3);
+  const px = ctx.getImageData(0, 0, 3, 3).data;
+  const parts: RGB[] = [];
+  for (let i = 0; i < 9; i++) parts.push([toLinear(px[i * 4]), toLinear(px[i * 4 + 1]), toLinear(px[i * 4 + 2])]);
+  const avg = [0, 1, 2].map((k) => parts.reduce((a, p) => a + p[k], 0) / 9) as RGB;
+  const light = (v: RGB): RGB => {
+    const l = 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+    const sat = v.map((x) => Math.max(0, l + (x - l) * 1.5));
+    const peak = Math.max(...sat, 1e-4);
+    const level = Math.min(1.3, 0.22 + l * 3);
+    return sat.map((x) => (x / peak) * level) as RGB;
   };
-  img.src = `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
-  return null;
+  return { avg: light(avg), parts: parts.map(light) };
 }
+
+/** An episode's three in-video frames (at ~25 / 50 / 75%), as looks; null while loading */
+const episodes = new Map<string, (Look | null)[]>();
+function frames(id: string) {
+  let f = episodes.get(id);
+  if (f) return f;
+  f = [null, null, null];
+  episodes.set(id, f);
+  [1, 2, 3].forEach((n, i) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        f![i] = look(img);
+      } catch {
+        /* unreadable: that frame stays out */
+      }
+    };
+    img.src = `https://i.ytimg.com/vi/${id}/${n}.jpg`;
+  });
+  return f;
+}
+const AT = [0.25, 0.5, 0.75]; // where in the video each frame is
 
 for (const host of document.querySelectorAll<HTMLElement>('[data-tv-robot]')) {
   const tv = host.closest<HTMLElement>('[data-tv]');
@@ -79,17 +94,35 @@ for (const host of document.querySelectorAll<HTMLElement>('[data-tv-robot]')) {
     blink: true,
     screenColor: () => {
       const id = tv?.dataset.current;
-      const p = id ? palette(id) : null;
-      if (!p || !playing()) return null;
-      // a "scene change" every few seconds: halfway between the picture's average and one
-      // of its parts
+      if (!id || !playing()) return null;
+      const f = frames(id);
+      const have = AT.map((at, i) => ({ at, l: f[i] })).filter((x) => x.l) as { at: number; l: Look }[];
+      if (!have.length) return null;
+      // the two frames either side of where the player is, and how far between them
+      const p = Number(tv?.dataset.progress ?? 0) || 0;
+      let a = have[0];
+      let b = have[have.length - 1];
+      for (let i = 0; i < have.length - 1; i++) {
+        if (p >= have[i].at && p <= have[i + 1].at) {
+          a = have[i];
+          b = have[i + 1];
+        }
+      }
+      if (p <= have[0].at) b = a;
+      if (p >= have[have.length - 1].at) a = b;
+      const k = a === b ? 0 : (p - a.at) / (b.at - a.at);
+      // a "scene change" every few seconds: halfway between the frame's average and one of
+      // its parts
       const now = performance.now() / 1000;
       if (now - sceneAt > SCENE) {
         sceneAt = now;
         scene = Math.floor(Math.random() * 9);
       }
-      const part = p.parts[scene];
-      for (let i = 0; i < 3; i++) color[i] = (p.avg[i] + part[i]) / 2;
+      for (let i = 0; i < 3; i++) {
+        const ca = (a.l.avg[i] + a.l.parts[scene][i]) / 2;
+        const cb = (b.l.avg[i] + b.l.parts[scene][i]) / 2;
+        color[i] = ca + (cb - ca) * k;
+      }
       return color;
     },
     head: (s) => ({

@@ -7,6 +7,8 @@
  *  error    a low two-note "nope" when the contact form shows an error, or an NDA project is
  *           clicked (it can't open)
  *  success  a rising three-note robot chirp when the form is sent
+ *  shutter  a camera shutter (mirror up, shutter: two quick mechanical clicks and a soft
+ *           thunk) with each photographer's flash in the home hero
  *
  * Browsers only let a page make sound after the visitor has clicked, tapped or pressed a key,
  * so everything is silent until then. Off when the visitor has turned it off
@@ -14,7 +16,7 @@
  * the form sounds are called by the contact block. Hovering makes no sound.
  */
 
-type Name = 'click' | 'error' | 'success';
+type Name = 'click' | 'error' | 'success' | 'shutter';
 
 const VOLUME = 0.32;
 
@@ -23,7 +25,7 @@ let out: GainNode | null = null;
 let noise: AudioBuffer | null = null;
 const last: Partial<Record<Name, number>> = {};
 /** least ms between two of the same sound */
-const GAP: Record<Name, number> = { click: 40, error: 300, success: 600 };
+const GAP: Record<Name, number> = { click: 40, error: 300, success: 600, shutter: 90 };
 
 const off = () => {
   try {
@@ -121,6 +123,27 @@ export function sfx(name: Name) {
     case 'error':
       tone(t, 190 * p, 175 * p, 0.075 * d, 0.3 * v);
       tone(t + 0.11 * d, 150 * p, 135 * p, 0.13 * d, 0.3 * v);
+      break;
+    // a camera shutter: the mirror flips up (a bright click and a soft thunk), the shutter
+    // snaps a few tens of ms later; a few takes, like different cameras
+    case 'shutter':
+      take(name, [
+        () => {
+          burst(t, 3200 * p, 0.018 * d, 0.5 * v);
+          tone(t, 190 * p, 110 * p, 0.045 * d, 0.22 * v, 'sine');
+          burst(t + 0.055 * d, 2400 * p, 0.022 * d, 0.42 * v);
+        },
+        () => {
+          burst(t, 4200 * p, 0.012 * d, 0.45 * v);
+          tone(t, 220 * p, 130 * p, 0.04 * d, 0.2 * v, 'sine');
+          burst(t + 0.04 * d, 3000 * p, 0.016 * d, 0.38 * v);
+        },
+        () => {
+          burst(t, 2600 * p, 0.022 * d, 0.5 * v);
+          tone(t, 160 * p, 95 * p, 0.06 * d, 0.24 * v, 'sine');
+          burst(t + 0.075 * d, 2000 * p, 0.03 * d, 0.4 * v);
+        },
+      ]);
       break;
     case 'success': {
       const q = vary(0.04);
