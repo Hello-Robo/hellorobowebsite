@@ -51,10 +51,11 @@ uniform sampler2D map;
 uniform float tiles, opacity, tanH, aspect, fish, bendTop;
 uniform mat3 rot;
 // photographer's flash on the sphere: its level, where its hotspot lands (uv), and the
-// robot's silhouette (rendered small while a flash is on) cast as a soft shadow, offset
-// away from the flash
-uniform float flash;
-uniform vec2 flashAt, shadowOffset;
+// robot's silhouette (rendered small while a flash is on) cast as his shadow: projected from
+// the flash's spot on screen (shadowFrom) and enlarged by shadowScale — the sphere is
+// further away than he is — so it falls long and away from the flash, with a firm edge
+uniform float flash, shadowScale;
+uniform vec2 flashAt, shadowFrom;
 uniform sampler2D shadowMask;
 varying vec2 vUv;
 void main(){
@@ -76,16 +77,17 @@ void main(){
     vec2 h = (vUv - flashAt) * vec2(aspect, 1.0);
     float spot = 0.35 + 0.65 * exp(-dot(h, h) * 1.6);
     col += (1.0 - col) * flash * 0.55 * spot;
-    // the robot's shadow: his silhouette, shifted away from the flash and softened
-    vec2 su = vUv + shadowOffset;
+    // the robot's shadow: the point of him that shades this spot of the sphere lies on the
+    // line to the flash, closer by shadowScale; a light blur keeps the edge firm but clean
+    vec2 su = shadowFrom + (vUv - shadowFrom) / shadowScale;
     float sh = 0.0;
-    for (int i = -2; i <= 2; i++) {
-      for (int j = -2; j <= 2; j++) {
-        sh += texture2D(shadowMask, su + vec2(float(i), float(j)) * vec2(0.006 / aspect, 0.006)).r;
+    for (int i = -1; i <= 1; i++) {
+      for (int j = -1; j <= 1; j++) {
+        sh += texture2D(shadowMask, su + vec2(float(i), float(j)) * vec2(0.0018 / aspect, 0.0018)).r;
       }
     }
-    sh /= 25.0;
-    col *= 1.0 - flash * 0.5 * sh;
+    sh = smoothstep(0.15, 0.85, sh / 9.0);
+    col *= 1.0 - flash * 0.55 * sh;
   }
   gl_FragColor = vec4(col, 1.0);
 }`;
@@ -150,7 +152,8 @@ export function mountHeroScene(o: {
   const bgUniforms = {
     flash: { value: 0 },
     flashAt: { value: new THREE.Vector2(0.5, 0.6) },
-    shadowOffset: { value: new THREE.Vector2() },
+    shadowFrom: { value: new THREE.Vector2(0.5, 0.5) },
+    shadowScale: { value: 1.3 },
     shadowMask: { value: shadowRT.texture },
     map: { value: null as THREE.Texture | null },
     tiles: { value: 1 },
@@ -377,9 +380,9 @@ export function mountHeroScene(o: {
     const fl = flash.intensity / FLASH.peak;
     bgUniforms.flash.value = fl;
     if (fl > 0 && rig.stage) {
-      // flash from the right → shadow to the left; from higher up → shadow lower
       bgUniforms.flashAt.value.set(0.5 + flashPos.x * 0.16, 0.5 + (flashPos.y - 1.2) * 0.22);
-      bgUniforms.shadowOffset.value.set(flashPos.x * 0.07, (flashPos.y - 1.2) * 0.08 + 0.03);
+      // the flash's spot on screen (off to the side / above for a far-out flash)
+      bgUniforms.shadowFrom.value.set(0.5 + flashPos.x * 0.35, 0.55 + (flashPos.y - 1.2) * 0.4);
       renderer.setRenderTarget(shadowRT);
       renderer.setClearColor(0x000000, 1);
       renderer.clear();

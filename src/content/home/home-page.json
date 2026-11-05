@@ -96,7 +96,7 @@
     "bgRotationStrength": 0.45,
     "bgSameDirection": false,
     "bgTiles": 4,
-    "bgFisheye": 0.14,
+    "bgFisheye": 0.35,
     "bgBendTop": 0.4,
     "bgFovDeg": 96,
     "bgOpacity": 0.9,

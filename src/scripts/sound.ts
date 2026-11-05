@@ -7,8 +7,10 @@
  *  error    a low two-note "nope" when the contact form shows an error, or an NDA project is
  *           clicked (it can't open)
  *  success  a rising three-note robot chirp when the form is sent
- *  shutter  a camera shutter (mirror up, shutter: two quick mechanical clicks and a soft
- *           thunk) with each photographer's flash in the home hero
+ *  shutter  a real film camera's shutter with each photographer's flash in the home hero:
+ *           public/sounds/shutter.m4a, from "Werra.wav" by hmilleo (freesound.org/s/409093,
+ *           CC0), a little different each time (pitch and level); a synthesized click until
+ *           it has loaded
  *
  * Browsers only let a page make sound after the visitor has clicked, tapped or pressed a key,
  * so everything is silent until then. Off when the visitor has turned it off
@@ -23,6 +25,7 @@ const VOLUME = 0.32;
 let ctx: AudioContext | null = null;
 let out: GainNode | null = null;
 let noise: AudioBuffer | null = null;
+let shutter: AudioBuffer | null = null;
 const last: Partial<Record<Name, number>> = {};
 /** least ms between two of the same sound */
 const GAP: Record<Name, number> = { click: 40, error: 300, success: 600, shutter: 90 };
@@ -51,6 +54,13 @@ function unlock() {
   soft.type = 'lowpass';
   soft.frequency.value = 9000;
   out.connect(soft).connect(ctx.destination);
+  // the recorded shutter, loaded once sound is allowed
+  const c = ctx;
+  fetch('/sounds/shutter.m4a')
+    .then((r) => r.arrayBuffer())
+    .then((b) => c.decodeAudioData(b))
+    .then((buf) => (shutter = buf))
+    .catch(() => {});
   noise = ctx.createBuffer(1, Math.round(ctx.sampleRate * 0.05), ctx.sampleRate);
   const d = noise.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -127,6 +137,16 @@ export function sfx(name: Name) {
     // a camera shutter: the mirror flips up (a bright click and a soft thunk), the shutter
     // snaps a few tens of ms later; a few takes, like different cameras
     case 'shutter':
+      if (shutter && ctx && out) {
+        const src = ctx.createBufferSource();
+        src.buffer = shutter;
+        src.playbackRate.value = vary(0.05);
+        const g = ctx.createGain();
+        g.gain.value = 1.6 * v;
+        src.connect(g).connect(out);
+        src.start(t);
+        break;
+      }
       take(name, [
         () => {
           burst(t, 3200 * p, 0.018 * d, 0.5 * v);
