@@ -13,11 +13,18 @@
  * The robot is a 3D model on desktop too (src/scripts/hero-robot.ts): the body stays put
  * and the head turns a little. The photo is hidden there while the model loads, and comes
  * back if it can't (no WebGL, model failed). Phones and tablets keep the photo.
+ *
+ * CRT: Figma's CRT screen shader (CrtScreen, overlay) lies over the whole hero, the title
+ * too, with the Showcase section's settings. The hero's bottom edge is straight (no corner
+ * notches).
  */
 import { Image } from 'astro:assets';
 import WebGLSlot from '../../components/ui/WebGLSlot.astro';
+import CrtScreen from '../../components/ui/CrtScreen.astro';
 import sphere from '../../assets/home/hero-sphere.png';
 import robot from '../../assets/home/hero-robot.png';
+// the CRT layer over the whole hero: the same settings as the Showcase section below
+const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
 ---
 <section class="home-hero" aria-labelledby="home-hero-title">
   <WebGLSlot name="home-hero" class="home-hero__scene">
@@ -44,13 +51,10 @@ import robot from '../../assets/home/hero-robot.png';
 
   <h1 id="home-hero-title" class="home-hero__title t-h1">Make<br class="only-mobile" /> the world<br class="only-mobile" /> say yes<br class="only-mobile" /> to your robot</h1>
 
-  <!-- White notches at the bottom corners (Figma 10093:124, 10093:125) -->
-  <svg class="home-hero__notch home-hero__notch--left" viewBox="0 0 117 71" aria-hidden="true">
-    <path d="M58 35.1966L0 0V71H117L58 35.1966Z" fill="currentColor" />
-  </svg>
-  <svg class="home-hero__notch home-hero__notch--right" viewBox="0 0 117 71" aria-hidden="true">
-    <path d="M59 35.1966L117 0V71H0L59 35.1966Z" fill="currentColor" />
-  </svg>
+  <!-- Figma's CRT screen shader over the whole hero (sphere, robot and title), as on the
+       Showcase section; desktop only (CrtScreen leaves phones the plain picture) -->
+  <CrtScreen overlay settings={crt} />
+
 </section>
 
 <script>
@@ -143,19 +147,9 @@ import robot from '../../assets/home/hero-robot.png';
     color: var(--color-orange);
     z-index: var(--z-raised);
   }
-  .home-hero__notch {
-    position: absolute;
-    bottom: 0;
-    width: calc(117 / 1728 * 100%);
-    height: auto;
-    color: var(--color-white);
-    z-index: var(--z-raised);
-  }
-  .home-hero__notch--left {
-    left: 0;
-  }
-  .home-hero__notch--right {
-    right: 0;
+  /* the CRT layer over everything, the title too (as on the Showcase section) */
+  .home-hero :global(.crt) {
+    z-index: calc(var(--z-raised) + 1);
   }
 
   /* ── Mobile: Figma "home mob" (10101:6462), 390×844 ── */
@@ -182,10 +176,6 @@ import robot from '../../assets/home/hero-robot.png';
     .home-hero__title {
       top: var(--space-20);
       width: calc(100% - 2 * var(--page-margin));
-    }
-    /* no corner notches: the robot is wider than the screen here, and they cut its arms */
-    .home-hero__notch {
-      display: none;
     }
   }
 </style>
