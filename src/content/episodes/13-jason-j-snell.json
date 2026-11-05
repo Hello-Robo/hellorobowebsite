@@ -8,7 +8,7 @@
   "description": "Robo Radio 13 is live. This month Hello Robo hosted Jason J Snell, musical neurofeedback artist. One of Jason's notable projects is Primary Assembly, a musical neurofeedback system that converts live brain activity from an EEG headband into musical compositions, rendering consciousness into perceivable sound. It has been presented at the Met museum, the Smithsonian Hirshhorn, MIT, NYU, and dozens of other conferences, festivals, and institutions.",
   "portfolioUrl": "https://jasonjsnell.com/",
   "listed": true,
-  "featured": false,
-  "homepage": true,
+  "featured": true,
+  "homepage": false,
   "order": 2
 }
