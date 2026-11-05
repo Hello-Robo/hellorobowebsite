@@ -174,12 +174,33 @@ const clientLogos = z
 /** The home page's own settings (CMS "Home page"): one entry, home-page.json */
 const home = defineCollection({
   loader: glob({ pattern: '**/*.json', base: './src/content/home' }),
-  schema: z.object({
-    /** Projects (ids) in the Works wheel on Home, shown in the Projects order */
-    featured: z.array(z.string()).default([]),
-    /** The Clients block's logos, in its 13 places (row by row) */
-    clients: clientLogos,
-  }),
+  schema: ({ image }) =>
+    z.object({
+      /** Projects (ids) in the Works wheel on Home, shown in the Projects order */
+      featured: z.array(z.string()).default([]),
+      /** The Clients block's logos, in its 13 places (row by row) */
+      clients: clientLogos,
+      /** The hero's 3D scene on desktop (src/scripts/hero-scene.ts); empty = its defaults */
+      hero: z
+        .object({
+          /** Equirect 2:1 picture on the sphere behind the robot */
+          background: image().optional(),
+          maxYawDeg: z.number().optional(),
+          maxPitchDeg: z.number().optional(),
+          damping: z.number().optional(),
+          torsoShare: z.number().optional(),
+          idleAfterMs: z.number().optional(),
+          robotScale: z.number().optional(),
+          robotLiftOfFrame: z.number().optional(),
+          bgRotationStrength: z.number().optional(),
+          bgSameDirection: z.boolean().optional(),
+          bgTiles: z.number().optional(),
+          bgFisheye: z.number().optional(),
+          bgFovDeg: z.number().optional(),
+          bgOpacity: z.number().optional(),
+        })
+        .default({}),
+    }),
 });
 
 /** The Services page's own settings (CMS "Services page"): one entry, services-page.json */
