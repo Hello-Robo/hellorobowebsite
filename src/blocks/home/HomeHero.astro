@@ -4,20 +4,18 @@
  * Figma: 1.0 home → "1 hero" (10093:119), 1728×1117
  * https://www.figma.com/design/9SsfbCUY7KcxjZpCuRpDxf/Hello-Robo-Website-2026?node-id=10093-119
  *
- * Marked "3d web gl". On desktop (src/scripts/hero-sphere.ts) the receipts picture becomes
- * the inside of a sphere, the camera at its centre, turning very slowly; the robot photo
- * and the title stay on top. Phones, tablets and browsers without WebGL 2 keep the still
- * picture. (The receipt photo under the sphere in Figma is fully covered by it, so it
- * isn't used.)
+ * Marked "3d web gl". On desktop one WebGL scene replaces the pictures
+ * (src/scripts/hero-robot.ts → hero-scene.ts): the 3D robot, cropped at the torso, follows
+ * the mouse with his head; behind him the sticker graphics lie on a virtual sphere that turns
+ * against the head. Its settings and that picture are edited in the CMS (Home page → Hero
+ * (3D, desktop)). The still pictures show while it loads and come
+ * back if it can't (no WebGL, model failed). Phones and tablets keep the still pictures.
  *
- * The robot is a 3D model on desktop too (src/scripts/hero-robot.ts): the body stays put
- * and the head turns a little. The photo is hidden there while the model loads, and comes
- * back if it can't (no WebGL, model failed). Phones and tablets keep the photo.
- *
- * CRT: Figma's CRT screen shader (CrtScreen, overlay) lies over the whole hero, the title
- * too, with the Showcase section's settings. The hero's bottom edge is straight (no corner
- * notches).
+ * CRT: Figma's CRT screen shader (CrtScreen, overlay) lies over the picture and the robot,
+ * with the Showcase section's settings; the title sits above it, untouched. The hero's bottom
+ * edge is straight (no corner notches).
  */
+import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import WebGLSlot from '../../components/ui/WebGLSlot.astro';
 import CrtScreen from '../../components/ui/CrtScreen.astro';
@@ -25,8 +23,11 @@ import sphere from '../../assets/home/hero-sphere.png';
 import robot from '../../assets/home/hero-robot.png';
 // the CRT layer over the whole hero: the same settings as the Showcase section below
 const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
+// the 3D scene's settings and background picture, from the CMS (Home page → Hero)
+const { background, ...heroSettings } = (await getCollection('home'))[0]?.data.hero ?? {};
+const heroData = JSON.stringify({ ...heroSettings, background: background?.src ?? sphere.src });
 ---
-<section class="home-hero" aria-labelledby="home-hero-title">
+<section class="home-hero" aria-labelledby="home-hero-title" data-hero={heroData}>
   <WebGLSlot name="home-hero" class="home-hero__scene">
     <Image
       class="home-hero__sphere"
@@ -51,15 +52,14 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
 
   <h1 id="home-hero-title" class="home-hero__title t-h1">Make<br class="only-mobile" /> the world<br class="only-mobile" /> say yes<br class="only-mobile" /> to your robot</h1>
 
-  <!-- Figma's CRT screen shader over the whole hero (sphere, robot and title), as on the
+  <!-- Figma's CRT screen shader over the sphere and robot (the title sits above it), as on the
        Showcase section; desktop only (CrtScreen leaves phones the plain picture) -->
   <CrtScreen overlay settings={crt} />
 
 </section>
 
 <script>
-  import '../../scripts/hero-sphere';
-  // the 3D robot: three.js and the model are only fetched on desktop
+  // the WebGL hero: three.js, the model and the background are only fetched on desktop
   if (matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px)').matches) {
     import('../../scripts/hero-robot').catch(() =>
       document.querySelector('.home-hero')?.classList.add('is-robot-fallback'),
@@ -78,19 +78,6 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
   .home-hero :global(.home-hero__scene) {
     position: absolute;
     inset: 0;
-  }
-  /* desktop: the sphere's canvas fills the hero; the still picture fades out over it once
-     the first frame is drawn (the robot stays on top) */
-  .home-hero :global(.home-hero__canvas) {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
-  .home-hero :global(.home-hero__sphere) {
-    transition: opacity var(--duration-smooth) var(--ease-out);
-  }
-  .home-hero :global(.is-live .home-hero__sphere) {
-    opacity: 0;
   }
   /* Sphere: 1784×1118, centred */
   .home-hero :global(.home-hero__sphere) {
@@ -119,8 +106,8 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
     height: 285.71%;
     max-width: none;
   }
-  /* desktop: the 3D robot replaces the photo; the canvas fills the hero and fades in once
-     drawn. The photo only shows if the model can't. */
+  /* desktop: the WebGL scene (robot and background) replaces both pictures; the canvas
+     fills the hero and fades in once drawn. The pictures only show if it can't. */
   .home-hero :global(.home-hero__robot-canvas) {
     position: absolute;
     inset: 0;
@@ -145,11 +132,12 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
     left: var(--page-margin);
     width: calc(1095 / 1728 * 100%);
     color: var(--color-orange);
-    z-index: var(--z-raised);
-  }
-  /* the CRT layer over everything, the title too (as on the Showcase section) */
-  .home-hero :global(.crt) {
+    /* above the CRT layer, so the title stays clean */
     z-index: calc(var(--z-raised) + 1);
+  }
+  /* the CRT layer over the picture and the robot, under the title */
+  .home-hero :global(.crt) {
+    z-index: var(--z-raised);
   }
 
   /* ── Mobile: Figma "home mob" (10101:6462), 390×844 ── */

@@ -84,5 +84,21 @@
       "width": 189.7,
       "micrographic": false
     }
-  ]
+  ],
+  "hero": {
+    "background": "../../assets/home/hero-bg.jpg",
+    "maxYawDeg": 55,
+    "maxPitchDeg": 18,
+    "damping": 4,
+    "torsoShare": 0.15,
+    "robotScale": 1.4,
+    "robotLiftOfFrame": -0.41,
+    "bgRotationStrength": 0.45,
+    "bgSameDirection": false,
+    "bgTiles": 4,
+    "bgFisheye": 0.14,
+    "bgFovDeg": 84,
+    "bgOpacity": 0.9,
+    "idleAfterMs": 4000
+  }
 }
