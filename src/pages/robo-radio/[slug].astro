@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import EpisodeHero from '../../blocks/episode/EpisodeHero.astro';
 import EpisodeText from '../../blocks/episode/EpisodeText.astro';
 import RadioTV from '../../blocks/radio/RadioTV.astro';
+import RadioEpisodes from '../../blocks/radio/RadioEpisodes.astro';
 import { getCollection, type CollectionEntry } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -15,4 +16,5 @@ const { episode } = Astro.props as { episode: CollectionEntry<'episodes'> };
   <EpisodeHero episode={episode} />
   <EpisodeText episode={episode} />
   <RadioTV variant="episode" start={episode.data.youtube} />
+  <RadioEpisodes after={episode.id} />
 </BaseLayout>

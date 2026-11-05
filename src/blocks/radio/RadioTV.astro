@@ -9,6 +9,8 @@
  * 18, vignette 24, flicker 62, roll 0.93; flat glass, so no masked corners).
  * Controls (Figma "player nav", 504×80): previous · play / pause · next, the progress
  * line (seekable) and a sound button at the end (the video plays with sound; it mutes it).
+ * An episode page is about its one episode: no previous / next, just play / pause, the
+ * line (longer, from where previous was to the sound button) and sound.
  * Play is a click, so browsers let it start with sound; if one still refuses (it can when
  * the player took a while to load), it plays muted and the sound button shows that.
  * They play the episodes that have a video, newest first: the hero starts with the
@@ -39,8 +41,10 @@ import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import WebGLSlot from '../../components/ui/WebGLSlot.astro';
 import CrtScreen from '../../components/ui/CrtScreen.astro';
-import hero from '../../assets/radio/tv-hero.png';
-import episode from '../../assets/radio/tv-episode.png';
+// the poster's screen text alone on black (the rest of the poster crushed to black), so
+// nothing playing is a plain black screen with the text and glyphs in the middle
+import hero from '../../assets/radio/tv-hero-idle.png';
+import episode from '../../assets/radio/tv-episode-idle.png';
 import robot from '../../assets/radio/tv-robot.png';
 
 interface Props {
@@ -79,8 +83,6 @@ const maskTop = Math.max(8, screenTop + 12 - (maskH - fitH) / 2 - 50);
 // the poster over the noise: shown from 14 inside its printed screen, faded in over 40
 const fadeY = (y: number) => pct(screenTop + y, h);
 const fade = `linear-gradient(to bottom, transparent ${fadeY(14)}, #000 ${fadeY(54)}, #000 ${fadeY(744 - 54)}, transparent ${fadeY(744 - 14)})`;
-// the noise patch (public/images/radio/tv-noise.jpg, 400×180 of the hero poster's screen)
-const noiseSize = `${pct(400, 1730)} auto`;
 const at = (x: number) => (x / MASK_W) * maskW; // a mask x on the TV
 // stretch the poster so its stretch [from0, from1] lands on the TV's [to0, to1]
 const fitX = (from0: number, from1: number, to0: number, to1: number) => {
@@ -98,7 +100,10 @@ const robotW = 442 * main.k;
 // the photo's is (its middle 45% across and 29% down the 442×405 picture, 55% of its width)
 const robotH = 405 * main.k;
 const box = { x: 0, y: 0, w: 1730 };
-const boxH = h;
+// on an episode page the TV sits 50 higher than its section's bottom, so the robot's canvas
+// runs those 50 further down: he's cut by the section's bottom edge, not the TV's
+const legRoom = variant === 'episode' ? 50 : 0;
+const boxH = h + legRoom;
 // the poster has the photo robot printed into it too: on desktop a soft hole round its
 // head lets the screen's plain noise (underneath) show there instead (fractions of the poster)
 const posterRobot = variant === 'hero' ? '13% 21% at 50.75% 82%' : '13% 19% at 50.75% 79%';
@@ -126,7 +131,7 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
   <div class="radio-tv__stage" style={`aspect-ratio: 1730 / ${h}`}>
   <!-- the screen, only through its shape (outside it: the TV's black): the poster's noise
        in all of it, and the poster itself (its text) over the main screen -->
-  <div class="radio-tv__glass radio-tv__glass--noise" aria-hidden="true" style={`--mask-size:${maskSize};--mask-pos:${maskPos};--noise-size:${noiseSize}`}></div>
+  <div class="radio-tv__glass radio-tv__glass--noise" aria-hidden="true" style={`--mask-size:${maskSize};--mask-pos:${maskPos}`}></div>
   <div class="radio-tv__glass radio-tv__glass--main" style={`--mask-size:${maskSize};--mask-pos:${maskPos}`}>
     <div class="radio-tv__fit" style={`${mainFit};--fade:${fade};--poster-robot:${posterRobot}`}>
       <WebGLSlot name="radio-tv" class="radio-tv__scene">
@@ -155,16 +160,20 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
 
   {playlist.length > 0 && (
     <div class="radio-tv__bar" style={`left:${(bar.x / 1730) * 100}%;top:${(bar.y / h) * 100}%`} role="group" aria-label="Player">
-      <button type="button" class="radio-tv__btn radio-tv__btn--prev" aria-label="Previous episode" data-prev>
-        <svg viewBox="0 24 32 32" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-width="1.5" d="m12.75 40.97 11.53 6.96 1.97-1.13V32.83l-1.89-1.15-11.61 6.9zm-.5-9.42h-5.5v16.5h5.5z" /></svg>
-      </button>
+      {variant === 'hero' && (
+        <button type="button" class="radio-tv__btn radio-tv__btn--prev" aria-label="Previous episode" data-prev>
+          <svg viewBox="0 24 32 32" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-width="1.5" d="m12.75 40.97 11.53 6.96 1.97-1.13V32.83l-1.89-1.15-11.61 6.9zm-.5-9.42h-5.5v16.5h5.5z" /></svg>
+        </button>
+      )}
       <button type="button" class="radio-tv__btn radio-tv__btn--play" aria-label="Play" data-play>
         <svg class="radio-tv__icon-play" viewBox="46.4 9.8 60 60" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-width="1.5" d="M85.38 41.55 70.4 50.34l-2.74-1.53V31.23l2.63-1.56 15.08 8.72z" /></svg>
         <svg class="radio-tv__icon-pause" viewBox="46.4 9.8 60 60" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-width="1.5" d="M68.4 31.25h5v17.5h-5zm11 0h5v17.5h-5z" /></svg>
       </button>
-      <button type="button" class="radio-tv__btn radio-tv__btn--next" aria-label="Next episode" data-next>
-        <svg viewBox="124 24 32 32" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-width="1.5" d="M141.05 40.97l-11.53 6.96-1.97-1.13V32.83l1.89-1.15 11.61 6.9zm.5-9.42h5.5v16.5h-5.5z" /></svg>
-      </button>
+      {variant === 'hero' && (
+        <button type="button" class="radio-tv__btn radio-tv__btn--next" aria-label="Next episode" data-next>
+          <svg viewBox="124 24 32 32" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-width="1.5" d="M141.05 40.97l-11.53 6.96-1.97-1.13V32.83l1.89-1.15 11.61 6.9zm.5-9.42h5.5v16.5h-5.5z" /></svg>
+        </button>
+      )}
       <input class="radio-tv__seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Position in the episode" data-seek />
       <button type="button" class="radio-tv__btn radio-tv__btn--sound" aria-label="Mute" aria-pressed="true" data-sound>
         <svg viewBox="2.5 2.5 27 27" fill="none" aria-hidden="true">
@@ -355,8 +364,8 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
     };
     playBtn.addEventListener('click', toggle);
     root.querySelector('[data-toggle]')!.addEventListener('click', toggle);
-    root.querySelector('[data-prev]')!.addEventListener('click', () => go(-1));
-    root.querySelector('[data-next]')!.addEventListener('click', () => go(1));
+    root.querySelector('[data-prev]')?.addEventListener('click', () => go(-1));
+    root.querySelector('[data-next]')?.addEventListener('click', () => go(1));
     function setSound(on: boolean) {
       sound = on;
       root.classList.toggle('is-sound', on);
@@ -443,10 +452,12 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
   }
   .radio-tv__glass--main {
     --mask: url(/images/radio/tv-screen-mask-main.svg);
+    /* the text image is on black: screened, its black drops out over the charcoal below */
+    mix-blend-mode: screen;
   }
   .radio-tv__glass--noise {
     --mask: url(/images/radio/tv-screen-mask.svg);
-    background: url(/images/radio/tv-noise.jpg) 0 0 / var(--noise-size) repeat;
+    background: #111; /* charcoal: the idle screen */
   }
   /* the poster, a hair wider (placed inline), fading out at its printed screen's top / bottom */
   .radio-tv__fit {
@@ -519,6 +530,7 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
   @media (min-width: 1024px) {
     .radio-tv--episode .radio-tv__stage {
       translate: 0 calc(-50 * var(--px));
+      overflow: visible;
     }
   }
   .radio-tv__standby {
@@ -590,6 +602,15 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
   }
   .radio-tv__btn--next {
     left: calc(122.4 * var(--u));
+  }
+  /* Episode page: no previous / next — play's glyph starts where previous's did (1.6) and
+     the line runs from 14.6 after it to the sound button, as on the hero */
+  .radio-tv--episode .radio-tv__btn--play {
+    left: calc(-19.66 * var(--u));
+  }
+  .radio-tv--episode .radio-tv__seek {
+    left: calc(33.9 * var(--u));
+    width: calc(304.1 * var(--u));
   }
   /* Sound right after the line, as far from it as next is (14.4); its glyph drawn as
      tall as previous / next */
