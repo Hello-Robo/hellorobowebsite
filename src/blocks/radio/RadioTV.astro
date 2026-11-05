@@ -31,7 +31,8 @@
  * screen has that shape before anything plays too; outside it the TV is black.
  * Robot: on desktop the photo in front of the screen is replaced by the 3D model, seen from
  * behind, his head tilted up to the screen and following the picture side to side (it
- * doesn't follow the mouse); the screen's light on him flickers while an episode plays.
+ * doesn't follow the mouse), soft wide projector rays from his face to the screen; the
+ * screen's light on him (and the rays) flickers while an episode plays.
  * Phones keep the photo.
  */
 import { Image } from 'astro:assets';
@@ -93,12 +94,11 @@ const mainFit = main.style;
 const robotX = main.x0 + 678 * main.k;
 const robotW = 442 * main.k;
 // Desktop: the robot is a live 3D model seen from behind (src/scripts/tv-robot.ts), on a
-// canvas round the photo's place — half its width more on each side and a third of its
-// height above, down to the TV's bottom — with his head where the photo's is (its middle
-// 45% across and 29% down the 442×405 picture, 55% of its width)
+// canvas over the whole TV (his projector rays reach up to the screen), with his head where
+// the photo's is (its middle 45% across and 29% down the 442×405 picture, 55% of its width)
 const robotH = 405 * main.k;
-const box = { x: robotX - robotW * 0.5, y: robotTop - robotH / 3, w: robotW * 2 };
-const boxH = h - box.y;
+const box = { x: 0, y: 0, w: 1730 };
+const boxH = h;
 // the poster has the photo robot printed into it too: on desktop a soft hole round its
 // head lets the screen's plain noise (underneath) show there instead (fractions of the poster)
 const posterRobot = variant === 'hero' ? '13% 21% at 50.75% 82%' : '13% 19% at 50.75% 79%';
@@ -259,7 +259,11 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
     };
     // The played part of the line is solid white
     const showProgress = () => seek.style.setProperty('--p', String(Number(seek.value) / 1000));
-    const announce = () => (title.textContent = `Now playing: ${list[index].title}`);
+    const announce = () => {
+      title.textContent = `Now playing: ${list[index].title}`;
+      root.dataset.current = list[index].id; // the 3D robot's light takes this episode's colours
+    };
+    root.dataset.current = list[index].id;
 
     // The picture: across the TV's width (the side screens show its edges). On a wide
     // screen (desktop) it covers that; on a tall one (phones)
