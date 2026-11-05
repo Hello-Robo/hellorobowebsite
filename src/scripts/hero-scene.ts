@@ -42,6 +42,13 @@ const DEFAULTS = {
 };
 export type HeroSettings = typeof DEFAULTS;
 
+// TEST: the sphere's fresnel edge glow, 0 (off) … 1 (strong)
+const FRESNEL = 0.8;
+// TEST: the sphere's edges — an extra warp that only grows near them (0 = off), and a soft
+// blur that grows towards them (0 = off, 1 = about 7 px at the corners, 2.5 ≈ 17 px)
+const EDGE_WARP = 0.35;
+const EDGE_BLUR = 2.5;
+
 // Part of the model kept in frame: from mid-torso to just above the head (model units).
 const FRAME = { top: 1.06, bottom: 0.5, width: 0.62 };
 
@@ -55,6 +62,8 @@ uniform mat3 rot;
 // the flash's spot on screen (shadowFrom) and enlarged by shadowScale — the sphere is
 // further away than he is — so it falls long and away from the flash, with a firm edge
 uniform float flash, shadowScale;
+// TEST: fresnel — the sphere's edge glows like glass seen at a grazing angle (0 = off)
+uniform float fresnel, edgeWarp, edgeBlur;
 uniform vec2 flashAt, shadowFrom;
 uniform sampler2D shadowMask;
 varying vec2 vUv;
@@ -62,6 +71,8 @@ void main(){
   vec2 p = vUv * 2.0 - 1.0; p.x *= aspect;
   float r2 = dot(p, p) / (1.0 + aspect * aspect);   // 0 at the centre, 1 in the corners
   vec2 q = p * (1.0 + fish * 3.0 * r2);               // barrel: rays pushed out at the edges
+  // TEST: edge warp — nothing in the middle, stretching harder and harder near the edges
+  q *= 1.0 + edgeWarp * 2.0 * r2 * r2 * r2;
   // top bend: towards the top, the further out to the sides the higher it samples, so rows
   // there bow down at the sides like the top of a curved screen
   float top = smoothstep(0.0, 1.0, vUv.y);
@@ -70,8 +81,33 @@ void main(){
   float lon = atan(d.x, -d.z);
   float lat = asin(clamp(d.y, -1.0, 1.0));
   vec2 uv = vec2(lon / 6.2831853, lat / 3.1415927) * tiles + 0.5;
-  vec3 c = texture2D(map, uv).rgb;
+  // TEST: edge blur — sharp in the middle, softer towards the edges: two rings of taps (sized
+  // in screen pixels from the uv's own derivatives) plus a little mipmap softening
+  float edge = smoothstep(0.3, 1.0, r2) * edgeBlur;
+  vec2 dx = dFdx(uv), dy = dFdy(uv); // outside the branch: derivatives need every pixel
+  vec3 c;
+  if (edge > 0.001) {
+    float rad = edge * 7.0;
+    // two rings (full and half radius, the inner one turned half a step) keep a wide blur
+    // smooth instead of grainy
+    float bias = min(edge * 1.5, 4.0);
+    c = texture2D(map, uv, bias).rgb;
+    for (int i = 0; i < 8; i++) {
+      float a = float(i) * 0.785398;
+      c += texture2D(map, uv + (dx * cos(a) + dy * sin(a)) * rad, bias).rgb;
+      c += texture2D(map, uv + (dx * cos(a + 0.3927) + dy * sin(a + 0.3927)) * rad * 0.5, bias).rgb;
+    }
+    c /= 17.0;
+  } else {
+    c = texture2D(map, uv).rgb;
+  }
   vec3 col = mix(vec3(1.0), c, opacity);
+  // TEST: fresnel. From the sphere's centre we'd always see it head-on, so it's faked on
+  // screen: towards the edges and corners (r2: 0 middle, 1 corners) the graphics wash out
+  // to a glassy white, with a faint warm rim just inside it
+  float fr = pow(clamp(r2 * 1.25, 0.0, 1.0), 2.2);
+  col = mix(col, vec3(1.0), fresnel * fr * 0.85);
+  col += vec3(0.06, 0.025, 0.0) * fresnel * smoothstep(0.25, 0.7, fr) * (1.0 - fr);
   if (flash > 0.0) {
     // the flash lights the graphics: brightest round its hotspot, a little everywhere
     vec2 h = (vUv - flashAt) * vec2(aspect, 1.0);
@@ -151,6 +187,9 @@ export function mountHeroScene(o: {
   const shadowMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const bgUniforms = {
     flash: { value: 0 },
+    fresnel: { value: FRESNEL },
+    edgeWarp: { value: EDGE_WARP },
+    edgeBlur: { value: EDGE_BLUR },
     flashAt: { value: new THREE.Vector2(0.5, 0.6) },
     shadowFrom: { value: new THREE.Vector2(0.5, 0.5) },
     shadowScale: { value: 1.3 },
@@ -309,7 +348,9 @@ export function mountHeroScene(o: {
   const flashLevel = (t: number) => {
     if (reduceMotion) return 0;
     if (t >= nextFlash) {
-      flashes = [shot(nextFlash)];
+      // fire it now: after a pause (scrolled away, menu open, another tab) the clock has
+      // jumped past it, and starting it in the past skipped both the flash and its sound
+      flashes = [shot(t)];
       const r = Math.random();
       const extra = r < 0.12 ? 2 : r < 0.35 ? 1 : 0;
       for (let i = 1; i <= extra; i++) flashes.push(shot(flashes[i - 1].at + 0.12 + Math.random() * 0.22));
@@ -323,7 +364,7 @@ export function mountHeroScene(o: {
       // turned sound off: see sound.ts)
       if (!f.heard) {
         f.heard = true;
-        if (k < 0.1) sfx('shutter');
+        if (k < 0.3) sfx('shutter'); // (a slow frame still gets its click)
       }
       const l = f.strength * (k < FLASH.rise ? k / FLASH.rise : Math.exp(-(k - FLASH.rise) / FLASH.fall));
       if (l > level) {

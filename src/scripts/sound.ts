@@ -102,7 +102,14 @@ function burst(at: number, freq: number, dur: number, vol: number) {
 }
 
 export function sfx(name: Name) {
-  if (!ctx || ctx.state !== 'running' || off()) return;
+  if (!ctx || off()) return;
+  // the browser can suspend audio after the tab was in the background: wake it and play
+  // as soon as it's back (allowed: the visitor has already clicked on this page)
+  if (ctx.state === 'suspended') {
+    ctx.resume().then(() => ctx?.state === 'running' && sfx(name), () => {});
+    return;
+  }
+  if (ctx.state !== 'running') return;
   const now = performance.now();
   if (now - (last[name] ?? -1e9) < GAP[name]) return;
   last[name] = now;

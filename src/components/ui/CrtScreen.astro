@@ -171,7 +171,10 @@ void main() {
   float jitterX = jitterAmt * (lineNoise * 0.9 + drift * 0.4) * inTexel.x * 6.0;
   warped = vec2(warped.x + jitterX, warped.y);
 
-  float cov = clipCurve ? coverage(warped, inTexel) : 1.0;
+  // the edge's anti-aliasing fade (for a curved screen's rim) — not in overlay mode: there's
+  // no curvature, and fading the overlay's edge towards black drew a dark 1px border round
+  // the layer (seen along the home hero's bottom)
+  float cov = clipCurve && uP4.w < 0.5 ? coverage(warped, inTexel) : 1.0;
 
   vec2 dir = aberrationOffset(vUv, aspect, aberr, aberrationScheme, inTexel);
   vec4 sr = sampleRaw(warped + dir);
