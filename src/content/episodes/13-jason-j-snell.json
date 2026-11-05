@@ -9,6 +9,6 @@
   "portfolioUrl": "https://jasonjsnell.com/",
   "listed": true,
   "featured": true,
-  "homepage": false,
+  "homepage": true,
   "order": 2
 }
