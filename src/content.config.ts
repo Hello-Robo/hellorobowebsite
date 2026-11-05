@@ -196,6 +196,7 @@ const home = defineCollection({
           bgSameDirection: z.boolean().optional(),
           bgTiles: z.number().optional(),
           bgFisheye: z.number().optional(),
+          bgBendTop: z.number().optional(),
           bgFovDeg: z.number().optional(),
           bgOpacity: z.number().optional(),
         })

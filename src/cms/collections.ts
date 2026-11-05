@@ -221,6 +221,7 @@ export const CMS_COLLECTIONS: CmsCollection[] = [
           { kind: 'boolean', key: 'bgSameDirection', label: 'Background turns the same way as the head', default: false, hint: 'Off: it turns against the head.' },
           { kind: 'number', key: 'bgTiles', label: 'Background: repeats', default: 4, hint: 'How many times the picture repeats round the sphere. 1–12.' },
           { kind: 'number', key: 'bgFisheye', label: 'Background: fisheye at the edges', default: 0.14, hint: '0–1.' },
+          { kind: 'number', key: 'bgBendTop', label: 'Background: bend at the top', default: 0.4, hint: 'The top bends like the bottom (a curved screen): rows there bow down towards the sides. 0 = flat, 0.4 = as now, 1 = very strong.' },
           { kind: 'number', key: 'bgFovDeg', label: 'Background: sphere scale (°)', default: 84, hint: 'Smaller = bigger graphics. 25–110.' },
           { kind: 'number', key: 'bgOpacity', label: 'Background: graphics strength', default: 0.9, hint: 'Graphics over white, 0–1.' },
         ],

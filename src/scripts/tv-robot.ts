@@ -3,8 +3,9 @@
  * screen, the camera behind him: he watches. His head is tilted up to the screen and
  * turns slowly side to side, now and then a little quicker, as if following the picture.
  * It doesn't follow the mouse. Lit only by the screen, so from behind he's a silhouette
- * with bright edges, like the photo; soft, wide projector rays run from his face to the
- * screen. While an episode plays the light (and the rays) flicker a little.
+ * with bright edges, like the photo; a soft, wide, diffuse projector light spreads from his
+ * face to the screen. It doesn't flicker or react to the sound; every 8–10 s he blinks and
+ * the light goes out for a moment.
  *
  * Screen colour: the page can't read the YouTube picture itself, so while an episode plays
  * the light on him (and the rays) takes its colours from the episode's thumbnail (YouTube
@@ -18,7 +19,7 @@
 import { mountRobot } from './robot-3d';
 
 const LOOK_UP = -0.16; // rad: tilted up to the screen
-const YAW = 0.16; // rad: following the picture side to side
+const YAW = 0.24; // rad: following the picture side to side
 const SCENE = 3; // s between "scene changes" (a new part of the thumbnail)
 
 type RGB = [number, number, number];
@@ -75,7 +76,7 @@ for (const host of document.querySelectorAll<HTMLElement>('[data-tv-robot]')) {
     headShare: Number(host.dataset.headShare),
     light: 'screen',
     beam: true,
-    flicker: playing,
+    blink: true,
     screenColor: () => {
       const id = tv?.dataset.current;
       const p = id ? palette(id) : null;
@@ -94,8 +95,8 @@ for (const host of document.querySelectorAll<HTMLElement>('[data-tv-robot]')) {
     head: (s) => ({
       // a slow sweep with a quicker glance on top, so it reads as following what's on
       yaw: YAW * (0.75 * Math.sin(s * 0.3) + 0.25 * Math.sin(s * 0.83 + 1.7)),
-      pitch: LOOK_UP + 0.025 * Math.sin(s * 0.5 + 0.4),
-      roll: 0.02 * Math.sin(s * 0.27 + 2),
+      pitch: LOOK_UP + 0.045 * Math.sin(s * 0.5 + 0.4),
+      roll: 0.035 * Math.sin(s * 0.27 + 2),
     }),
     onLive: () => host.classList.add('is-live'),
     onFail: () => tv?.classList.add('is-robot-fallback'),

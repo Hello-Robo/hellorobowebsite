@@ -13,7 +13,9 @@
  */
 import {
   ACESFilmicToneMapping,
-  AdditiveBlending,
+  Color,
+  CustomBlending,
+  OneFactor,
   Mesh as ThreeMesh,
   PlaneGeometry,
   Vector2,
@@ -69,20 +71,23 @@ export interface RobotOptions {
   screenColor?: () => [number, number, number] | null;
   /** soft, wide projector rays from the front of his head (towards the TV) */
   beam?: boolean;
+  /** he blinks every 8–10 s: the projector light goes out for a moment and comes back */
+  blink?: boolean;
   /** an accessible name for the canvas (it stands in for a photo) */
   label?: string;
   onLive?: () => void;
   onFail?: () => void;
 }
 
-// Projector rays, as volumetric light: a soft shaft drawn in screen space over the whole
-// canvas, under the robot (so his head hides where it starts). Each frame the front of his
-// face and a point far along his gaze are projected to the screen; the shaft runs between
-// them, widening as it goes, with a gaussian falloff across it (no edges), fading in just
-// off his face and out towards the far end, and slow drifting haze through it. Additive.
-const BEAM_LEN = 1.15; // how far it reaches on screen (1 = half the canvas height)
-const BEAM_W0 = 0.14; // half-width at his face, in screen units (1 = half the canvas height)
-const BEAM_W1 = 1.7; // … at the far end: wide
+// Projector light, as diffuse volumetric light: a soft glow drawn in screen space over the
+// whole canvas, under the robot (so his head hides where it starts). Each frame the front of
+// his face and a point along his gaze are projected to the screen. The light spreads out
+// from his face in a wide fan (a soft gaussian on the angle from his gaze, no edges), fades
+// gently with distance (no end to it), with faint soft rays through it, slow drifting haze and
+// tiny dust specks floating in it.
+// Added on, premultiplied.
+const BEAM_SPREAD = 1.25; // rad: how wide the fan is (gaussian on the angle off his gaze)
+const BEAM_FALL = 2.6; // how fast it fades with distance (screen units, 1 = half the height)
 const BEAM_VERT = `
 varying vec2 vNdc;
 void main() {
@@ -104,24 +109,62 @@ float noise(vec2 p) {
   f = f * f * (3.0 - 2.0 * f);
   return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
 }
+// dust: tiny specks, a few per area (most grid cells are empty), each wandering on its own
+// slow, random path (two sines per axis with its own speeds and phases: no shared drift, so
+// they float every which way like dust) and twinkling. Neighbouring cells are checked too,
+// since a speck can wander out of its own cell.
+float dust(vec2 p, float scale, float seed) {
+  vec2 pp = p * scale;
+  vec2 base = floor(pp);
+  float sum = 0.0;
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      vec2 id = base + vec2(float(i), float(j));
+      float r = hash(id + seed);
+      if (r > 0.056) continue;
+      float h1 = hash(id + seed + 2.1), h2 = hash(id + seed + 5.9);
+      float h3 = hash(id + seed + 11.3), h4 = hash(id + seed + 13.7);
+      vec2 at = id + vec2(hash(id + seed + 1.3), hash(id + seed + 7.1));
+      at += 0.55 * vec2(
+        sin(uTime * (0.05 + 0.12 * h1) + h2 * 6.283) + 0.5 * sin(uTime * (0.16 + 0.2 * h3) + h4 * 6.283),
+        sin(uTime * (0.04 + 0.11 * h3) + h1 * 6.283) + 0.5 * sin(uTime * (0.14 + 0.2 * h2) + h3 * 6.283)
+      );
+      float d = length(pp - at) / scale; // in screen units
+      float size = mix(0.0008, 0.0018, hash(id + seed + 3.7));
+      float twinkle = 0.45 + 0.55 * sin(uTime * (0.8 + r * 40.0) + h4 * 60.0);
+      sum += smoothstep(size, size * 0.25, d) * max(twinkle, 0.0);
+    }
+  }
+  return sum;
+}
 void main() {
   vec2 p = vec2(vNdc.x * uAspect, vNdc.y);
   vec2 a = vec2(uFrom.x * uAspect, uFrom.y);
   vec2 b = vec2(uTo.x * uAspect, uTo.y);
-  vec2 ab = b - a;
-  float len = max(length(ab), 1e-4);
-  vec2 dir = ab / len;
+  vec2 dir = normalize(b - a);
   vec2 ap = p - a;
-  float t = dot(ap, dir) / len; // 0 at his face, 1 at the far end
-  float d = abs(dir.x * ap.y - dir.y * ap.x); // distance from the shaft's middle
-  float w = mix(${BEAM_W0.toFixed(3)}, ${BEAM_W1.toFixed(3)}, clamp(t, 0.0, 1.0));
-  float across = exp(-2.2 * (d / w) * (d / w));
-  float along = smoothstep(0.0, 0.15, t) * pow(clamp(1.0 - t, 0.0, 1.0), 1.0);
-  // haze drifting slowly up the light
-  vec2 q = p * 3.0 + vec2(uTime * 0.04, -uTime * 0.09);
-  float haze = 0.7 + 0.3 * noise(q) + 0.2 * (noise(q * 2.7 + 5.0) - 0.5);
-  float alpha = uStrength * uGlow * across * along * haze;
-  gl_FragColor = vec4(uColor, alpha);
+  float r = max(length(ap), 1e-4);
+  // signed angle off his gaze
+  float ang = atan(dir.x * ap.y - dir.y * ap.x, dot(ap, dir));
+  float u = ang / ${BEAM_SPREAD.toFixed(3)};
+  float fan = exp(-u * u);
+  // starts just off his face, then fades softly with distance
+  float fall = smoothstep(0.0, 0.25, r) * exp(-r / ${BEAM_FALL.toFixed(3)});
+  // faint soft rays fanning out (slowly shifting), and haze drifting up through the light
+  float rays = 0.82 + 0.18 * noise(vec2(ang * 9.0, uTime * 0.06));
+  vec2 q = p * 1.4 + vec2(uTime * 0.02, -uTime * 0.05);
+  float haze = 0.72 + 0.28 * noise(q) + 0.12 * (noise(q * 2.3 + 7.0) - 0.5);
+  float alpha = uStrength * uGlow * fan * fall * rays * haze;
+  // dust specks, only seen where the light is (three sizes / depths)
+  float specks = dust(p, 22.0, 0.0) + 0.8 * dust(p, 34.0, 4.0) + 0.6 * dust(p, 52.0, 9.0);
+  alpha += 0.9 * uGlow * specks * fan * fall;
+  // a little dither so the soft falloff doesn't band in 8 bits
+  alpha += (hash(gl_FragCoord.xy + fract(uTime)) - 0.5) / 255.0;
+  alpha = max(alpha, 0.0);
+  // premultiplied, added on (the canvas is transparent): the light's colour, and a third of its
+  // strength as coverage, so the browser shows even the faintest part (an alpha that rounds
+  // to 0 hides the pixel, which drew a hard edge) and the page under it dims a touch
+  gl_FragColor = vec4(uColor * alpha, alpha * 0.3);
 }`;
 
 function makeBeam() {
@@ -129,7 +172,7 @@ function makeBeam() {
     uTime: { value: 0 },
     uGlow: { value: 1 },
     uColor: { value: [1, 0.88, 0.74] as number[] },
-    uStrength: { value: 0.15 },
+    uStrength: { value: 0.42 },
     uAspect: { value: 1 },
     uFrom: { value: new Vector2() },
     uTo: { value: new Vector2() },
@@ -143,7 +186,11 @@ function makeBeam() {
       transparent: true,
       depthTest: false,
       depthWrite: false,
-      blending: AdditiveBlending,
+      blending: CustomBlending,
+      blendSrc: OneFactor,
+      blendDst: OneFactor,
+      blendSrcAlpha: OneFactor,
+      blendDstAlpha: OneFactor,
     }),
   );
   quad.frustumCulled = false;
@@ -192,18 +239,21 @@ export function mountRobot(o: RobotOptions) {
     rim.position.set(2, 1.5, -2);
     scene.add(rim);
   } else {
-    // the TV in front of him (he faces +z): light from straight ahead, level with his
-    // head, so only his edges catch it from behind; next to nothing reaches his back
-    renderer.toneMappingExposure = 1;
-    scene.add(new HemisphereLight(0x2a241f, 0x000000, 0.25));
-    screenBase = 3.2;
+    // Dramatic rim light (like a product shot on black): he's a dark, glossy silhouette and
+    // only his edges catch the light. The TV in front of him (he faces +z) lights him from
+    // ahead and from below his head (a light level with or above it mirrors off the top of
+    // his dome straight at the camera), so from behind just the outlines of his head and
+    // shoulders shine and the top of his head stays fairly dark; the side screens, off to his left and right at a grazing angle, trace
+    // his sides. No fill: next to nothing reaches his back.
+    renderer.toneMappingExposure = 1.1;
+    scene.add(new HemisphereLight(0x2a241f, 0x000000, 0.04));
+    screenBase = 5;
     screenLight = new DirectionalLight(0xfff1e0, screenBase);
-    screenLight.position.set(0, 0.95, 3);
+    screenLight.position.set(0, -0.6, 3);
     scene.add(screenLight);
-    // the side screens, off to his left and right and a little ahead: warm edges
     for (const x of [-1, 1]) {
-      const side = new DirectionalLight(0xffd2a6, 1.1);
-      side.position.set(x * 2.5, 0.9, 1.6);
+      const side = new DirectionalLight(0xffd2a6, 6);
+      side.position.set(x * 2.2, 1.0, 1.6);
       scene.add(side);
       sides.push(side);
     }
@@ -218,7 +268,27 @@ export function mountRobot(o: RobotOptions) {
   let raf = 0;
   let t0 = 0;
   let glow = 1;
+  // blinking: when the next one starts (s), and the light's level through one (0 = shut)
+  let nextBlink = 8 + Math.random() * 2;
+  const BLINK = { close: 0.07, shut: 0.06, open: 0.16 }; // s
+  const blinkLevel = (s: number) => {
+    if (!o.blink || reduced) return 1;
+    let t = s - nextBlink;
+    if (t < 0) return 1;
+    const { close, shut, open } = BLINK;
+    if (t < close) return 1 - t / close;
+    if ((t -= close) < shut) return 0;
+    if ((t -= shut) < open) {
+      const k = t / open;
+      return k * k * (3 - 2 * k);
+    }
+    nextBlink = s + 8 + Math.random() * 2;
+    return 1;
+  };
   let beam: ReturnType<typeof makeBeam> | null = null;
+  // screen light: a thin glow round his silhouette (fresnel), none on top, in the
+  // screen's colour — the light wrapping round his edges
+  const rim = { uRimColor: { value: new Color(...IDLE) }, uRimStrength: { value: 1.1 } };
   const from = new Vector3();
   const to = new Vector3();
 
@@ -260,10 +330,11 @@ export function mountRobot(o: RobotOptions) {
       screenLight.color.setRGB(tint[0], tint[1], tint[2]);
       // the side screens show the picture's edges: the same light, a little warmer
       for (const side of sides) side.color.setRGB(tint[0], tint[1] * 0.92, tint[2] * 0.82);
+      rim.uRimColor.value.setRGB(tint[0], tint[1], tint[2]);
     }
     if (beam) {
       beam.uniforms.uTime.value = s;
-      beam.uniforms.uGlow.value = glow;
+      beam.uniforms.uGlow.value = glow * (0.04 + 0.96 * blinkLevel(s));
       beam.uniforms.uColor.value = tint;
       // the shaft's ends on screen: the front of his face, and far along his gaze
       head!.updateWorldMatrix(true, true);
@@ -271,10 +342,10 @@ export function mountRobot(o: RobotOptions) {
       beam.anchor.localToWorld(from).project(camera);
       to.set(0, 0, 4);
       beam.anchor.localToWorld(to).project(camera);
-      // the direction his gaze runs on screen, at a set length (perspective would shrink it)
+      // the direction his gaze runs on screen (only the direction is used)
       const dx = (to.x - from.x) * camera.aspect;
       const dy = to.y - from.y;
-      const k = BEAM_LEN / Math.max(1e-4, Math.hypot(dx, dy));
+      const k = 1 / Math.max(1e-4, Math.hypot(dx, dy));
       beam.uniforms.uFrom.value.set(from.x, from.y);
       beam.uniforms.uTo.value.set(from.x + (dx * k) / camera.aspect, from.y + dy * k);
       beam.uniforms.uAspect.value = camera.aspect;
@@ -306,13 +377,32 @@ export function mountRobot(o: RobotOptions) {
         pivot.attach(mesh);
         head = pivot;
       }
+      const done = new Set<MeshStandardMaterial>();
       root.traverse((obj) => {
         const m = (obj as Mesh).material as MeshStandardMaterial | undefined;
-        if (!m || !('metalness' in m)) return;
+        if (!m || !('metalness' in m) || done.has(m)) return;
+        done.add(m);
         // the model came from FBX Phong: tone the metal down, it reads as painted plastic
         m.metalness = 0.15;
         m.roughness = 0.55;
         m.envMapIntensity = 0.9;
+        if (o.light === 'screen') {
+          // dark and glossy, so the edges catch crisp, bright highlights
+          m.color.multiplyScalar(0.18);
+          m.metalness = 0.3;
+          m.roughness = 0.3;
+          m.onBeforeCompile = (shader) => {
+            Object.assign(shader.uniforms, rim);
+            shader.fragmentShader = shader.fragmentShader
+              .replace('void main() {', 'uniform vec3 uRimColor;\nuniform float uRimStrength;\nvoid main() {')
+              .replace(
+                '#include <opaque_fragment>',
+                `float fres = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 7.0);
+                outgoingLight += uRimColor * fres * uRimStrength * (1.0 - smoothstep(0.1, 0.6, normal.y));
+                #include <opaque_fragment>`,
+              );
+          };
+        }
       });
       if (o.beam && head) {
         // from the front of his face: the head's middle height, just ahead of it

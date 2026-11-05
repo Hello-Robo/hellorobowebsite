@@ -1,10 +1,12 @@
 /**
  * Home hero — one WebGL scene (ported from the "robot-hero draft v2" prototype):
- * - the robot (public/models/hello-robot.glb) cropped at the torso; his head follows the
+ * - the robot (public/models/hello-robot.glb, with a slight glossy lacquer) cropped at the
+ *   torso; his head follows the
  *   mouse, the body takes a little of the turn; after a few seconds without the mouse he
  *   looks around on his own; he "breathes" slightly;
  * - behind him the sticker graphics (public/images/home/hero-bg.jpg, an equirect 2:1
- *   picture) on a virtual sphere — tiled, a little fisheye at the edges — that turns with
+ *   picture) on a virtual sphere — tiled, a little fisheye at the edges, the top bent like a
+ *   curved screen — that turns with
  *   (by default against) the head.
  *
  * The settings and the background picture come from the CMS (Home page → Hero (3D,
@@ -31,6 +33,7 @@ const DEFAULTS = {
   bgSameDirection: false, // false = the background turns against the head
   bgTiles: 4, // picture repeats round the sphere and top to bottom
   bgFisheye: 0.14, // edge distortion, 0..1
+  bgBendTop: 0.4, // the top bends like a curved screen (rows bow down towards the sides), 0..1
   bgFovDeg: 84, // background field of view (smaller = bigger graphics)
   bgOpacity: 0.9, // graphics over white, 0..1
 };
@@ -42,13 +45,17 @@ const FRAME = { top: 1.06, bottom: 0.5, width: 0.62 };
 const BG_VERT = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
 const BG_FRAG = `
 uniform sampler2D map;
-uniform float tiles, opacity, tanH, aspect, fish;
+uniform float tiles, opacity, tanH, aspect, fish, bendTop;
 uniform mat3 rot;
 varying vec2 vUv;
 void main(){
   vec2 p = vUv * 2.0 - 1.0; p.x *= aspect;
   float r2 = dot(p, p) / (1.0 + aspect * aspect);   // 0 at the centre, 1 in the corners
   vec2 q = p * (1.0 + fish * 3.0 * r2);               // barrel: rays pushed out at the edges
+  // top bend: towards the top, the further out to the sides the higher it samples, so rows
+  // there bow down at the sides like the top of a curved screen
+  float top = smoothstep(0.0, 1.0, vUv.y);
+  q.y += bendTop * 2.25 * top * top * (p.x / aspect) * (p.x / aspect);
   vec3 d = normalize(rot * vec3(q * tanH, -1.0));
   float lon = atan(d.x, -d.z);
   float lat = asin(clamp(d.y, -1.0, 1.0));
@@ -112,6 +119,7 @@ export function mountHeroScene(o: {
     tanH: { value: 1 },
     aspect: { value: 1 },
     fish: { value: 0 },
+    bendTop: { value: 0 },
     rot: { value: new THREE.Matrix3() },
   };
   bgScene.add(
@@ -171,6 +179,30 @@ export function mountHeroScene(o: {
   new GLTFLoader().load(
     o.modelUrl,
     ({ scene: model }) => {
+      // a slight shine: the model is fully matte (roughness 0.82), so each part gets a thin
+      // clear lacquer on top (soft glossy highlights and room reflections) and a little less
+      // roughness underneath; colours and textures stay as they are
+      const glossy = new Map<THREE.Material, THREE.MeshPhysicalMaterial>();
+      model.traverse((n) => {
+        const mesh = n as THREE.Mesh;
+        const m = mesh.material as THREE.MeshStandardMaterial | undefined;
+        if (!mesh.isMesh || !m?.isMeshStandardMaterial) return;
+        let g = glossy.get(m);
+        if (!g) {
+          // copy the standard properties only (the physical copy expects a physical source),
+          // then put back the physical shader's defines that the copy replaced
+          g = new THREE.MeshPhysicalMaterial();
+          THREE.MeshStandardMaterial.prototype.copy.call(g, m);
+          g.defines = { STANDARD: '', PHYSICAL: '' };
+          g.roughness = Math.min(m.roughness, 0.6);
+          g.clearcoat = 0.45;
+          g.clearcoatRoughness = 0.22;
+          g.envMapIntensity = 1.15;
+          glossy.set(m, g);
+          m.dispose();
+        }
+        mesh.material = g;
+      });
       const head = model.getObjectByName(config.head);
       if (!head) console.warn(`[hero] no "${config.head}" in the model`);
       rig.stage = new THREE.Group();
@@ -251,6 +283,7 @@ export function mountHeroScene(o: {
     bgUniforms.tiles.value = c.bgTiles;
     bgUniforms.opacity.value = c.bgOpacity;
     bgUniforms.fish.value = c.bgFisheye;
+    bgUniforms.bendTop.value = c.bgBendTop;
     bgUniforms.tanH.value = Math.tan(D2R(c.bgFovDeg / 2));
 
     renderer.clear();
