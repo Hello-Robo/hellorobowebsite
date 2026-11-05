@@ -13,7 +13,9 @@
  *           it has loaded
  *
  * Browsers only let a page make sound after the visitor has clicked, tapped or pressed a key,
- * so everything is silent until then. Off when the visitor has turned it off
+ * so everything is silent until then (on desktop the audio is set up and the shutter loaded
+ * at once, so it plays from the very first flash wherever the browser allows it, and from
+ * the first one after a click everywhere else). Off when the visitor has turned it off
  * (localStorage "sound" = "off"). Presses on buttons and links click on their own (below);
  * the form sounds are called by the contact block. Hovering makes no sound.
  */
@@ -38,12 +40,8 @@ const off = () => {
   }
 };
 
-/** the audio starts on the visitor's first click / tap / key */
-function unlock() {
-  if (ctx) {
-    if (ctx.state === 'suspended') ctx.resume();
-    return;
-  }
+/** sets up the audio graph and loads the recorded shutter */
+function init() {
   const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!AC) return;
   ctx = new AC();
@@ -54,7 +52,8 @@ function unlock() {
   soft.type = 'lowpass';
   soft.frequency.value = 9000;
   out.connect(soft).connect(ctx.destination);
-  // the recorded shutter, loaded once sound is allowed
+  // the recorded shutter: decoding works while the audio is still waiting for a click, so
+  // the first flash after it already has the real sound
   const c = ctx;
   fetch('/sounds/shutter.m4a')
     .then((r) => r.arrayBuffer())
@@ -65,8 +64,35 @@ function unlock() {
   const d = noise.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
 }
+
+/** has the visitor clicked / tapped / pressed a key on this page yet */
+const activated = () => navigator.userActivation?.hasBeenActive ?? !!ctx;
+
+/** the audio starts on the visitor's first click / tap / key */
+function unlock() {
+  if (!ctx) init();
+  if (!ctx) return;
+  if (ctx.state !== 'running') {
+    ctx.resume().catch(() => {});
+    // Safari only really starts the audio once something plays inside the click itself
+    const s = ctx.createBufferSource();
+    s.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+    s.connect(ctx.destination);
+    s.start();
+  }
+}
 // (iOS only counts the end of a tap, other browsers the start)
 for (const type of ['pointerdown', 'pointerup', 'touchend', 'keydown']) addEventListener(type, unlock, { passive: true, capture: true });
+// set up and load straight away; browsers that allow sound before a click (a site the visitor
+// often plays sound on, or set to allow it) then play from the very first flash. Desktop only:
+// on phones it waits for the first tap as before
+if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  try {
+    init();
+  } catch {
+    ctx = null;
+  }
+}
 
 /** one tone: `f0` falling / rising to `f1`, `dur` s, decaying from `vol` */
 function tone(at: number, f0: number, f1: number, dur: number, vol: number, wave: OscillatorType = 'square') {
@@ -106,6 +132,8 @@ export function sfx(name: Name) {
   // the browser can suspend audio after the tab was in the background: wake it and play
   // as soon as it's back (allowed: the visitor has already clicked on this page)
   if (ctx.state === 'suspended') {
+    // (before the first click this would only be refused, and warned about, every time)
+    if (!activated()) return;
     ctx.resume().then(() => ctx?.state === 'running' && sfx(name), () => {});
     return;
   }
