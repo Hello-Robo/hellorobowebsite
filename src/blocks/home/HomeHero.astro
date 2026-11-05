@@ -9,6 +9,10 @@
  * and the title stay on top. Phones, tablets and browsers without WebGL 2 keep the still
  * picture. (The receipt photo under the sphere in Figma is fully covered by it, so it
  * isn't used.)
+ *
+ * The robot is a 3D model on desktop too (src/scripts/hero-robot.ts): the body stays put
+ * and the head turns a little. The photo is hidden there while the model loads, and comes
+ * back if it can't (no WebGL, model failed). Phones and tablets keep the photo.
  */
 import { Image } from 'astro:assets';
 import WebGLSlot from '../../components/ui/WebGLSlot.astro';
@@ -51,6 +55,12 @@ import robot from '../../assets/home/hero-robot.png';
 
 <script>
   import '../../scripts/hero-sphere';
+  // the 3D robot: three.js and the model are only fetched on desktop
+  if (matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px)').matches) {
+    import('../../scripts/hero-robot').catch(() =>
+      document.querySelector('.home-hero')?.classList.add('is-robot-fallback'),
+    );
+  }
 </script>
 
 <style>
@@ -104,6 +114,26 @@ import robot from '../../assets/home/hero-robot.png';
     width: 100%;
     height: 285.71%;
     max-width: none;
+  }
+  /* desktop: the 3D robot replaces the photo; the canvas fills the hero and fades in once
+     drawn. The photo only shows if the model can't. */
+  .home-hero :global(.home-hero__robot-canvas) {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--duration-smooth) var(--ease-out);
+  }
+  .home-hero :global(.is-robot-live .home-hero__robot-canvas) {
+    opacity: 1;
+  }
+  @media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
+    .home-hero:not(.is-robot-fallback) .home-hero__robot-frame {
+      visibility: hidden;
+    }
   }
   .home-hero__title {
     position: absolute;

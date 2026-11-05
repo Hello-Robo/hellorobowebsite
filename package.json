@@ -16,11 +16,13 @@
   "dependencies": {
     "@astrojs/vercel": "^11.0.18",
     "@vercel/blob": "^2.8.2",
-    "astro": "^7.4.2"
+    "astro": "^7.4.2",
+    "three": "^0.170.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
     "@types/node": "^22.20.5",
+    "@types/three": "^0.170.0",
     "svgo": "^4.1.0",
     "typescript": "^6.0.3"
   }
