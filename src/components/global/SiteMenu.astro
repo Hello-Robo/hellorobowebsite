@@ -213,15 +213,15 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path === href 
   /* The two CRT canvases (photo, Say hello) fade on their own layer too: Chrome sometimes
      didn't repaint a WebGL canvas inside a block whose clip-path / opacity was animating, so
      on close the cards stayed fully drawn while the rest faded. Closing, they go first and
-     quickly (the plain picture underneath fades with its card); opening, they come in with
-     the cards. */
+     quickly (the plain picture underneath fades with its card); opening, they're on at once
+     and appear with their cards (CrtScreen draws them the moment the menu opens). */
   .site-menu__panel :global(.crt) {
     opacity: 0;
     transition: opacity 0.16s ease;
   }
   :global(html[data-menu='open']) .site-menu__panel :global(.crt) {
     opacity: 1;
-    transition: opacity 0.3s ease calc(var(--p) * 0.04s);
+    transition: none; /* on at once with its card: no plain photo showing first */
   }
 
   /* Links and socials: each one slides up through a mask, one after another — the Services

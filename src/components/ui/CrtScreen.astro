@@ -413,25 +413,50 @@ void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
     };
     // Animate only while the box is visible (e.g. the menu is open); otherwise check back
     // a few times a second so a newly shown box starts right away
+    const html = document.documentElement;
+    const inMenu = !!box.closest('.site-menu');
     const shown = () => {
       if (document.visibilityState !== 'visible' || !box.offsetWidth) return false;
       // the page's own CRT layers rest while the site menu is open (they're under its blur);
       // the menu's own keep running
-      if (document.documentElement.dataset.menu === 'open' && !box.closest('.site-menu')) return false;
+      const menuOpen = html.dataset.menu === 'open';
+      if (menuOpen && !inMenu) return false;
       const cs = getComputedStyle(box);
-      return cs.visibility === 'visible' && cs.opacity !== '0';
+      if (cs.visibility !== 'visible') return false;
+      // the menu's pictures run from the moment it opens, while their cards are still
+      // fading in (waiting for them to show let the first frames show a stale picture)
+      return cs.opacity !== '0' || (inMenu && menuOpen);
     };
     // "crt:update" on the box: redraw now, even while hidden (the menu swaps its photo while
     // closed, so the screen already shows the new one the moment it opens — no blink)
     box.addEventListener('crt:update', () => draw(performance.now()));
-    const later = () => setTimeout(() => requestAnimationFrame(loop), 250);
+    let timer = 0;
+    let frame = 0;
+    const later = () => {
+      frame = 0;
+      timer = window.setTimeout(() => (frame = requestAnimationFrame(loop)), 250);
+    };
     const loop = (now: number) => {
+      frame = 0;
       if (!shown()) return later();
       draw(now);
       if (still) return later();
-      requestAnimationFrame(loop);
+      frame = requestAnimationFrame(loop);
     };
-    requestAnimationFrame(loop);
+    frame = requestAnimationFrame(loop);
+    // the menu opening: its pictures draw at once (this runs before the next frame is
+    // painted), so the first frame of the opening already shows the right, CRT'd picture —
+    // no stale frame, no pop a quarter second later
+    if (inMenu) {
+      new MutationObserver(() => {
+        if (html.dataset.menu !== 'open' || !shown()) return;
+        clearTimeout(timer);
+        if (frame) cancelAnimationFrame(frame);
+        const now = performance.now();
+        draw(now);
+        frame = requestAnimationFrame(loop);
+      }).observe(html, { attributes: true, attributeFilter: ['data-menu'] });
+    }
   }
 </script>
 
