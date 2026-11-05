@@ -21,8 +21,9 @@ import WebGLSlot from '../../components/ui/WebGLSlot.astro';
 import CrtScreen from '../../components/ui/CrtScreen.astro';
 import sphere from '../../assets/home/hero-sphere.png';
 import robot from '../../assets/home/hero-robot.png';
-// the CRT layer over the whole hero: the same settings as the Showcase section below
-const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
+// the CRT layer over the hero: the Showcase section's settings, every darkening strength
+// 10% lighter (scanlines 38, mask 9, flicker 22, static 8, vignette 13 → ×0.9)
+const crt = { scanlines: 34.2, mask: 8.1, flicker: 19.8, noise: 7.2, vignette: 11.7, rollSpeed: 0.35 };
 // the 3D scene's settings and background picture, from the CMS (Home page → Hero)
 const { background, ...heroSettings } = (await getCollection('home'))[0]?.data.hero ?? {};
 const heroData = JSON.stringify({ ...heroSettings, background: background?.src ?? sphere.src });

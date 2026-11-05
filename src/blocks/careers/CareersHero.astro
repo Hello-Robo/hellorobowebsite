@@ -9,6 +9,7 @@
 import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import CrtScreen from '../../components/ui/CrtScreen.astro';
+import { CRT_SUBTLE } from '../../data/crt';
 
 const photos = ((await getCollection('careers-page'))[0]?.data.strip ?? []).map((s) => s.photo);
 // the strip's proportions (all photos at one height), and each photo's share of its width
@@ -36,7 +37,7 @@ const ratio = photos.reduce((sum, p) => sum + p.width / p.height, 0);
           />
         );
       })}
-      <CrtScreen mosaic />
+      <CrtScreen mosaic settings={CRT_SUBTLE} />
     </div>
   )}
 </section>

@@ -16,6 +16,7 @@ import { Image } from 'astro:assets';
 import Icon from '../icons/Icon.astro';
 import RoboLogo from '../icons/RoboLogo.astro';
 import CrtScreen from '../ui/CrtScreen.astro';
+import { CRT_SUBTLE } from '../../data/crt';
 import { mainNav, socials } from '../../data/site';
 import type { ImageMetadata } from 'astro';
 import robot from '../../assets/menu/menu-hello.png'; // Figma 10507:91: the robot in front of the micrographic
@@ -62,11 +63,11 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path === href 
         {photos.map((p, i) => (
           <Image class:list={{ 'is-current': i === 0 }} src={p} alt={i === 0 ? 'The Hello Robo team' : ''} widths={[541, 1082]} sizes="(min-width: 1728px) 541px, 32vw" loading="lazy" />
         ))}
-        <CrtScreen />
+        <CrtScreen settings={CRT_SUBTLE} />
       </div>
       <section class="site-menu__panel site-menu__hello">
         <Image class="site-menu__robot" src={robot} alt="" widths={[541, 1082]} sizes="(min-width: 1728px) 541px, 32vw" loading="lazy" />
-        <CrtScreen />
+        <CrtScreen settings={CRT_SUBTLE} />
         <p class="site-menu__hello-title t-body">Say hello</p>
         <ul class="site-menu__socials t-body">
           {socials.map((s, i) => <li><a href={s.href} target="_blank" rel="noopener"><span class="site-menu__mask"><span style={`--d: ${i}`}>{s.label}</span></span></a></li>)}
@@ -207,6 +208,20 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path === href 
   :global(html[data-menu='open']) .site-menu :is(.site-menu__head, .site-menu__talk > *, .site-menu__hello-title) {
     opacity: 1;
     transition: opacity 0.4s ease 0.22s;
+  }
+
+  /* The two CRT canvases (photo, Say hello) fade on their own layer too: Chrome sometimes
+     didn't repaint a WebGL canvas inside a block whose clip-path / opacity was animating, so
+     on close the cards stayed fully drawn while the rest faded. Closing, they go first and
+     quickly (the plain picture underneath fades with its card); opening, they come in with
+     the cards. */
+  .site-menu__panel :global(.crt) {
+    opacity: 0;
+    transition: opacity 0.16s ease;
+  }
+  :global(html[data-menu='open']) .site-menu__panel :global(.crt) {
+    opacity: 1;
+    transition: opacity 0.3s ease calc(var(--p) * 0.04s);
   }
 
   /* Links and socials: each one slides up through a mask, one after another — the Services

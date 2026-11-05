@@ -8,6 +8,10 @@
  * style (H1–H3, big statements) rises like the headlines instead (headline-reveal.ts). Not links, buttons, the menu, the footer, or blocks that already move
  * their text (contact block, Services scroller, Robo Radio clips, Careers values, the
  * wheels, Team canvas). Off for reduced motion.
+ *
+ * Groups of pictures do the same: in a `[data-reveal-group]` each `[data-reveal-item]` is
+ * one "word" — dim (grey) to full, one after another in page order, e.g. Home's client
+ * logos.
  */
 
 import { uncovered } from './uncovered';
@@ -70,6 +74,11 @@ if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const words = split(el);
     if (words.length < 4) continue;
     paras.push({ el, words, last: [], start: 0 });
+  }
+  // picture groups (the client logos): each item lights up like a word
+  for (const el of document.querySelectorAll<HTMLElement>('[data-reveal-group]')) {
+    const words = [...el.querySelectorAll<HTMLElement>('[data-reveal-item]')];
+    if (words.length) paras.push({ el, words, last: [], start: 0 });
   }
 
   const active = new Set<Para>();

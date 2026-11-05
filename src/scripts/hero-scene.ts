@@ -4,6 +4,8 @@
  *   torso; his head follows the
  *   mouse, the body takes a little of the turn; after a few seconds without the mouse he
  *   looks around on his own; he "breathes" slightly;
+ * - now and then a photographer's flash lights him and the sphere for a moment and casts
+ *   his soft shadow on it (only the light shows, not the flash itself);
  * - behind him the sticker graphics (public/images/home/hero-bg.jpg, an equirect 2:1
  *   picture) on a virtual sphere — tiled, a little fisheye at the edges, the top bent like a
  *   curved screen — that turns with
@@ -18,6 +20,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { sfx } from './sound';
 /** Defaults (the prototype's tuned values); the CMS overrides all but head / pivot */
 const DEFAULTS = {
   head: 'tripo_part_3', // mesh that turns as the head
@@ -47,6 +50,12 @@ const BG_FRAG = `
 uniform sampler2D map;
 uniform float tiles, opacity, tanH, aspect, fish, bendTop;
 uniform mat3 rot;
+// photographer's flash on the sphere: its level, where its hotspot lands (uv), and the
+// robot's silhouette (rendered small while a flash is on) cast as a soft shadow, offset
+// away from the flash
+uniform float flash;
+uniform vec2 flashAt, shadowOffset;
+uniform sampler2D shadowMask;
 varying vec2 vUv;
 void main(){
   vec2 p = vUv * 2.0 - 1.0; p.x *= aspect;
@@ -61,7 +70,24 @@ void main(){
   float lat = asin(clamp(d.y, -1.0, 1.0));
   vec2 uv = vec2(lon / 6.2831853, lat / 3.1415927) * tiles + 0.5;
   vec3 c = texture2D(map, uv).rgb;
-  gl_FragColor = vec4(mix(vec3(1.0), c, opacity), 1.0);
+  vec3 col = mix(vec3(1.0), c, opacity);
+  if (flash > 0.0) {
+    // the flash lights the graphics: brightest round its hotspot, a little everywhere
+    vec2 h = (vUv - flashAt) * vec2(aspect, 1.0);
+    float spot = 0.35 + 0.65 * exp(-dot(h, h) * 1.6);
+    col += (1.0 - col) * flash * 0.55 * spot;
+    // the robot's shadow: his silhouette, shifted away from the flash and softened
+    vec2 su = vUv + shadowOffset;
+    float sh = 0.0;
+    for (int i = -2; i <= 2; i++) {
+      for (int j = -2; j <= 2; j++) {
+        sh += texture2D(shadowMask, su + vec2(float(i), float(j)) * vec2(0.006 / aspect, 0.006)).r;
+      }
+    }
+    sh /= 25.0;
+    col *= 1.0 - flash * 0.5 * sh;
+  }
+  gl_FragColor = vec4(col, 1.0);
 }`;
 
 export function mountHeroScene(o: {
@@ -107,12 +133,25 @@ export function mountHeroScene(o: {
   const rim = new THREE.DirectionalLight(0xffd9c4, 1.1 * Math.PI);
   rim.position.set(-1.6, 1.4, -1.8);
   scene.add(key, rim, new THREE.HemisphereLight(0xffffff, 0x8a8580, 0.35 * Math.PI));
+  // Photographer's flash, now and then: a bright, cool-white burst from just beside the camera
+  // (a little left and up) that lights only the robot — its glossy coat and paint catch it —
+  // and dies off fast. The flash itself is never shown; the background isn't lit by it.
+  const flash = new THREE.DirectionalLight(0xf4f8ff, 0);
+  flash.position.set(-0.5, 1.5, 3);
+  scene.add(flash);
   const camera = new THREE.PerspectiveCamera(26, 1, 0.01, 20);
 
   // Background: a full-screen quad, each pixel casts a ray onto the virtual sphere.
   const bgScene = new THREE.Scene();
   const bgCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  // the robot's silhouette for the flash shadow, small (it's blurred anyway)
+  const shadowRT = new THREE.WebGLRenderTarget(1, 1);
+  const shadowMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const bgUniforms = {
+    flash: { value: 0 },
+    flashAt: { value: new THREE.Vector2(0.5, 0.6) },
+    shadowOffset: { value: new THREE.Vector2() },
+    shadowMask: { value: shadowRT.texture },
     map: { value: null as THREE.Texture | null },
     tiles: { value: 1 },
     opacity: { value: 1 },
@@ -143,6 +182,7 @@ export function mountHeroScene(o: {
     const w = o.host.clientWidth || innerWidth;
     const h = o.host.clientHeight || innerHeight;
     renderer.setSize(w, h, false);
+    shadowRT.setSize(Math.max(1, Math.round(w / 4)), Math.max(1, Math.round(h / 4)));
     camera.aspect = w / h;
     const halfV = THREE.MathUtils.degToRad(camera.fov / 2);
     const dist = Math.max(
@@ -248,9 +288,56 @@ export function mountHeroScene(o: {
     o.onFail?.();
   }
 
+  // flash timing, random like a press pit: the next one comes 1.5–7 s later (short gaps more
+  // likely), now and then a quick burst of 2–3; each flash has its own strength and comes
+  // from its own spot round the camera (left / right, higher / lower), as if from different
+  // photographers. Each burst: up in 20 ms, then a fast exponential fall-off (~0.25 s).
+  const FLASH = { peak: 6 * Math.PI, rise: 0.02, fall: 0.07 };
+  type Flash = { at: number; strength: number; x: number; y: number; heard?: boolean };
+  const flashPos = new THREE.Vector2();
+  let flashes: Flash[] = [];
+  let nextFlash = 1.5 + Math.random() * 3;
+  const shot = (at: number): Flash => ({
+    at,
+    strength: 0.55 + Math.random() * 0.45,
+    x: (Math.random() * 2 - 1) * 1.6,
+    y: 0.9 + Math.random() * 1.2,
+  });
+  const flashLevel = (t: number) => {
+    if (reduceMotion) return 0;
+    if (t >= nextFlash) {
+      flashes = [shot(nextFlash)];
+      const r = Math.random();
+      const extra = r < 0.12 ? 2 : r < 0.35 ? 1 : 0;
+      for (let i = 1; i <= extra; i++) flashes.push(shot(flashes[i - 1].at + 0.12 + Math.random() * 0.22));
+      nextFlash = t + 1.5 + 5.5 * Math.pow(Math.random(), 1.6);
+    }
+    let level = 0;
+    for (const f of flashes) {
+      const k = t - f.at;
+      if (k < 0) continue;
+      // the shutter clicks as it fires (silent until the visitor has clicked, or if they
+      // turned sound off: see sound.ts)
+      if (!f.heard) {
+        f.heard = true;
+        if (k < 0.1) sfx('shutter');
+      }
+      const l = f.strength * (k < FLASH.rise ? k / FLASH.rise : Math.exp(-(k - FLASH.rise) / FLASH.fall));
+      if (l > level) {
+        level = l;
+        flash.position.set(f.x, f.y, 3);
+        flashPos.set(f.x, f.y);
+      }
+    }
+    return level < 0.002 ? 0 : level;
+  };
+
   function tick() {
     raf = 0;
     const dt = Math.min(clock.getDelta(), 0.05);
+    const f = flashLevel(clock.elapsedTime);
+    flash.intensity = FLASH.peak * f;
+    scene.environmentIntensity = 1 + 1.2 * f; // the room reflections brighten with it
     const t = clock.elapsedTime;
     const c = config;
     if (rig.pivot && rig.body && rig.stage) {
@@ -286,6 +373,22 @@ export function mountHeroScene(o: {
     bgUniforms.bendTop.value = c.bgBendTop;
     bgUniforms.tanH.value = Math.tan(D2R(c.bgFovDeg / 2));
 
+    // during a flash: the robot's silhouette into the small mask, for his shadow on the sphere
+    const fl = flash.intensity / FLASH.peak;
+    bgUniforms.flash.value = fl;
+    if (fl > 0 && rig.stage) {
+      // flash from the right → shadow to the left; from higher up → shadow lower
+      bgUniforms.flashAt.value.set(0.5 + flashPos.x * 0.16, 0.5 + (flashPos.y - 1.2) * 0.22);
+      bgUniforms.shadowOffset.value.set(flashPos.x * 0.07, (flashPos.y - 1.2) * 0.08 + 0.03);
+      renderer.setRenderTarget(shadowRT);
+      renderer.setClearColor(0x000000, 1);
+      renderer.clear();
+      scene.overrideMaterial = shadowMat;
+      renderer.render(scene, camera);
+      scene.overrideMaterial = null;
+      renderer.setRenderTarget(null);
+      renderer.setClearColor(0xffffff, 1);
+    }
     renderer.clear();
     if (bgUniforms.map.value) renderer.render(bgScene, bgCamera);
     renderer.clearDepth();
@@ -303,7 +406,10 @@ export function mountHeroScene(o: {
   let onScreen = true;
   let running = false;
   const update = () => {
-    const should = !failed && onScreen && !document.hidden;
+    // paused while the site menu is open: it's behind the menu's full-screen blur, and
+    // redrawing under that blur made the menu's fades stutter
+    const menuOpen = document.documentElement.dataset.menu === 'open';
+    const should = !failed && onScreen && !document.hidden && !menuOpen;
     if (should && !running) {
       running = true;
       clock.getDelta();
@@ -315,6 +421,7 @@ export function mountHeroScene(o: {
     update();
   }).observe(o.host);
   document.addEventListener('visibilitychange', update);
+  new MutationObserver(update).observe(document.documentElement, { attributes: true, attributeFilter: ['data-menu'] });
   canvas.addEventListener('webglcontextlost', fail);
   update();
 }

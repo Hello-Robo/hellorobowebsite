@@ -71,7 +71,8 @@ export interface RobotOptions {
   screenColor?: () => [number, number, number] | null;
   /** soft, wide projector rays from the front of his head (towards the TV) */
   beam?: boolean;
-  /** he blinks every 8–10 s: the projector light goes out for a moment and comes back */
+  /** he blinks now and then, at random (every 2–8 s, sometimes twice in a row): the
+   *  projector light goes out for a moment and comes back */
   blink?: boolean;
   /** an accessible name for the canvas (it stands in for a photo) */
   label?: string;
@@ -269,7 +270,9 @@ export function mountRobot(o: RobotOptions) {
   let t0 = 0;
   let glow = 1;
   // blinking: when the next one starts (s), and the light's level through one (0 = shut)
-  let nextBlink = 8 + Math.random() * 2;
+  // random gaps of 2–8 s (shorter ones more likely); about one in five is a double blink
+  const gap = () => 2 + 6 * Math.pow(Math.random(), 1.4);
+  let nextBlink = 1.5 + Math.random() * 3;
   const BLINK = { close: 0.07, shut: 0.06, open: 0.16 }; // s
   const blinkLevel = (s: number) => {
     if (!o.blink || reduced) return 1;
@@ -282,7 +285,7 @@ export function mountRobot(o: RobotOptions) {
       const k = t / open;
       return k * k * (3 - 2 * k);
     }
-    nextBlink = s + 8 + Math.random() * 2;
+    nextBlink = s + (Math.random() < 0.2 ? 0.12 + Math.random() * 0.1 : gap());
     return 1;
   };
   let beam: ReturnType<typeof makeBeam> | null = null;
@@ -357,7 +360,8 @@ export function mountRobot(o: RobotOptions) {
     raf = 0;
     if (!t0) t0 = t;
     draw((t - t0) / 1000);
-    if (visible && !document.hidden) raf = requestAnimationFrame(tick);
+    // paused while the site menu is open (it's under the menu's blur; see hero-scene.ts)
+    if (visible && !document.hidden && document.documentElement.dataset.menu !== 'open') raf = requestAnimationFrame(tick);
   };
   const run = () => {
     if (ready && !raf && !reduced) raf = requestAnimationFrame(tick);
@@ -435,5 +439,6 @@ export function mountRobot(o: RobotOptions) {
     run();
   }).observe(o.host);
   document.addEventListener('visibilitychange', run);
+  new MutationObserver(run).observe(document.documentElement, { attributes: true, attributeFilter: ['data-menu'] });
   canvas.addEventListener('webglcontextlost', fail);
 }

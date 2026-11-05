@@ -14,6 +14,8 @@
  *   The page opens on the Figma frame (on phones: centred on the robot).
  * - Every object stays sharp (no blur). Hover an object: the fade grows with distance from
  *   it and toward the corners, with a lens distortion toward the screen edges.
+ * - Desktop only: a faint CRT screen layer (CrtScreen, overlay) lies over the field, under
+ *   the open card; phones and tablets get the plain field.
  * - Click: the canvas glides so the object lands in the middle of the left half (beside
  *   the card), the rest stays out of focus, and the card fades in on the right. The robot
  *   (hello_robo) opens the studio card — Hello Robo, no
@@ -49,6 +51,7 @@ import helloRobo from '../../assets/team/objects/hello_robo.png';
 import innerCalm from '../../assets/team/objects/inner_calm_02.png';
 import layout from './team-layout.json';
 import CrtScreen from '../../components/ui/CrtScreen.astro';
+import { CRT_SUBTLE } from '../../data/crt';
 
 const people = (await getCollection('team')).sort((a, b) => a.data.order - b.data.order);
 
@@ -188,7 +191,7 @@ const config = JSON.stringify({
       <figure class="team-card__photo">
         <span class="team-card__screen">
           <Image src={p.data.photo} alt={p.data.name} widths={[369, 738]} sizes="369px" loading="lazy" />
-          <CrtScreen />
+          <CrtScreen settings={CRT_SUBTLE} />
         </span>
         <figcaption class="t-body">{p.data.role}</figcaption>
       </figure>
@@ -222,6 +225,11 @@ const config = JSON.stringify({
       ))}
     </div>
   </article>
+
+  <!-- Figma's CRT screen shader over the field, lighter than the home hero's: the lines
+       (scanlines, shadow mask) kept faint so the light canvas doesn't look dirty. Desktop
+       only (CrtScreen leaves phones and tablets the plain field); under the open card -->
+  <CrtScreen overlay settings={CRT_SUBTLE} />
 
   <!-- Keyboard / screen reader access to every card -->
   <ul class="visually-hidden">
@@ -639,6 +647,10 @@ const config = JSON.stringify({
 </script>
 
 <style>
+  /* the CRT layer over the field (under the card, which is fixed above it) */
+  .team > :global(.crt--overlay) {
+    z-index: 3;
+  }
   /* ── Canvas ──────────────────────────────────────────────────── */
   .team {
     --s: 1; /* canvas scale on top of the site's --px (smaller on phones) */

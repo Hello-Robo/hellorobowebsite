@@ -54,13 +54,13 @@ const pct = (v: number, of: number) => `${(v / of) * 100}%`;
     </h2>
   </div>
 
-  <ul class="home-clients__wall" aria-label="Clients" data-clients-wall>
+  <ul class="home-clients__wall" aria-label="Clients" data-clients-wall data-reveal-group>
     {tiles.map((t) => (
       <li
         class="home-clients__tile"
         style={`left:${pct(t.x, 1728)};top:${pct(t.y, FRAME_H)};--logo-w:${t.width};--mrow:${t.mrow};--mcol:${t.mcol}`}
       >
-        <img src={t.src} alt={t.micrographic ? '' : t.name} loading="lazy" />
+        <img src={t.src} alt={t.micrographic ? '' : t.name} loading="lazy" data-reveal-item />
       </li>
     ))}
   </ul>

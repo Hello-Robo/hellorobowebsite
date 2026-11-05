@@ -27,7 +27,7 @@
     {
       "name": "Cosmic Robotics",
       "logo": "/images/home/clients/cosmic.svg",
-      "width": 90.56,
+      "width": 99.62,
       "micrographic": false
     },
     {
@@ -98,7 +98,7 @@
     "bgTiles": 4,
     "bgFisheye": 0.14,
     "bgBendTop": 0.4,
-    "bgFovDeg": 84,
+    "bgFovDeg": 96,
     "bgOpacity": 0.9,
     "idleAfterMs": 4000
   }

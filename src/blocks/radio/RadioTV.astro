@@ -254,6 +254,8 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
         const d = player.getDuration();
         seek.value = d ? String(Math.round((player.getCurrentTime() / d) * 1000)) : '0';
         showProgress();
+        // how far through the episode (0–1): the 3D robot's light picks its colour by it
+        root.dataset.progress = String(Number(seek.value) / 1000);
       }
       if (playing) frame = requestAnimationFrame(tick);
     };

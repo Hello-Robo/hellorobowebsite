@@ -415,6 +415,9 @@ void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
     // a few times a second so a newly shown box starts right away
     const shown = () => {
       if (document.visibilityState !== 'visible' || !box.offsetWidth) return false;
+      // the page's own CRT layers rest while the site menu is open (they're under its blur);
+      // the menu's own keep running
+      if (document.documentElement.dataset.menu === 'open' && !box.closest('.site-menu')) return false;
       const cs = getComputedStyle(box);
       return cs.visibility === 'visible' && cs.opacity !== '0';
     };
