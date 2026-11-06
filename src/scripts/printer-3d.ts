@@ -24,6 +24,8 @@ import {
   BufferAttribute,
   BufferGeometry,
   CanvasTexture,
+  MeshDepthMaterial,
+  RGBADepthPacking,
   DirectionalLight,
   FrontSide,
   Group,
@@ -71,7 +73,7 @@ const BEND = 0.15;
 /** the paper starts this far back inside the printer, so its cut edge never shows */
 const INSIDE = 0.08;
 /** when it's done, the receipt's top is still this far inside, held in the rollers */
-const HELD = 0.07;
+const HELD = 0.045;
 /** rows along the receipt / columns across it */
 const ROWS = 220;
 const COLS = 3;
@@ -252,8 +254,13 @@ export function mountPrinter(o: PrinterOptions) {
   // stays black wherever the light falls; colours as drawn (no tone mapping)
   const paperFront = new MeshLambertMaterial({ color: 0xffffff, side: BackSide, emissive: 0xffffff, emissiveIntensity: 0.45, toneMapped: false });
   const paperBack = new MeshLambertMaterial({ color: 0xece9e0, side: FrontSide });
+  // the paper ends where the receipt's outline does (its torn zigzag edges): everything
+  // outside it is cut away, on both sides and in its shadow
+  const paperDepth = new MeshDepthMaterial({ depthPacking: RGBADepthPacking, alphaTest: 0.5 });
+  for (const m of [paperFront, paperBack]) m.alphaTest = 0.5;
   const paper = new Group();
   paper.add(new Mesh(paperGeo, paperFront), new Mesh(paperGeo, paperBack));
+  paper.children.forEach((m) => ((m as Mesh).customDepthMaterial = paperDepth));
   paper.children.forEach((m) => {
     m.castShadow = true;
     m.receiveShadow = true;
@@ -337,7 +344,7 @@ export function mountPrinter(o: PrinterOptions) {
         if (pivot) spinners.push({ pivot, speed: SPIN[name] });
       }
       // the camera backs off until the printer fills `fill` of the height
-      const fill = o.fill ?? 1.375;
+      const fill = o.fill ?? 1.55;
       const radius = (Math.max(s.x, s.y, s.z) * unit) / 2;
       dist = (0.5 / fill / Math.tan((camera.fov * Math.PI) / 360)) + radius;
       camera.position.set(0, 0, dist);
@@ -411,14 +418,30 @@ export function mountPrinter(o: PrinterOptions) {
   const handle = {
     /** feeds `receipt` (a canvas) out of the slot, its bottom first */
     print(receipt: HTMLCanvasElement) {
-      const old = paperFront.map;
+      const old = [paperFront.map, paperFront.alphaMap];
       const map = new CanvasTexture(receipt);
       map.colorSpace = SRGBColorSpace;
       map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      // the cut-out: white where the receipt is, black around it (from its transparency)
+      const cut = document.createElement('canvas');
+      cut.width = receipt.width / 2;
+      cut.height = receipt.height / 2;
+      const cx = cut.getContext('2d')!;
+      cx.drawImage(receipt, 0, 0, cut.width, cut.height);
+      cx.globalCompositeOperation = 'source-in';
+      cx.fillStyle = '#fff';
+      cx.fillRect(0, 0, cut.width, cut.height);
+      cx.globalCompositeOperation = 'destination-over';
+      cx.fillStyle = '#000';
+      cx.fillRect(0, 0, cut.width, cut.height);
+      const alpha = new CanvasTexture(cut);
       paperFront.map = map;
       paperFront.emissiveMap = map;
-      paperFront.needsUpdate = true;
-      old?.dispose();
+      for (const m of [paperFront, paperBack, paperDepth]) {
+        m.alphaMap = alpha;
+        m.needsUpdate = true;
+      }
+      old.forEach((t) => t?.dispose());
       fed = 0;
       printing = 0;
       feedTo(0);
