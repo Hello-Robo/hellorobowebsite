@@ -7,9 +7,9 @@
  *  error    a low two-note "nope" when the contact form shows an error, or an NDA project is
  *           clicked (it can't open)
  *  success  a rising three-note robot chirp when the form is sent
- *  print    the contact printer feeding a receipt, like clockwork: even tick-tock clicks with
- *           a metallic ring, speeding up and slowing down with the paper (as long as the
- *           caller says)
+ *  print    the contact printer feeding a receipt, as a clock movement: struck metallic
+ *           tick-tocks, speeding up and slowing down with the paper (as long as the caller
+ *           says)
  *  shutter  a real film camera's shutter with each photographer's flash in the home hero:
  *           public/sounds/shutter.m4a, from "Werra.wav" by hmilleo (freesound.org/s/409093,
  *           CC0), a little different each time (pitch and level); a synthesized click until
@@ -217,34 +217,66 @@ export function sfx(name: Name, seconds = 6) {
   }
 }
 
-/** The printer at work for `dur` s from `at`, like clockwork: an escapement's even ticks,
- * a bright "tick" and a lower "tock" in turn, each a dry click with a short metallic ring;
- * they start slower, settle into a quick steady beat and slow again as the paper stops */
+/** One tick of a clock movement at `at`: a tiny dry impact ringing through the small metal
+ * parts — a 2 ms noise click through a few narrow resonances (no tones, so it sounds struck,
+ * not beeped). `pitch` sets the metal, `vol` the strength */
+function clockTick(at: number, pitch: number, vol: number) {
+  if (!ctx || !out || !noise) return;
+  const src = ctx.createBufferSource();
+  src.buffer = noise;
+  const hit = ctx.createGain();
+  hit.gain.setValueAtTime(vol, at);
+  hit.gain.exponentialRampToValueAtTime(0.0001, at + 0.002);
+  src.connect(hit);
+  // the parts it rings: three narrow bands, each with its own ring time
+  for (const [f, q, level] of [
+    [2350, 28, 1],
+    [3900, 32, 0.7],
+    [6100, 24, 0.45],
+  ]) {
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.value = f * pitch;
+    band.Q.value = q;
+    const g = ctx.createGain();
+    g.gain.value = level * 5;
+    hit.connect(band).connect(g).connect(out);
+  }
+  // and the dry edge of the impact itself
+  const edge = ctx.createBiquadFilter();
+  edge.type = 'highpass';
+  edge.frequency.value = 3000;
+  const eg = ctx.createGain();
+  eg.gain.value = 0.5;
+  hit.connect(edge).connect(eg).connect(out);
+  src.start(at);
+  src.stop(at + 0.01);
+}
+
+/** The printer at work for `dur` s from `at`, as a clock movement: the escapement's
+ * tick and tock in turn (the tock a little lower and softer), each followed a few ms later
+ * by the faint click of the wheel dropping onto the next tooth. It starts slowly, settles
+ * into a quick even beat and slows to a stop with the paper */
 function printing(at: number, dur: number, vol: number) {
   if (!ctx || !out) return;
   const end = at + dur;
-  const RAMP = 0.5;
+  const RAMP = 0.6;
   /** seconds between beats at full speed */
-  const BEAT = 0.085;
+  const BEAT = 0.13;
   let tick = true;
-  for (let t = at + 0.05; t < end - 0.03; ) {
+  for (let t = at + 0.08; t < end - 0.05; ) {
     const k = Math.min(1, (t - at) / RAMP, (end - t) / RAMP); // 0 → 1 → 0 with the speed
-    const p = vary(0.03) * (tick ? 1 : 0.78);
-    const v = (0.55 + 0.45 * k) * vary(0.12) * vol;
-    // the click: a short dry burst, and the ring of the wheel it strikes
-    burst(t, 4200 * p, 0.004, 0.42 * v);
-    tone(t, 2900 * p, 2850 * p, 0.035, 0.05 * v, 'sine');
-    tone(t, 5200 * p, 5100 * p, 0.02, 0.025 * v, 'sine');
-    // the body of the movement under it
-    tone(t, 620 * p, 560 * p, 0.03, 0.05 * v, 'triangle');
+    const pitch = (tick ? 1 : 0.86) * vary(0.015);
+    const v = (tick ? 1 : 0.75) * (0.7 + 0.3 * k) * vary(0.1) * vol;
+    clockTick(t, pitch, 0.9 * v);
+    clockTick(t + 0.011 * vary(0.15), pitch * 1.18, 0.3 * v); // the drop
     tick = !tick;
-    t += (BEAT + (1 - k) * 0.11) * vary(0.04);
+    t += (BEAT + (1 - k) * 0.12) * vary(0.02);
   }
-  // the button going down at the start, and a final click as the paper comes to rest
-  burst(at, 1800, 0.02, 0.4 * vol);
-  tone(at, 160, 110, 0.05, 0.12 * vol, 'sine');
-  burst(end - 0.02, 3000, 0.006, 0.35 * vol);
-  tone(end - 0.02, 2400, 2350, 0.08, 0.05 * vol, 'sine');
+  // the button going down at the start, a last tick as the paper comes to rest
+  burst(at, 1800, 0.02, 0.35 * vol);
+  tone(at, 160, 110, 0.05, 0.1 * vol, 'sine');
+  clockTick(end, 0.8, 0.8 * vol);
 }
 
 /** 1 ± up to `amount`, at random */
