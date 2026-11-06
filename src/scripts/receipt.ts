@@ -12,8 +12,12 @@
 
 const W = 546;
 const H = 1584;
-/** pixels per Figma pixel */
-const SCALE = 2;
+/** pixels per Figma pixel (the texture is 1365×3960: sharp enough on the 3D paper, and
+ * under the 4096 limit some graphics cards have) */
+const SCALE = 2.5;
+/** the small Alliance lines are thin for paper seen this small: drawn this much bolder (a
+ * stroke round each letter, in Figma px) so they print black, not grey */
+const BOLDER = 0.75;
 /** the dynamic parts: black like the rest (Figma's red only marks them) */
 const RED = '#000000';
 const INK = '#000000';
@@ -123,13 +127,19 @@ export async function drawReceipt(data: ReceiptData): Promise<HTMLCanvasElement>
     // a smaller font sits lower, so it stays on the line's middle
     const lh = o.lineH ?? o.size * 1.2;
     ctx.fillText(s, o.x, o.top + (lh - size * 1.2) / 2);
+    if (o.font === 'alliance') {
+      ctx.strokeStyle = ctx.fillStyle;
+      ctx.lineWidth = BOLDER;
+      ctx.lineJoin = 'round';
+      ctx.strokeText(s, o.x, o.top + (lh - size * 1.2) / 2);
+    }
   };
   const small = (s: string, x: number, top: number, align: CanvasTextAlign = 'left', color = INK) =>
     text(s, { x, top, size: 13, font: 'alliance', color, align, track: 1.04, maxW: 514 });
   const dashed = (y: number) => {
     ctx.save();
     ctx.strokeStyle = INK;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2;
     ctx.setLineDash([3.02, 4.02]);
     ctx.beginPath();
     ctx.moveTo(15, y);
@@ -146,6 +156,9 @@ export async function drawReceipt(data: ReceiptData): Promise<HTMLCanvasElement>
     ctx.fillStyle = INK;
     ctx.textAlign = 'left';
     ctx.fillText('*'.repeat(46), 15, top + 4);
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = BOLDER;
+    ctx.strokeText('*'.repeat(46), 15, top + 4);
   };
 
   const C = W / 2;

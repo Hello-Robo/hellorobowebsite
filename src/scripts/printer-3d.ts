@@ -28,7 +28,7 @@ import {
   FrontSide,
   Group,
   Mesh,
-  MeshStandardMaterial,
+  MeshLambertMaterial,
   LoopOnce,
   PerspectiveCamera,
   PMREMGenerator,
@@ -42,14 +42,16 @@ import {
   type Object3D,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { sfx } from './sound';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
 const MODEL = '/models/rcpt-01.glb';
 
-/** The printer's resting angle (radians): its face (screen, receipt slot) turned a little
- * to the left, showing the side with the drive wheel, as in the photo it replaces */
-const BASE_YAW = Math.PI - 0.55;
+/** The printer's resting angle (radians): its face (screen, receipt slot) to the viewer,
+ * turned just a little to the left so the side with the drive wheel still shows */
+const BASE_YAW = Math.PI - 0.3;
 const BASE_PITCH = 0.12;
 
 // ── The paper (in the model's frame: the printer 1 tall, centred). Measured from the
@@ -67,7 +69,9 @@ const ANGLE_END = 0.08;
 /** how quickly it bends from the one to the other (model units) */
 const BEND = 0.15;
 /** the paper starts this far back inside the printer, so its cut edge never shows */
-const INSIDE = 0.03;
+const INSIDE = 0.08;
+/** when it's done, the receipt's top is still this far inside, held in the rollers */
+const HELD = 0.07;
 /** rows along the receipt / columns across it */
 const ROWS = 220;
 const COLS = 3;
@@ -86,6 +90,9 @@ const SPIN: Record<string, number> = {
   Pivot_Guide: -7,
   Pivot_Roll: 1.6,
 };
+/** edges shallower than this (radians) are shaded smooth */
+const SOFTEN = (50 * Math.PI) / 180;
+
 /** seconds the drive takes to get up to speed / to stop */
 const SPIN_RAMP = 0.4;
 
@@ -240,11 +247,11 @@ export function mountPrinter(o: PrinterOptions) {
   paperGeo.setAttribute('position', new BufferAttribute(positions, 3));
   paperGeo.setAttribute('uv', new BufferAttribute(uvs, 2));
   // the grid's triangles face away from the camera: the printed side is their back
-  // The printed side: matte, and glowing a little with its own picture so the paper stays
-  // white and the print stays black wherever the light falls (not grey on grey); colours
-  // as drawn (no tone mapping, which would wash them out)
-  const paperFront = new MeshStandardMaterial({ color: 0xffffff, roughness: 1, metalness: 0, side: BackSide, envMapIntensity: 0.4, emissive: 0xffffff, emissiveIntensity: 0.45, toneMapped: false });
-  const paperBack = new MeshStandardMaterial({ color: 0xece9e0, roughness: 1, metalness: 0, side: FrontSide });
+  // The printed side: fully matte (Lambert: no sheen, which laid a grey film over the
+  // print), and glowing a little with its own picture so the paper stays white and the print
+  // stays black wherever the light falls; colours as drawn (no tone mapping)
+  const paperFront = new MeshLambertMaterial({ color: 0xffffff, side: BackSide, emissive: 0xffffff, emissiveIntensity: 0.45, toneMapped: false });
+  const paperBack = new MeshLambertMaterial({ color: 0xece9e0, side: FrontSide });
   const paper = new Group();
   paper.add(new Mesh(paperGeo, paperFront), new Mesh(paperGeo, paperBack));
   paper.children.forEach((m) => {
@@ -255,7 +262,8 @@ export function mountPrinter(o: PrinterOptions) {
   rig.add(paper);
   /** lays the paper out with `fed` (0–1) of the receipt out of the slot */
   const feedTo = (fed: number) => {
-    const head = fed * (PAPER_L + INSIDE);
+    // fully printed, the top stops HELD short of the slot: the receipt stays in the rollers
+    const head = fed * (PAPER_L + INSIDE - HELD);
     for (let r = 0; r <= ROWS; r++) {
       const p = at(Math.max(0, head - (r / ROWS) * PAPER_L));
       for (let c = 0; c <= COLS; c++) {
@@ -275,12 +283,18 @@ export function mountPrinter(o: PrinterOptions) {
   /** seconds since this print started (the drive's speed ramps with it) */
   let printing = 0;
 
+  // The printer is framed in the host; the canvas runs on below it to the bottom of the
+  // block (the host's positioned parent), so the hanging receipt isn't cut off mid-block
   const size = () => {
     const w = o.host.clientWidth || 1;
     const h = o.host.clientHeight || 1;
+    const parent = o.host.offsetParent as HTMLElement | null;
+    const below = parent ? Math.max(0, parent.clientHeight - (o.host.offsetTop + h)) : 0;
+    canvas.style.height = `${h + below}px`;
     renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
-    renderer.setSize(w, h, false);
+    renderer.setSize(w, h + below, false);
     camera.aspect = w / h;
+    camera.setViewOffset(w, h, 0, 0, w, h + below);
     camera.updateProjectionMatrix();
   };
 
@@ -309,6 +323,9 @@ export function mountPrinter(o: PrinterOptions) {
         if (!m.isMesh) return;
         m.castShadow = true;
         m.receiveShadow = true;
+        // softer edges: shading blends across every edge shallower than SOFTEN, so
+        // chamfers and the facets of round parts read as rounded (the shapes stay as modelled)
+        if (!m.morphTargetInfluences) m.geometry = toCreasedNormals(m.geometry, SOFTEN);
         for (const mat of Array.isArray(m.material) ? m.material : [m.material]) {
           if (seen.has(mat) || /^LED/.test(mat.name)) continue;
           seen.add(mat);
@@ -320,7 +337,7 @@ export function mountPrinter(o: PrinterOptions) {
         if (pivot) spinners.push({ pivot, speed: SPIN[name] });
       }
       // the camera backs off until the printer fills `fill` of the height
-      const fill = o.fill ?? 1.25;
+      const fill = o.fill ?? 1.375;
       const radius = (Math.max(s.x, s.y, s.z) * unit) / 2;
       dist = (0.5 / fill / Math.tan((camera.fov * Math.PI) / 360)) + radius;
       camera.position.set(0, 0, dist);
@@ -408,6 +425,7 @@ export function mountPrinter(o: PrinterOptions) {
       paper.visible = true;
       feeding = true;
       printAction?.reset().play();
+      sfx('print', FEED);
       run();
     },
   };

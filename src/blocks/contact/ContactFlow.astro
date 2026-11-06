@@ -184,9 +184,8 @@ const services = [
   <div class="contact__bg" aria-hidden="true">
     <div class="contact__log contact__log--a" data-log="a"></div>
     <div class="contact__log contact__log--b" data-log="b"></div>
-    <img class="contact__printer" src="/images/shell/prefooter-printer-dark.png" alt="" width="1024" height="1535" loading="lazy" decoding="async" />
-    <!-- Desktop: the RCPT-01 printer as a live 3D model (src/scripts/printer-3d.ts) in the
-         photo's place; the photo stays if WebGL or the model fails -->
+    <!-- Desktop: the RCPT-01 printer as a live 3D model (src/scripts/printer-3d.ts); nothing
+         shows there if WebGL or the model fails -->
     <div class="contact__printer-3d" data-printer-3d></div>
   </div>
 
@@ -294,7 +293,7 @@ const services = [
         near.disconnect();
         import('../../scripts/printer-3d')
           .then(({ mountPrinter }) => {
-            const printer = mountPrinter({ host, className: 'contact__printer-canvas', onLive: () => block?.classList.add('is-printer-live') });
+            const printer = mountPrinter({ host, className: 'contact__printer-canvas' });
             if (printer && block) printers.set(block, printer);
           })
           .catch(() => {});
@@ -785,7 +784,8 @@ const services = [
     position: relative;
     width: 100%;
     aspect-ratio: 1728 / 949;
-    background: var(--color-grey-100);
+    /* grey-100 (#f2f2f2) taken 10% lighter, towards white */
+    background: color-mix(in srgb, var(--color-grey-100), white 10%);
     color: var(--color-black);
     overflow: hidden;
   }
@@ -866,18 +866,9 @@ const services = [
     }
   }
 
-  /* ── Printer: one picture, still, on the right of every screen (a placeholder) ── */
-  .contact__printer {
-    position: absolute;
-    left: calc(900 * var(--px));
-    top: calc(-280 * var(--px));
-    width: calc(796 * var(--px));
-    max-width: none;
-    height: auto;
-  }
 
   /* The 3D printer: the right part of the block, behind the screens, raised 200 (its top
-     is cut off by the block's edge). Once it's drawn the photo goes */
+     is cut off by the block's edge) */
   .contact__printer-3d {
     position: absolute;
     left: calc(860 * var(--px));
@@ -885,19 +876,16 @@ const services = [
     right: 0;
     bottom: calc(200 * var(--px));
   }
+  /* (its height is set by the script: on down to the block's bottom) */
   .contact__printer-3d :global(.contact__printer-canvas) {
     display: block;
     width: 100%;
-    height: 100%;
     animation: contact-printer-in 0.8s ease both;
   }
   @keyframes contact-printer-in {
     from {
       opacity: 0;
     }
-  }
-  .contact.is-printer-live .contact__printer {
-    display: none;
   }
 
   /* ── Screens: one at a time, fading over each other ── */
