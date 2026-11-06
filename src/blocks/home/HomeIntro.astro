@@ -24,9 +24,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* stamp at 213, text at 390, block 1012 tall */
+    /* stamp at 213 from the top; the same 213 under the text */
     padding-top: calc(213 * var(--px));
-    padding-bottom: calc(390 * var(--px));
+    padding-bottom: calc(213 * var(--px)); /* as much room under the text as above the stamp */
     gap: calc(33 * var(--px));
     text-align: center;
   }
@@ -34,9 +34,12 @@
     width: calc(342 * var(--px));
     height: auto;
   }
-  /* Figma box is 807; browsers set Alliance ~1% tighter, 795 reproduces Figma's line breaks */
+  /* As the Robo Radio intro: a step under H3 (50) at 44, in a box 10% narrower than
+     Figma's (795 for Figma's breaks at 50 → 700 at 44 → 630) */
   .home-intro__text {
-    width: calc(795 * var(--px));
+    font-size: max(26px, calc(44 * var(--px)));
+    width: calc(630 * var(--px));
+    text-wrap: pretty; /* no single word left on the last line */
     max-width: 100%;
   }
 
@@ -55,6 +58,7 @@
       margin-left: 7px;
     }
     .home-intro__text {
+      font-size: var(--type-h3-size-mobile);
       width: 100%;
       margin-top: 30px;
     }
