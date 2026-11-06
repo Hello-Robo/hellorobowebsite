@@ -185,6 +185,9 @@ const services = [
     <div class="contact__log contact__log--a" data-log="a"></div>
     <div class="contact__log contact__log--b" data-log="b"></div>
     <img class="contact__printer" src="/images/shell/prefooter-printer-dark.png" alt="" width="1024" height="1535" loading="lazy" decoding="async" />
+    <!-- Desktop: the RCPT-01 printer as a live 3D model (src/scripts/printer-3d.ts) in the
+         photo's place; the photo stays if WebGL or the model fails -->
+    <div class="contact__printer-3d" data-printer-3d></div>
   </div>
 
   <!-- Start: three ways in -->
@@ -277,6 +280,29 @@ const services = [
 
   type Group = { x: number; y: number; n?: string; lines: string[]; m?: [number, number] };
   type Logs = Record<string, { a: Group[]; b?: Group[] }>;
+
+  // The 3D printer: desktop with a mouse only, fetched once the block is near the screen.
+  // Each block's printer, once it's up, so a sent brief can print its receipt
+  type Printer = { print: (receipt: HTMLCanvasElement) => void };
+  const printers = new WeakMap<HTMLElement, Printer>();
+  for (const host of document.querySelectorAll<HTMLElement>('[data-printer-3d]')) {
+    if (!matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)').matches) break;
+    const block = host.closest<HTMLElement>('.contact');
+    const near = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        near.disconnect();
+        import('../../scripts/printer-3d')
+          .then(({ mountPrinter }) => {
+            const printer = mountPrinter({ host, className: 'contact__printer-canvas', onLive: () => block?.classList.add('is-printer-live') });
+            if (printer && block) printers.set(block, printer);
+          })
+          .catch(() => {});
+      },
+      { rootMargin: '600px 0px' },
+    );
+    near.observe(host);
+  }
 
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -714,8 +740,24 @@ const services = [
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
-        if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? 'Something went wrong');
+        const reply = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(reply?.error ?? 'Something went wrong');
         setError(form, '');
+        // a project brief prints its receipt (desktop, once the printer is up)
+        const printer = printers.get(root);
+        if (type === 'project' && printer) {
+          import('../../scripts/receipt')
+            .then(({ drawReceipt }) =>
+              drawReceipt({
+                number: Number(reply?.number) || 1,
+                name: String(body.name ?? ''),
+                company: String(body.company ?? ''),
+                services: body.services as string[],
+              }),
+            )
+            .then((receipt) => printer.print(receipt))
+            .catch(() => {});
+        }
         go(type === 'message' ? 'sent' : 'done');
         sfx('success');
         // the done screen's log has used the answers; the forms are cleared
@@ -832,6 +874,30 @@ const services = [
     width: calc(796 * var(--px));
     max-width: none;
     height: auto;
+  }
+
+  /* The 3D printer: the right part of the block, behind the screens, raised 200 (its top
+     is cut off by the block's edge). Once it's drawn the photo goes */
+  .contact__printer-3d {
+    position: absolute;
+    left: calc(860 * var(--px));
+    top: calc(-200 * var(--px));
+    right: 0;
+    bottom: calc(200 * var(--px));
+  }
+  .contact__printer-3d :global(.contact__printer-canvas) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    animation: contact-printer-in 0.8s ease both;
+  }
+  @keyframes contact-printer-in {
+    from {
+      opacity: 0;
+    }
+  }
+  .contact.is-printer-live .contact__printer {
+    display: none;
   }
 
   /* ── Screens: one at a time, fading over each other ── */

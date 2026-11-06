@@ -98,6 +98,22 @@ async function blobResponses(): Promise<ContactResponse[]> {
   return entries.filter((e): e is ContactResponse => !!e);
 }
 
+/** How many responses are stored (names only, no file is read): the printed receipt's number */
+export async function countResponses(): Promise<number> {
+  if (inBlob) {
+    let n = 0;
+    let cursor: string | undefined;
+    do {
+      const page = await list({ prefix: BLOB_PREFIX, cursor, limit: 1000 });
+      n += page.blobs.filter((b) => b.pathname.endsWith('.json')).length;
+      cursor = page.hasMore ? page.cursor : undefined;
+    } while (cursor);
+    return n;
+  }
+  if (!existsSync(DIR)) return 0;
+  return (await readdir(DIR)).filter((f) => f.endsWith('.json')).length;
+}
+
 /** Newest first */
 export async function listResponses(): Promise<ContactResponse[]> {
   let entries: ContactResponse[];
