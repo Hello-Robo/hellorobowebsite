@@ -4,7 +4,7 @@
  */
 import type { APIRoute } from 'astro';
 import { errorResponse, json } from '../../cms/api';
-import { saveResponse } from '../../cms/responses';
+import { countResponses, saveResponse } from '../../cms/responses';
 
 export const prerender = false;
 
@@ -26,11 +26,13 @@ export const POST: APIRoute = async ({ request, url, clientAddress }) => {
   try {
     const body = await request.json().catch(() => null);
     // Hidden field only bots fill in: pretend it worked
-    if (body?.website) return json({ ok: true });
+    if (body?.website) return json({ ok: true, number: 0 });
     await saveResponse(body);
     times.push(now);
     recent.set(ip, times);
-    return json({ ok: true }, 201);
+    // the receipt's number: how many have come in, this one included (0 if counting fails)
+    const number = await countResponses().catch(() => 0);
+    return json({ ok: true, number }, 201);
   } catch (err) {
     return errorResponse(err);
   }
