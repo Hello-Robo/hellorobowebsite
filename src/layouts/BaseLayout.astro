@@ -47,6 +47,8 @@ const loaderGraphics = [
   '/images/contact/start-word.svg',
   '/images/radio/badge-episode.svg',
 ];
+// link previews need absolute URLs: always the live domain
+const SITE = 'https://hellorobo.co';
 const pageTitle = title === 'Home' ? 'Hello Robo — Make the world say yes to your robot' : `${title} — Hello Robo`;
 ---
 <!doctype html>
@@ -56,6 +58,23 @@ const pageTitle = title === 'Home' ? 'Hello Robo — Make the world say yes to y
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    <!-- Icons and the link preview: the orange robot mark on black (public/) -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Hello Robo" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={new URL(Astro.url.pathname, SITE)} />
+    <meta property="og:image" content={new URL('/og-image.png', SITE)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Hello Robo" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL('/og-image.png', SITE)} />
     <link rel="preload" href="/fonts/AllianceNo2-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <!-- Page transition (src/scripts/page-transition.ts): a page reached through it opens
          covered by the black columns with the loading screen (pt-load), before its first
@@ -120,6 +139,12 @@ const pageTitle = title === 'Home' ? 'Hello Robo — Make the world say yes to y
       import '../scripts/text-reveal';
       import '../scripts/page-transition';
       import '../scripts/bottom-bend';
+    </script>
+    <script is:inline>
+      // No dragging pictures off the page (Firefox ignores -webkit-user-drag in global.css)
+      document.addEventListener('dragstart', (e) => {
+        if (e.target instanceof HTMLImageElement) e.preventDefault();
+      });
     </script>
     <script is:inline>
       // Fade images in as they arrive instead of popping (styles in global.css)
