@@ -430,18 +430,30 @@ const config = JSON.stringify({
     let lastPerson = '';
     /** cards whose contents are fading out: they fly off once that's done */
     const closing = new Map<HTMLElement, number>();
-    const openCard = (id: string) => {
+    /** swap = another card was open: the new one appears in its place, no fly-in */
+    const openCard = (id: string, swap = false) => {
       cards.forEach((c, cid) => {
         const on = cid === id;
         window.clearTimeout(closing.get(c));
         closing.delete(c);
         c.classList.remove('is-closing');
+        if (on) c.classList.toggle('is-swap', swap && !c.classList.contains('is-open'));
+        else if (swap && c.classList.contains('is-open')) {
+          // the card being replaced goes at once, under the new one (no fly-out)
+          c.classList.add('is-gone');
+          c.classList.remove('is-open', 'is-swap');
+          void c.offsetWidth;
+          c.classList.remove('is-gone');
+        }
         c.classList.toggle('is-open', on);
         c.setAttribute('aria-hidden', String(!on));
       });
       history.replaceState(null, '', `#${id}`);
       lastPerson = id;
     };
+    /** the card on screen right now (not one on its way out) */
+    const shownCard = () => [...cards.values()].find((c) => c.classList.contains('is-open') && !closing.has(c));
+    let openTimer = 0;
     const closeAll = () => {
       delete document.documentElement.dataset.nav;
       cards.forEach((c) => {
@@ -479,13 +491,21 @@ const config = JSON.stringify({
       panAnim = { x0: panX, y0: panY, x1: panX + (t.x - s.x), y1: panY + (t.y - s.y), t0: performance.now(), dur: reduce ? 0 : 1100 };
       selTarget = { x: t.x, y: t.y, panX: panAnim.x1, panY: panAnim.y1 };
       kick();
-      window.setTimeout(() => openCard(id), reduce ? 0 : 450);
+      window.clearTimeout(openTimer);
+      const shown = shownCard();
+      if (shown && shown.id !== id && !reduce) {
+        // A card is open: it stays put, its contents fade out, then the new person's
+        // contents come in on the same panel
+        shown.classList.add('is-closing');
+        openTimer = window.setTimeout(() => openCard(id, true), 180);
+      } else openTimer = window.setTimeout(() => openCard(id), reduce || shown ? 0 : 450);
     };
     const deselect = () => {
       if (selected < 0) return;
       selected = -1;
       selTarget = null;
       objs.forEach((el) => el.classList.remove('is-selected'));
+      window.clearTimeout(openTimer);
       closeAll();
       setFocus(-1);
     };
@@ -811,6 +831,8 @@ const config = JSON.stringify({
     column-gap: calc(56 * var(--px));
     visibility: hidden;
     --fly-out: calc(100% + var(--page-margin) + 24px);
+    /* contents start once the card has landed */
+    --card-in: 0.3s;
     transform: translateX(var(--fly-out));
     transition:
       transform 0.5s cubic-bezier(0.7, 0, 0.84, 0),
@@ -831,11 +853,21 @@ const config = JSON.stringify({
     opacity: 1;
     transition: opacity 0.5s ease;
   }
-  .team-card.is-open > :nth-child(1) { transition-delay: 0.3s; }
-  .team-card.is-open > :nth-child(2) { transition-delay: 0.36s; }
-  .team-card.is-open > :nth-child(3) { transition-delay: 0.42s; }
-  .team-card.is-open > :nth-child(4) { transition-delay: 0.48s; }
-  .team-card.is-open > :nth-child(n + 5) { transition-delay: 0.54s; }
+  .team-card.is-open > :nth-child(1) { transition-delay: var(--card-in); }
+  .team-card.is-open > :nth-child(2) { transition-delay: calc(var(--card-in) + 0.06s); }
+  .team-card.is-open > :nth-child(3) { transition-delay: calc(var(--card-in) + 0.12s); }
+  .team-card.is-open > :nth-child(4) { transition-delay: calc(var(--card-in) + 0.18s); }
+  .team-card.is-open > :nth-child(n + 5) { transition-delay: calc(var(--card-in) + 0.24s); }
+  /* Switching people with a card open: the panel stays where it is (no fly-in) and only
+     the contents come in, straight away; the card it replaces goes without flying off */
+  .team-card.is-open.is-swap {
+    --card-in: 0s;
+    transition: visibility 0s;
+  }
+  .team-card.is-gone,
+  .team-card.is-gone > * {
+    transition: none !important;
+  }
   .team-card.is-open.is-closing > * {
     opacity: 0;
     transition: opacity 0.15s ease;
@@ -860,7 +892,7 @@ const config = JSON.stringify({
   .team-card.is-open .team-card__mask > span {
     transform: none;
     transition: transform var(--duration-smooth) var(--ease-out);
-    transition-delay: calc(0.35s + var(--d, 0) * var(--stagger));
+    transition-delay: calc(var(--card-in) + 0.05s + var(--d, 0) * var(--stagger));
   }
   /* The quote: the site's body-copy fade — its words light up from dim one after another,
      after the names */
@@ -869,7 +901,7 @@ const config = JSON.stringify({
   }
   .team-card.is-open .team-card__word {
     animation: card-light 0.3s linear both;
-    animation-delay: calc(0.6s + var(--t));
+    animation-delay: calc(var(--card-in) + 0.3s + var(--t));
   }
   @keyframes card-light {
     from {

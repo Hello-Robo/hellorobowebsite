@@ -7,7 +7,7 @@
 ---
 <section class="radio-intro">
   <img src="/images/radio/stamp-radio-intro.svg" alt="" width="320" style="--w: 320" height="165" />
-  <!-- Line breaks as set in Figma (desktop); revisit in the responsive step -->
+  <!-- Figma's line breaks, hidden in CSS (the box is narrower now) -->
   <p class="radio-intro__text t-h3">
     We design the human side of robotics. <br />
     Robo Radio is where that belief becomes <br />
@@ -30,9 +30,16 @@
     background: var(--color-white);
     color: var(--color-black);
   }
+  /* a step under H3 (50): 44 at 1728, in a box 10% narrower than the scaled Figma one (890) */
   .radio-intro__text {
-    width: calc(1011 * var(--px));
+    font-size: max(26px, calc(44 * var(--px)));
+    width: calc(801 * var(--px));
+    text-wrap: pretty; /* no single word left on the last line */
     max-width: 100%;
+  }
+  /* Figma's fixed line breaks don't fit the narrower box: the text wraps on its own */
+  .radio-intro__text br {
+    display: none;
   }
 
   /* ── Mobile: Home intro rhythm; Figma's desktop line breaks are dropped ── */
@@ -45,8 +52,8 @@
       width: 193px;
       height: auto;
     }
-    .radio-intro__text br {
-      display: none;
+    .radio-intro__text {
+      font-size: var(--type-h3-size-mobile);
     }
   }
 </style>

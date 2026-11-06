@@ -248,12 +248,15 @@ const chapters = [
     position: relative;
     z-index: 10;
     display: grid;
-    width: calc(818 * var(--px));
+    /* as the Home / Robo Radio intros: 818 → 720 at 44 → 10% narrower */
+    width: calc(648 * var(--px));
     max-width: 100%;
     margin-top: calc(20 * var(--u));
   }
   .home-philosophy__text {
     grid-area: 1 / 1;
+    font-size: max(26px, calc(44 * var(--px)));
+    text-wrap: balance; /* even lines: no short last line */
   }
   .home-philosophy__text--dark {
     color: var(--color-white);
@@ -310,6 +313,9 @@ const chapters = [
     .home-philosophy__texts {
       width: 290px;
       margin-top: 44px;
+    }
+    .home-philosophy__text {
+      font-size: var(--type-h3-size-mobile);
     }
     /* above the fixed nav pill (20 + 64) */
     .home-philosophy :global(.home-philosophy__bars) {
