@@ -7,6 +7,9 @@
  *  error    a low two-note "nope" when the contact form shows an error, or an NDA project is
  *           clicked (it can't open)
  *  success  a rising three-note robot chirp when the form is sent
+ *  print    the contact printer feeding a receipt, like clockwork: even tick-tock clicks with
+ *           a metallic ring, speeding up and slowing down with the paper (as long as the
+ *           caller says)
  *  shutter  a real film camera's shutter with each photographer's flash in the home hero:
  *           public/sounds/shutter.m4a, from "Werra.wav" by hmilleo (freesound.org/s/409093,
  *           CC0), a little different each time (pitch and level); a synthesized click until
@@ -20,7 +23,7 @@
  * the form sounds are called by the contact block. Hovering makes no sound.
  */
 
-type Name = 'click' | 'error' | 'success' | 'shutter';
+type Name = 'click' | 'error' | 'success' | 'shutter' | 'print';
 
 const VOLUME = 0.32;
 
@@ -30,7 +33,7 @@ let noise: AudioBuffer | null = null;
 let shutter: AudioBuffer | null = null;
 const last: Partial<Record<Name, number>> = {};
 /** least ms between two of the same sound */
-const GAP: Record<Name, number> = { click: 40, error: 300, success: 600, shutter: 90 };
+const GAP: Record<Name, number> = { click: 40, error: 300, success: 600, shutter: 90, print: 500 };
 
 const off = () => {
   try {
@@ -127,14 +130,15 @@ function burst(at: number, freq: number, dur: number, vol: number) {
   s.stop(at + dur + 0.01);
 }
 
-export function sfx(name: Name) {
+/** `seconds`: how long it lasts (the print sound) */
+export function sfx(name: Name, seconds = 6) {
   if (!ctx || off()) return;
   // the browser can suspend audio after the tab was in the background: wake it and play
   // as soon as it's back (allowed: the visitor has already clicked on this page)
   if (ctx.state === 'suspended') {
     // (before the first click this would only be refused, and warned about, every time)
     if (!activated()) return;
-    ctx.resume().then(() => ctx?.state === 'running' && sfx(name), () => {});
+    ctx.resume().then(() => ctx?.state === 'running' && sfx(name, seconds), () => {});
     return;
   }
   if (ctx.state !== 'running') return;
@@ -200,6 +204,9 @@ export function sfx(name: Name) {
         },
       ]);
       break;
+    case 'print':
+      printing(t, seconds, v);
+      break;
     case 'success': {
       const q = vary(0.04);
       tone(t, 660 * q, 680 * q, 0.07, 0.16 * v, 'triangle');
@@ -208,6 +215,36 @@ export function sfx(name: Name) {
       break;
     }
   }
+}
+
+/** The printer at work for `dur` s from `at`, like clockwork: an escapement's even ticks,
+ * a bright "tick" and a lower "tock" in turn, each a dry click with a short metallic ring;
+ * they start slower, settle into a quick steady beat and slow again as the paper stops */
+function printing(at: number, dur: number, vol: number) {
+  if (!ctx || !out) return;
+  const end = at + dur;
+  const RAMP = 0.5;
+  /** seconds between beats at full speed */
+  const BEAT = 0.085;
+  let tick = true;
+  for (let t = at + 0.05; t < end - 0.03; ) {
+    const k = Math.min(1, (t - at) / RAMP, (end - t) / RAMP); // 0 → 1 → 0 with the speed
+    const p = vary(0.03) * (tick ? 1 : 0.78);
+    const v = (0.55 + 0.45 * k) * vary(0.12) * vol;
+    // the click: a short dry burst, and the ring of the wheel it strikes
+    burst(t, 4200 * p, 0.004, 0.42 * v);
+    tone(t, 2900 * p, 2850 * p, 0.035, 0.05 * v, 'sine');
+    tone(t, 5200 * p, 5100 * p, 0.02, 0.025 * v, 'sine');
+    // the body of the movement under it
+    tone(t, 620 * p, 560 * p, 0.03, 0.05 * v, 'triangle');
+    tick = !tick;
+    t += (BEAT + (1 - k) * 0.11) * vary(0.04);
+  }
+  // the button going down at the start, and a final click as the paper comes to rest
+  burst(at, 1800, 0.02, 0.4 * vol);
+  tone(at, 160, 110, 0.05, 0.12 * vol, 'sine');
+  burst(end - 0.02, 3000, 0.006, 0.35 * vol);
+  tone(end - 0.02, 2400, 2350, 0.08, 0.05 * vol, 'sine');
 }
 
 /** 1 ± up to `amount`, at random */
