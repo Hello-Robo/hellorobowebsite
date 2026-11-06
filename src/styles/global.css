@@ -217,6 +217,10 @@ img, video, svg {
   display: block;
   max-width: 100%;
 }
+/* Pictures can't be dragged off the page (the drag ghost showed the raw image file) */
+img {
+  -webkit-user-drag: none;
+}
 /* Images take their Figma width from the width attribute (copied to --w), scaled
    with the page. A block's own CSS width always wins over this. */
 img[style*="--w"],
