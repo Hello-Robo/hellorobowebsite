@@ -38,6 +38,20 @@ html.pt-in .pt__col {
 html.pt-out .pt__col {
   transition: transform 0.75s cubic-bezier(0.76, 0, 0.24, 1) calc(var(--i) * 63ms);
 }
+/* Before the columns: the page shrinks to 90% towards the middle of the screen, on black
+   (page-transition.ts animates it). The body's colour moves onto main so the page keeps its
+   own background while it shrinks — inset 2px all round: under a dark block reaching main's
+   edge, white right to that edge bled through the smoothed edges of the scaled page as a
+   hairline; this way only black meets black there */
+html.pt-shrink {
+  background: var(--color-black);
+}
+html.pt-shrink body {
+  background: transparent;
+}
+html.pt-shrink main {
+  background: linear-gradient(var(--color-bg) 0 0) center / calc(100% - 4px) calc(100% - 4px) no-repeat;
+}
 @media (max-width: 1023px) {
   .pt__col:nth-child(n + 6) {
     display: none;

@@ -35,8 +35,11 @@ const SELECTOR = [
   '.team-card__close',
 ].join(',');
 
-/** where the words are: the first match inside the button wins */
-const LABEL = '[data-copy-label], .button__label, .contact__card > .t-body, .t-button:not(.button), :scope > span';
+/** where the words are: the first match inside the button wins. The menu's links and socials:
+ * the word inside its reveal mask — the mask itself would get its inner span (the one that
+ * slides up as the menu opens) overwritten by the scramble, so after one hover the word sat
+ * there unmasked and popped in fully drawn with every later opening */
+const LABEL = '[data-copy-label], .button__label, .contact__card > .t-body, .t-button:not(.button), .site-menu__mask > span, :scope > span';
 
 /** links made of more than words: only the named part animates */
 const ROW_LINKS: Record<string, string> = {

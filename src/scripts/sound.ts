@@ -3,7 +3,8 @@
  * synthesized in the browser (Web Audio), so there are no audio files to load or license.
  *
  * Every play varies (a few takes of each, pitch / level / timing nudged at random):
- *  click    a short bright click on press
+ *  click    a tiny, quiet tick on press, matched to toyfight.co's button sound: a ~3.1 kHz
+ *           blip gone in under 2 ms, with a faint ring for ~20 ms after it
  *  error    a low two-note "nope" when the contact form shows an error, or an NDA project is
  *           clicked (it can't open)
  *  success  a rising three-note robot chirp when the form is sent
@@ -130,6 +131,48 @@ function burst(at: number, freq: number, dur: number, vol: number) {
   s.stop(at + dur + 0.01);
 }
 
+/** The click: a ~1.5 ms sine blip at `freq` (down 37 dB by then), a faint ring of the same
+ * pitch for ~20 ms after it, a glint an octave and a half up and a breath of noise */
+function tick(at: number, freq: number, vol: number) {
+  if (!ctx || !out || !noise) return;
+  const o = ctx.createOscillator();
+  o.type = 'sine';
+  o.frequency.value = freq;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0, at);
+  g.gain.linearRampToValueAtTime(vol, at + 0.0003);
+  g.gain.exponentialRampToValueAtTime(vol * 0.014, at + 0.0016);
+  g.gain.exponentialRampToValueAtTime(vol * 0.0035, at + 0.016);
+  g.gain.exponentialRampToValueAtTime(vol * 0.0003, at + 0.024);
+  o.connect(g).connect(out);
+  o.start(at);
+  o.stop(at + 0.03);
+  // a glint up top (~10 kHz), gone within a millisecond
+  const hi = ctx.createOscillator();
+  hi.type = 'sine';
+  hi.frequency.value = freq * 3.2;
+  const hg = ctx.createGain();
+  hg.gain.setValueAtTime(0, at);
+  hg.gain.linearRampToValueAtTime(vol * 0.12, at + 0.0002);
+  hg.gain.exponentialRampToValueAtTime(vol * 0.002, at + 0.0012);
+  hi.connect(hg).connect(out);
+  hi.start(at);
+  hi.stop(at + 0.004);
+  const s = ctx.createBufferSource();
+  s.buffer = noise;
+  const band = ctx.createBiquadFilter();
+  band.type = 'bandpass';
+  band.frequency.value = freq * 1.1;
+  band.Q.value = 6;
+  const ng = ctx.createGain();
+  ng.gain.setValueAtTime(vol * 0.2, at);
+  ng.gain.exponentialRampToValueAtTime(vol * 0.006, at + 0.0015);
+  ng.gain.exponentialRampToValueAtTime(0.00001, at + 0.02);
+  s.connect(band).connect(ng).connect(out);
+  s.start(at);
+  s.stop(at + 0.025);
+}
+
 /** `seconds`: how long it lasts (the print sound) */
 export function sfx(name: Name, seconds = 6) {
   if (!ctx || off()) return;
@@ -153,20 +196,9 @@ export function sfx(name: Name, seconds = 6) {
   const d = vary(0.15); // timing
   switch (name) {
     case 'click':
-      take(name, [
-        () => {
-          burst(t, 5500 * p, 0.006, 0.35 * v);
-          tone(t, 2600 * p, 1700 * p, 0.05 * d, 0.22 * v);
-        },
-        () => {
-          burst(t, 4500 * p, 0.008, 0.32 * v);
-          tone(t, 2200 * p, 1500 * p, 0.04 * d, 0.2 * v, 'triangle');
-        },
-        () => {
-          burst(t, 7000 * p, 0.005, 0.38 * v);
-          tone(t, 3000 * p, 2100 * p, 0.035 * d, 0.18 * v);
-        },
-      ]);
+      // matched to toyfight.co's button sound: the same tick every time, only a hair of
+      // pitch / level drift
+      tick(t, 3150 * vary(0.02), 0.125 * vary(0.08));
       break;
     // the form sounds stay recognisable: one shape, only nudged
     case 'error':
