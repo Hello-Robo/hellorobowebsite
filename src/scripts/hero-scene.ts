@@ -261,9 +261,11 @@ export function mountHeroScene(o: {
   new GLTFLoader().load(
     o.modelUrl,
     ({ scene: model }) => {
-      // a slight shine: the model is fully matte (roughness 0.82), so each part gets a thin
-      // clear lacquer on top (soft glossy highlights and room reflections) and a little less
-      // roughness underneath; colours and textures stay as they are
+      // shine and texture: the model is fully matte (roughness 0.82), so each part gets a
+      // clear lacquer on top (glossy highlights and room reflections) over a finely grained
+      // surface (grain(), below); colours and textures stay as they are
+      const size = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
+      const grainFreq = GRAIN.cells / Math.max(size.x, size.y, size.z, 1e-6);
       const glossy = new Map<THREE.Material, THREE.MeshPhysicalMaterial>();
       model.traverse((n) => {
         const mesh = n as THREE.Mesh;
@@ -276,10 +278,11 @@ export function mountHeroScene(o: {
           g = new THREE.MeshPhysicalMaterial();
           THREE.MeshStandardMaterial.prototype.copy.call(g, m);
           g.defines = { STANDARD: '', PHYSICAL: '' };
-          g.roughness = Math.min(m.roughness, 0.6);
-          g.clearcoat = 0.45;
-          g.clearcoatRoughness = 0.22;
-          g.envMapIntensity = 1.15;
+          g.roughness = Math.min(m.roughness, 0.52);
+          g.clearcoat = 0.8;
+          g.clearcoatRoughness = 0.12;
+          g.envMapIntensity = 1.4;
+          grain(g, grainFreq);
           glossy.set(m, g);
           m.dispose();
         }
@@ -468,4 +471,71 @@ export function mountHeroScene(o: {
   new MutationObserver(update).observe(document.documentElement, { attributes: true, attributeFilter: ['data-menu'] });
   canvas.addEventListener('webglcontextlost', fail);
   update();
+}
+
+/** The robot's surface grain: a fine, slightly uneven texture like a powder-coated or
+ * bead-blasted part, felt in how the light catches it (not painted on). `cells` across the
+ * model's longest side; `bump` how far it tilts the surface (about the steepest slope); `rough` how much the gloss varies
+ * between patches */
+const GRAIN = { cells: 420, bump: 0.12, rough: 0.22 };
+
+/** Adds the grain to `mat`: 3D value noise on each part's own coordinates (the model's UVs
+ * are an AI unwrap in many small islands, a tiled map would show their seams), so it sticks
+ * to the surface as the head turns. It tilts the base surface's normal (the clear coat on top
+ * stays smooth, so reflections stay crisp) and varies its roughness a little, in larger
+ * patches */
+function grain(mat: THREE.MeshPhysicalMaterial, freq: number) {
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.grainFreq = { value: freq };
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vGrainPos;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGrainPos = position;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        '#include <common>',
+        `#include <common>
+        varying vec3 vGrainPos;
+        uniform float grainFreq;
+        float grainHash(vec3 p) {
+          p = fract(p * 0.3183099 + 0.1);
+          p *= 17.0;
+          return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+        }
+        float grainNoise(vec3 x) {
+          vec3 i = floor(x);
+          vec3 f = fract(x);
+          f = f * f * (3.0 - 2.0 * f);
+          return mix(
+            mix(mix(grainHash(i), grainHash(i + vec3(1, 0, 0)), f.x),
+                mix(grainHash(i + vec3(0, 1, 0)), grainHash(i + vec3(1, 1, 0)), f.x), f.y),
+            mix(mix(grainHash(i + vec3(0, 0, 1)), grainHash(i + vec3(1, 0, 1)), f.x),
+                mix(grainHash(i + vec3(0, 1, 1)), grainHash(i + vec3(1, 1, 1)), f.x), f.y),
+            f.z);
+        }`,
+      )
+      .replace(
+        '#include <roughnessmap_fragment>',
+        `#include <roughnessmap_fragment>
+        vec3 grainP = vGrainPos * grainFreq;
+        float grainH = grainNoise(grainP) * 0.65 + grainNoise(grainP * 2.3) * 0.35;
+        roughnessFactor = clamp(roughnessFactor * (1.0 + ${GRAIN.rough.toFixed(3)} * (grainNoise(grainP * 0.08) - 0.5) * 2.0), 0.04, 1.0);`,
+      )
+      .replace(
+        '#include <normal_fragment_maps>',
+        `#include <normal_fragment_maps>
+        {
+          // bump from the grain's slope on screen (as three's bump map does)
+          vec3 sx = dFdx(-vViewPosition);
+          vec3 sy = dFdy(-vViewPosition);
+          float hx = dFdx(grainH);
+          float hy = dFdy(grainH);
+          vec3 r1 = cross(sy, normal);
+          vec3 r2 = cross(normal, sx);
+          float det = dot(sx, r1);
+          vec3 slope = sign(det) * (hx * r1 + hy * r2);
+          normal = normalize(abs(det) * normal - (${GRAIN.bump.toFixed(3)} / grainFreq) * slope);
+        }`,
+      );
+  };
+  mat.customProgramCacheKey = () => 'robot-grain';
 }
