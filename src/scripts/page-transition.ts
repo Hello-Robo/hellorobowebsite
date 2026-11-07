@@ -1,5 +1,6 @@
 /**
- * Page to page transition — after the reference: black columns rise from the bottom, a beat
+ * Page to page transition — after the reference (and toyfight.co): the page shrinks to 90%
+ * towards the middle of the screen, on black, and black columns rise from the bottom, a beat
  * apart left to right, until the screen is black (Figma "transition" 10434:7805). Then the
  * loading screen shows, the same as on the first page of a visit: site micrographics
  * flicking past and a 1px loading bar that fills as the new page loads (load()); then the
@@ -16,6 +17,9 @@ const html = document.documentElement;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const KEY = 'pt';
 
+/** the columns start rising this far into the page's shrink to 90% (SHRINK, below): they
+ * overlap it, so the cover comes on while the page is still moving */
+const SHRINK_LEAD_MS = 100;
 /** columns rise: 0.63s each, 58ms apart (keep in step with .pt__col in global.css) */
 const COVER_MS = 630 + 7 * 58;
 /** columns drop back down */
@@ -63,6 +67,7 @@ async function reveal() {
   try {
     sessionStorage.removeItem(KEY);
   } catch {}
+  unshrink();
   html.classList.add('pt-cover');
   html.classList.remove('pt-cover', 'pt-in', 'pt-hold', 'pt-load');
   html.classList.add('pt-out');
@@ -70,9 +75,49 @@ async function reveal() {
   html.classList.remove('pt-out');
 }
 
-/** Cover the page, show the loading screen, then go to `url` */
+/** What shrinks: everything on the page but the transition itself */
+const shrinking = () =>
+  [...document.body.children].filter(
+    (el): el is HTMLElement => el instanceof HTMLElement && !el.matches('.pt, script, style, template, link, astro-dev-toolbar'),
+  );
+
+/** Shrink the page to 90% around the middle of the screen. Each part scales around that same
+ * point, so they all move as one picture — fixed bars and the scrolled page alike. The point
+ * is measured from where the part sits before its own transform (transform-origin is), so a
+ * bar centred with translateX(-50%) — the nav pill, wider still with the menu open — doesn't
+ * drift sideways as it shrinks. Web Animations, so the parts' own CSS transitions and
+ * animations are left alone */
+const SHRINK = { duration: 825, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', fill: 'forwards' as const };
+let shrinks: Animation[] = [];
+function shrink() {
+  const cx = innerWidth / 2;
+  const cy = innerHeight / 2;
+  const parts = shrinking().map((el) => {
+    const r = el.getBoundingClientRect();
+    const t = getComputedStyle(el).transform;
+    const m = t && t !== 'none' ? new DOMMatrix(t) : null;
+    // (a plain translate: take it off to find the box's own place)
+    return { el, x: cx - (r.left - (m?.e ?? 0)), y: cy - (r.top - (m?.f ?? 0)) };
+  });
+  html.classList.add('pt-shrink');
+  shrinks = parts.map(({ el, x, y }) => {
+    el.style.transformOrigin = `${x}px ${y}px`;
+    return el.animate([{ scale: '1' }, { scale: '0.9' }], SHRINK);
+  });
+}
+
+function unshrink() {
+  for (const a of shrinks) a.cancel();
+  shrinks = [];
+  html.classList.remove('pt-shrink');
+  for (const el of shrinking()) el.style.transformOrigin = '';
+}
+
+/** Shrink the page, cover it, show the loading screen, then go to `url` */
 async function leave(url: string) {
   html.classList.remove('pt-out');
+  shrink();
+  await wait(SHRINK_LEAD_MS);
   html.classList.add('pt-in');
   await wait(COVER_MS);
   document.querySelector<HTMLElement>('[data-pt-bar]')?.style.setProperty('--p', '0');

@@ -191,7 +191,7 @@ const services = [
 
   <!-- Start: three ways in -->
   <div class="contact__screen contact__screen--start" data-step="start" data-active>
-    <Title class="contact__title t-h2">Are you ready for the world to say yes to your robot?</Title>
+    <Title class="contact__title t-h2">Is the world ready<br />for your robot?</Title>
     <div class="contact__cards">
       <a class="contact__card contact__card--light" href="#name" data-go="name">
         <span class="t-body">Start a project</span>
@@ -464,6 +464,20 @@ const services = [
     }, { rootMargin: '0px 0px -15% 0px' });
     firstView.observe(root);
     const screens = [...root.querySelectorAll<HTMLElement>('.contact__screen')];
+    // Desktop: Go back + Next / Submit sit 80 under the field's line (CSS: .has-field-line),
+    // following it down as the message box grows. Measured in the screen's own units
+    // (offsets ignore the screens' entrance translate)
+    const lines = new ResizeObserver((entries) => {
+      for (const { target } of entries) {
+        const input = target as HTMLElement;
+        const fieldBox = input.offsetParent as HTMLElement | null;
+        const screen = input.closest<HTMLElement>('.contact__screen');
+        if (!fieldBox || !screen) continue;
+        screen.style.setProperty('--field-line', `${fieldBox.offsetTop + input.offsetTop + input.offsetHeight}px`);
+        screen.classList.add('has-field-line');
+      }
+    });
+    for (const input of root.querySelectorAll<HTMLElement>('.contact__field .contact__input')) lines.observe(input);
     const logs: Logs = JSON.parse(root.querySelector('[data-logs]')?.textContent ?? '{}');
     const write = { a: typewriter(root.querySelector('[data-log=a]')!), b: typewriter(root.querySelector('[data-log=b]')!) };
     const field = (id: string) => root.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#contact-${id}`)!;
@@ -1271,6 +1285,13 @@ const services = [
   .contact__submit[aria-busy='true'] {
     opacity: 0.5;
     cursor: progress;
+  }
+  /* Screens with a field (Name, Email, Company, Quick word): the pair 80 under the field's
+     line instead of at the bottom (--field-line set by the script, following the message
+     box as it grows) — never lower than the bottom spot */
+  .has-field-line :is(.contact__back, .contact__submit) {
+    top: min(calc(var(--field-line) + 80 * var(--px)), calc(100% - 60 * var(--px) - var(--button-height)));
+    bottom: auto;
   }
   /* Steps 01–03 (Next) and Quick word (Submit): beside Go back, dimmed until the field is filled */
   .contact__submit--next {
