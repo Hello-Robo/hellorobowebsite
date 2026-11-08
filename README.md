@@ -327,6 +327,20 @@ The first run also creates `CMS_SESSION_SECRET`. Then open http://localhost:4321
   `{ "video": "/videos/..." }`; images stay in `src/assets`. `components/ui/Media.astro`
   renders either: optimized image, GIF as-is (keeps animating), or a muted looping inline
   video (paused for reduced motion).
+- **Hosted project videos** live in the S3 bucket `hellorobosite` (us-east-2), folder `web/`,
+  as a pair: `<name>.mp4` (desktop) and `<name>-mobile.mp4` (phones). Both H.264 — phones
+  decode it in hardware; VP9 WebM, and anything over 1080p, they decode in software, which
+  ran them out of memory. `Media.astro` gives phones the `-mobile` twin of any `web/…mp4`
+  automatically. Prefer this over GIFs (a GIF is far heavier than the same clip as video).
+  To make a pair (muted loops, so no audio):
+
+  ```bash
+  ffmpeg -i in.mov -an -vf "scale='min(1920,iw)':-2,fps=30" -c:v libx264 -preset slow -crf 24 -maxrate 4M -bufsize 8M -pix_fmt yuv420p -movflags +faststart name.mp4
+  ffmpeg -i in.mov -an -vf "scale='min(960,iw)':-2,fps=30" -c:v libx264 -preset slow -crf 27 -maxrate 1500k -bufsize 3M -profile:v main -pix_fmt yuv420p -movflags +faststart name-mobile.mp4
+  ```
+
+  Upload both to `web/` (the bucket policy makes them public; CORS is set on the bucket) and
+  use `{ "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/name.mp4" }`.
 - The **studio card** on /team (Hello Robo, opened by the robot) is its own collection,
   `src/content/studio/hello-robo.json`. In the CMS it sits pinned at the top of Team
   (`parent: 'team'`); it can be edited but not added or deleted (`fixed: true`).

@@ -16,8 +16,9 @@
  * phone cards). With `autoplay` they all downloaded and decoded at once, and phones ran out of
  * memory: iOS dropped the tab, which reloaded it or showed "Can't open this page".
  */
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const phone = matchMedia('(max-width: 1023px)');
+import { PHONE, reducedMotion } from './media-query';
+const reduced = reducedMotion;
+const phone = matchMedia(PHONE);
 const videos = [...document.querySelectorAll<HTMLVideoElement>('video[data-autoplay]')];
 const near = new Set<HTMLVideoElement>();
 
@@ -91,4 +92,10 @@ if (videos.length) {
     if (near.size) update();
   }, 250);
   document.addEventListener('visibilitychange', update);
+  // Leaving the page: the browser may keep it (back / forward cache) with its videos' frames
+  // in memory while the next page loads. Let go of them; they load again if it comes back.
+  addEventListener('pagehide', () => videos.forEach(unload));
+  addEventListener('pageshow', (e) => {
+    if (e.persisted) update();
+  });
 }

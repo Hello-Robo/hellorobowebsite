@@ -54,6 +54,7 @@ const { overlay = false, mosaic = false } = Astro.props;
 <canvas class:list={['crt', { 'crt--overlay': overlay }]} aria-hidden="true" data-crt={JSON.stringify(settings)} data-overlay={overlay ? '' : undefined} data-mosaic={mosaic ? '' : undefined}></canvas>
 
 <script>
+  import { isDesktop, reducedMotion } from '../../scripts/media-query';
   // Fragment shader: Figma's fs_main, line for line (WGSL → GLSL ES 1.0)
   const FRAG = `
 precision highp float;
@@ -272,9 +273,9 @@ attribute vec2 aUv;
 varying vec2 vUv;
 void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
 
-  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const still = reducedMotion;
   // desktop only (see above): elsewhere no WebGL at all, the plain image shows
-  const desktop = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px)').matches;
+  const desktop = isDesktop();
 
   for (const canvas of document.querySelectorAll<HTMLCanvasElement>('canvas[data-crt]')) {
     const box = canvas.parentElement;
@@ -418,8 +419,10 @@ void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
     // a few times a second so a newly shown box starts right away
     const html = document.documentElement;
     const inMenu = !!box.closest('.site-menu');
+    /** on (or near) the screen — set by the observer below; off screen it rests entirely */
+    let onScreen = true;
     const shown = () => {
-      if (document.visibilityState !== 'visible' || !box.offsetWidth) return false;
+      if (!onScreen || document.visibilityState !== 'visible' || !box.offsetWidth) return false;
       // the page's own CRT layers rest while the site menu is open (they're under its blur);
       // the menu's own keep running
       const menuOpen = html.dataset.menu === 'open';
@@ -441,12 +444,25 @@ void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
     };
     const loop = (now: number) => {
       frame = 0;
+      if (!onScreen) return; // the observer starts it again
       if (!shown()) return later();
       draw(now);
       if (still) return later();
       frame = requestAnimationFrame(loop);
     };
     frame = requestAnimationFrame(loop);
+    // Off screen (the Home hero once scrolled past, the Showcase before it's reached), a
+    // full-screen shader pass every frame was pure waste: rest, and start again as it nears
+    new IntersectionObserver(
+      ([e]) => {
+        onScreen = e.isIntersecting;
+        if (onScreen && !frame) {
+          clearTimeout(timer);
+          frame = requestAnimationFrame(loop);
+        }
+      },
+      { rootMargin: '100px 0px' },
+    ).observe(box);
     // the menu opening: its pictures draw at once (this runs before the next frame is
     // painted), so the first frame of the opening already shows the right, CRT'd picture —
     // no stale frame, no pop a quarter second later

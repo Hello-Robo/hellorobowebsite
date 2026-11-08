@@ -15,6 +15,7 @@
  */
 
 import { uncovered } from './uncovered';
+import { reducedMotion } from './media-query';
 
 const TEXT = 'main p, main li, main blockquote, main dd';
 const SKIP = [
@@ -62,7 +63,7 @@ function split(el: HTMLElement): HTMLElement[] {
   return words;
 }
 
-if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+if (!reducedMotion) {
   const paras: Para[] = [];
   for (const el of document.querySelectorAll<HTMLElement>(TEXT)) {
     if (el.closest(SKIP) || el.querySelector('.mask, .hl-mask')) continue;

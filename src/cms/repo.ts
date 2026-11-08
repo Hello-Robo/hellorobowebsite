@@ -275,4 +275,3 @@ export const repo: Repo = GITHUB_TOKEN
 
 /** True when saves go to GitHub (and reach the live site through a Vercel build) */
 export const savesToGitHub = !!GITHUB_TOKEN;
-export const repoBranch = branch;

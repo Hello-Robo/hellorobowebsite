@@ -6,14 +6,10 @@
  * Plays the home page's showreel (public/videos/showreel.mp4, as in HomeShowreel): muted,
  * looping, only while it can be seen. Phones get showreel-mobile.mp4 when it's there.
  */
-import fs from 'node:fs';
 import VideoSlot from '../../components/ui/VideoSlot.astro';
+import { showreel } from '../../data/showreel';
 
-const has = (f: string) => fs.existsSync(`public/videos/${f}`);
-const src = has('showreel.mp4') ? '/videos/showreel.mp4' : undefined;
-const mobileSrc = has('showreel-mobile.mp4') ? '/videos/showreel-mobile.mp4' : undefined;
-const webm = has('showreel.webm') ? '/videos/showreel.webm' : undefined;
-const poster = has('showreel-poster.jpg') ? '/videos/showreel-poster.jpg' : undefined;
+const { src, mobileSrc, webm, poster } = showreel;
 ---
 <section class="services-device" aria-label="Showreel">
   {/* Mobile: a vertical 4:5 crop */}

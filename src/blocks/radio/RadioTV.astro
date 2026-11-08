@@ -188,8 +188,9 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
 </section>
 
 <script>
+  import { isDesktop } from '../../scripts/media-query';
   // the 3D robot: three.js and the model are only fetched on desktop
-  if (matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px)').matches) {
+  if (isDesktop()) {
     import('../../scripts/tv-robot').catch(() =>
       document.querySelectorAll('[data-tv]').forEach((tv) => tv.classList.add('is-robot-fallback')),
     );

@@ -70,6 +70,7 @@ const chapters = [
 
 <script>
   import { slideScrub } from '../../scripts/slide-scrub';
+  import { reducedMotion } from '../../scripts/media-query';
 
   /** how far towards the next chapter (share of a chapter's scroll) before it switches */
   const PULL = 0.12;
@@ -79,7 +80,7 @@ const chapters = [
   const IDLE = 140;
   /** ms the pull to a chapter takes */
   const GLIDE = 650;
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduced = reducedMotion;
   /** fast start, soft landing */
   const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 

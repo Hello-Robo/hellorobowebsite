@@ -59,7 +59,8 @@ function init() {
   // the recorded shutter: decoding works while the audio is still waiting for a click, so
   // the first flash after it already has the real sound
   const c = ctx;
-  fetch('/sounds/shutter.m4a')
+  // (only the desktop hero's flash uses it)
+  if (matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px)').matches) fetch('/sounds/shutter.m4a')
     .then((r) => r.arrayBuffer())
     .then((b) => c.decodeAudioData(b))
     .then((buf) => (shutter = buf))

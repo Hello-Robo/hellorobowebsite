@@ -12,12 +12,12 @@
  * handle (e.g. Get in touch opening the contact block) are left alone. Back / forward from
  * the browser cache uncovers too. Off for reduced motion.
  */
+import { isDesktop, reducedMotion } from './media-query';
 
 const html = document.documentElement;
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduced = reducedMotion;
 /** the shrink is desktop only: on a phone, scaling the whole page made it one huge layer
  *  (every block of a long page at once) just as the next page starts loading */
-const desktop = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px)');
 const KEY = 'pt';
 
 /** the columns start rising this far into the page's shrink to 90% (SHRINK, below): they
@@ -119,7 +119,7 @@ function unshrink() {
 /** Shrink the page, cover it, show the loading screen, then go to `url` */
 async function leave(url: string) {
   html.classList.remove('pt-out');
-  if (desktop.matches) {
+  if (isDesktop()) {
     shrink();
     await wait(SHRINK_LEAD_MS);
   }

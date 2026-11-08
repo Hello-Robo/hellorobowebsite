@@ -21,6 +21,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { sfx } from './sound';
+import { reducedMotion } from './media-query';
 /** Defaults (the prototype's tuned values); the CMS overrides all but head / pivot */
 const DEFAULTS = {
   head: 'tripo_part_3', // mesh that turns as the head
@@ -139,7 +140,7 @@ export function mountHeroScene(o: {
   onFail?: () => void;
 }) {
   const config: HeroSettings = { ...DEFAULTS, ...o.config };
-  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduceMotion = reducedMotion;
 
   let renderer: THREE.WebGLRenderer;
   try {
