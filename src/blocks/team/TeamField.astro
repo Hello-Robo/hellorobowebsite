@@ -15,7 +15,8 @@
  * - Every object stays sharp (no blur). Hover an object: the fade grows with distance from
  *   it and toward the corners, with a lens distortion toward the screen edges.
  * - Desktop only: a faint CRT screen layer (CrtScreen, overlay) lies over the field, under
- *   the open card; phones and tablets get the plain field.
+ *   the open card; phones and tablets get the plain field. The cards' photos play through
+ *   the same shader: one canvas, moved into the card that opens (two WebGL contexts in all).
  * - Click: the canvas glides so the object lands in the middle of the left half (beside
  *   the card), the rest stays out of focus, and the card fades in on the right. The robot
  *   (hello_robo) opens the studio card — Hello Robo, no
@@ -173,7 +174,7 @@ const config = JSON.stringify({
     </div>
   </div>
 
-  {people.map((p) => (
+  {people.map((p, i) => (
     <article class="team-card" id={p.id} aria-label={p.data.name} aria-hidden="true">
       <a class="team-card__close" href="#" aria-label="Close" data-team-close>
         <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -183,15 +184,16 @@ const config = JSON.stringify({
         </svg>
       </a>
       <header class="team-card__names">
-        <p class="team-card__ja t-h3" lang="ja"><span class="team-card__mask"><span style="--d: 0">{p.data.nameJa}</span></span></p>
+        <p class="team-card__ja t-h3" lang="ja"><span class="mask"><span style="--d: 0">{p.data.nameJa}</span></span></p>
         <h2 class="t-h2">
-          {nameWords(p.data.name).map((n, i, all) => <><span class="team-card__mask"><span style={`--d: ${n.d}`}>{n.w}</span></span>{i < all.length - 1 && ' '}</>)}
+          {nameWords(p.data.name).map((n, i, all) => <><span class="mask"><span style={`--d: ${n.d}`}>{n.w}</span></span>{i < all.length - 1 && ' '}</>)}
         </h2>
       </header>
       <figure class="team-card__photo">
         <span class="team-card__screen">
           <Image src={p.data.photo} alt={p.data.name} widths={[369, 738]} sizes="369px" loading="lazy" />
-          <CrtScreen settings={CRT_SUBTLE} />
+          {/* one CRT screen for all the cards (each canvas is a WebGL context): it moves to the card that opens */}
+          {i === 0 && <CrtScreen settings={CRT_SUBTLE} />}
         </span>
         <figcaption class="t-body">{p.data.role}</figcaption>
       </figure>
@@ -214,9 +216,9 @@ const config = JSON.stringify({
     </a>
     {studio.stamp && <img class="team-card__stamp" src={studio.stamp} alt="" width="252" height="82" style="--w: 252" />}
     <header class="team-card__names">
-      <p class="team-card__ja t-h3" lang="ja"><span class="team-card__mask"><span style="--d: 0">{studio.nameJa}</span></span></p>
+      <p class="team-card__ja t-h3" lang="ja"><span class="mask"><span style="--d: 0">{studio.nameJa}</span></span></p>
       <h2 class="t-h2">
-        {nameWords(studio.name).map((n, i, all) => <><span class="team-card__mask"><span style={`--d: ${n.d}`}>{n.w}</span></span>{i < all.length - 1 && ' '}</>)}
+        {nameWords(studio.name).map((n, i, all) => <><span class="mask"><span style={`--d: ${n.d}`}>{n.w}</span></span>{i < all.length - 1 && ' '}</>)}
       </h2>
     </header>
     <div class="team-card__quote t-body">
@@ -435,7 +437,17 @@ const config = JSON.stringify({
     /** cards whose contents are fading out: they fly off once that's done */
     const closing = new Map<HTMLElement, number>();
     /** swap = another card was open: the new one appears in its place, no fly-in */
+    // The card photos' CRT screen: one canvas, moved into the card that opens (the cards it
+    // leaves are out of sight by then: faded, or gone)
+    const crt = root.querySelector<HTMLCanvasElement>('.team-card__screen > canvas.crt');
+    const moveCrt = (card: HTMLElement | undefined) => {
+      const screen = card?.querySelector('.team-card__screen');
+      if (!crt || crt.hidden || !screen || crt.parentElement === screen) return;
+      screen.append(crt);
+      crt.dispatchEvent(new Event('crt:move'));
+    };
     const openCard = (id: string, swap = false) => {
+      moveCrt(cards.get(id));
       cards.forEach((c, cid) => {
         const on = cid === id;
         window.clearTimeout(closing.get(c));
@@ -883,24 +895,15 @@ const config = JSON.stringify({
     opacity: 0;
     transition: opacity 0.15s ease;
   }
-  /* The names don't fade: they slide up through their masks once the card has landed
-     (as the Services titles); a closed card's wait below them */
+  /* The names don't fade: they slide up through their masks (.mask, global.css) once the
+     card has landed (as the Services titles); a closed card's wait below them */
   .team-card > .team-card__names {
     opacity: 1;
   }
-  .team-card__mask {
-    display: inline-block;
-    overflow: hidden;
-    vertical-align: top;
-    /* room on every side so no letter is clipped */
-    padding: 0.1em 0.06em 0.14em;
-    margin: -0.1em -0.06em -0.14em;
-  }
-  .team-card__mask > span {
-    display: inline-block;
+  .team-card .mask > span {
     transform: translateY(135%);
   }
-  .team-card.is-open .team-card__mask > span {
+  .team-card.is-open .mask > span {
     transform: none;
     transition: transform var(--duration-smooth) var(--ease-out);
     transition-delay: calc(var(--card-in) + 0.05s + var(--d, 0) * var(--stagger));
@@ -923,7 +926,7 @@ const config = JSON.stringify({
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .team-card__mask > span {
+    .team-card .mask > span {
       transform: none;
     }
     .team-card.is-open .team-card__word {

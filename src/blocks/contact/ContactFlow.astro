@@ -277,6 +277,7 @@ const services = [
   import { sfx } from '../../scripts/sound';
   import { blinkLogo } from '../../scripts/robo-logo';
   import { PHONE, isDesktop, reducedMotion } from '../../scripts/media-query';
+  import { splitWords } from '../../scripts/split-words';
 
   type Group = { x: number; y: number; n?: string; lines: string[]; m?: [number, number] };
   type Logs = Record<string, { a: Group[]; b?: Group[] }>;
@@ -307,30 +308,6 @@ const services = [
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const reduced = reducedMotion;
 
-  /** Wraps every word of `el` in spans (for the title rise and the lead light-up) */
-  function splitWords(el: HTMLElement, wrap: (word: HTMLElement) => Node, wordClass: string) {
-    let n = 0;
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-    const texts: Text[] = [];
-    for (let t = walker.nextNode(); t; t = walker.nextNode()) texts.push(t as Text);
-    for (const text of texts) {
-      const frag = document.createDocumentFragment();
-      for (const part of text.nodeValue!.split(/( +)/)) {
-        if (!part) continue;
-        if (/^ +$/.test(part)) {
-          frag.append(part);
-          continue;
-        }
-        const w = document.createElement('span');
-        w.className = wordClass;
-        w.style.setProperty('--d', String(n++));
-        w.textContent = part;
-        frag.append(wrap(w));
-      }
-      text.replaceWith(frag);
-    }
-  }
-
   /** Titles move as on the Services scroller and the works wheel: every word sits in a mask;
    *  on a screen change the old title's words slide out of their masks and the new one's
    *  slide in after them — up when going on, down when going back (data-state next /
@@ -338,17 +315,21 @@ const services = [
   function prepareText(root: HTMLElement) {
     if (reduced) return;
     root.querySelectorAll<HTMLElement>('.contact__title').forEach((t) => {
-      splitWords(t, (w) => {
-        const mask = document.createElement('span');
-        mask.className = 'hl-mask';
-        mask.append(w);
-        return mask;
-      }, 'ct-word');
+      splitWords(t, {
+        className: 'ct-word',
+        stagger: true,
+        wrap: (w) => {
+          const mask = document.createElement('span');
+          mask.className = 'hl-mask';
+          mask.append(w);
+          return mask;
+        },
+      });
       t.classList.add('ct-ready');
       t.dataset.state = 'next';
     });
     root.querySelectorAll<HTMLElement>('.contact__lead').forEach((l) => {
-      splitWords(l, (w) => w, 'cr-word');
+      splitWords(l, { className: 'cr-word', stagger: true });
       l.classList.add('cr-ready');
     });
   }

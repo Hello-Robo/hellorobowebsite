@@ -184,6 +184,7 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
   import { sfx } from '../../scripts/sound';
   import { blinkLogo } from '../../scripts/robo-logo';
   import { reducedMotion } from '../../scripts/media-query';
+  import { pinned, pinnedSlides } from '../../scripts/pinned';
 
   // NDA projects don't open: a click on one blinks its NDA tag instead — 100% → 30% → 100%,
   // 4 times in 1s — with the contact form's "nope" sound. Covers the desktop wheel, the phone
@@ -227,7 +228,6 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
       return data.fade[i] + (data.fade[i + 1] - data.fade[i]) * (a - i);
     };
     let current = 0;
-    let frame = 0;
 
     // Smooth follow: the drum eases toward `target`, time-based so it feels the same at
     // any frame rate. SMOOTH = seconds to cover ~63% of the remaining turn.
@@ -431,25 +431,17 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
         const travel = rect.height - stage.offsetHeight - expand;
         window.scrollTo({ top: window.scrollY + rect.top + expand + (to / N) * travel, behavior: reduceMotion ? 'auto' : 'smooth' });
       };
-      const update = () => {
-        frame = 0;
+      pinned(
+        root,
+        stage,
+        ({ enter, progress }) => {
+          stage.style.setProperty('--enter', String(enter));
+          target = progress * N;
+          follow();
+        },
         // phones hide this wheel (.only-desktop; they get the cards): nothing to turn
-        if (!root.offsetWidth) return;
-        const rect = root.getBoundingClientRect();
-        const travel = rect.height - stage.offsetHeight;
-        const expand = expandOf();
-        const clamp = (v: number) => Math.min(1, Math.max(0, v));
-        stage.style.setProperty('--enter', String(expand > 0 ? clamp(-rect.top / expand) : 1));
-        const progress = travel - expand > 0 ? clamp((-rect.top - expand) / (travel - expand)) : 0;
-        target = progress * N;
-        follow();
-      };
-      const request = () => {
-        if (!frame) frame = requestAnimationFrame(update);
-      };
-      window.addEventListener('scroll', request, { passive: true });
-      window.addEventListener('resize', request);
-      update();
+        { expand: true, when: () => root.offsetWidth > 0 },
+      );
       // start where the page already is (e.g. after a reload mid-page), without easing in
       offset = target;
       place(offset);
@@ -457,43 +449,27 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
   }
 
   // Mobile: pinned project slides. Progress 0→1 across the block picks the slide and
-  // fills the line. Measured against the stage's own height so the phone toolbar
-  // showing / hiding doesn't make slides jump.
+  // fills the line.
   for (const root of document.querySelectorAll<HTMLElement>('[data-project-slides]')) {
     const stage = root.querySelector<HTMLElement>('.project-cards__stage');
-    // the photos uncover one another with the scroll, like every slideshow (slide-scrub.ts)
-    const pictures = slideScrub([...root.querySelectorAll<HTMLElement>('.project-cards__bg')]);
     const slides = [...root.querySelectorAll<HTMLElement>('.project-card, .project-card__mark')];
     const count = root.querySelectorAll('.project-card').length;
     if (!stage || !count) continue;
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      if (!stage.offsetHeight) return; // hidden on desktop
-      const rect = root.getBoundingClientRect();
-      const travel = rect.height - stage.offsetHeight;
-      const progress = travel > 0 ? Math.min(1, Math.max(0, -rect.top / travel)) : 0;
-      const active = String(Math.min(count - 1, Math.floor(progress * count)));
-      stage.style.setProperty('--progress', String(progress));
-      pictures.set(Math.min(count - 1, Math.max(0, progress * count - 0.5)));
-      if (stage.dataset.active !== active) {
-        stage.dataset.active = active;
+    pinnedSlides(root, stage, count, {
+      // the photos uncover one another with the scroll, like every slideshow (slide-scrub.ts)
+      pictures: [slideScrub([...root.querySelectorAll<HTMLElement>('.project-cards__bg')])],
+      onSlide: (active) =>
         slides.forEach((el) => {
-          const on = el.dataset.index === active;
+          const on = Number(el.dataset.index) === active;
           el.classList.toggle('is-current', on);
           if (el.classList.contains('project-card')) {
             el.setAttribute('aria-hidden', String(!on));
             el.querySelector('a')?.setAttribute('tabindex', on ? '0' : '-1');
           }
-        });
-      }
-    };
-    const request = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    window.addEventListener('scroll', request, { passive: true });
-    window.addEventListener('resize', request);
-    update();
+        }),
+      // hidden on desktop
+      when: () => stage.offsetHeight > 0,
+    });
   }
 </script>
 
@@ -692,37 +668,12 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
     gap: calc(8 * var(--px));
   }
   /* ── Services: as on the Services page, each line sits in a mask and slides up through
-     it, one after another; the outgoing project's go up and away first ── */
-  .project-wheel__services .mask {
-    display: inline-block;
-    overflow: hidden;
-    vertical-align: top;
-    /* room on every side so no letter is clipped */
-    padding: 0.1em 0.06em 0.14em;
-    margin: -0.1em -0.06em -0.14em;
-  }
-  .project-wheel__services .mask > span {
-    display: inline-block;
-    transform: translateY(var(--y, 0));
-    transition: transform var(--duration-smooth) var(--ease-out);
-    transition-delay: calc(var(--d, 0) * var(--stagger));
-  }
-  .project-wheel__services[data-state='next'] .mask > span {
-    --y: 135%;
-  }
-  .project-wheel__services[data-state='past'] .mask > span {
-    --y: -135%;
-    transition-delay: 0s;
-  }
-  /* incoming lines wait a beat so the outgoing ones clear first */
-  .project-wheel__services[data-state='current'] .mask > span {
-    transition-delay: calc(0.12s + var(--d, 0) * var(--stagger));
-  }
+     it, one after another (.mask, global.css); the outgoing project's go up and away first.
+     is-instant: placed on the side it comes in from, without moving ── */
   .project-wheel__services.is-instant .mask > span {
     transition: none;
   }
   @media (prefers-reduced-motion: reduce) {
-    .project-wheel__services .mask > span,
     .project-wheel__mark img {
       transition: none;
     }

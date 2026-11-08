@@ -36,40 +36,22 @@ const SKIP = [
   '.has-hover-fx',
 ].join(',');
 
-/** ms between one word and the next */
-const STAGGER = 55;
-
-function split(h: HTMLElement) {
-  let n = 0;
-  const walker = document.createTreeWalker(h, NodeFilter.SHOW_TEXT);
-  const texts: Text[] = [];
-  for (let t = walker.nextNode(); t; t = walker.nextNode()) texts.push(t as Text);
-  for (const text of texts) {
-    const parts = text.nodeValue!.split(/( +)/);
-    const frag = document.createDocumentFragment();
-    for (const part of parts) {
-      if (!part) continue;
-      if (/^ +$/.test(part)) {
-        frag.append(part);
-        continue;
-      }
-      // the word sits in a clipping box and rises into it
-      const mask = document.createElement('span');
-      mask.className = 'hl-mask';
-      const word = document.createElement('span');
-      word.className = 'hl-word';
-      word.style.setProperty('--d', String(n++));
-      word.textContent = part;
-      mask.append(word);
-      frag.append(mask);
-    }
-    text.replaceWith(frag);
-  }
-  return n;
-}
-
 import { uncovered } from './uncovered';
 import { reducedMotion } from './media-query';
+import { splitWords } from './split-words';
+
+/** each word sits in a clipping box and rises into it (55ms after the one before: global.css) */
+const split = (h: HTMLElement) =>
+  splitWords(h, {
+    className: 'hl-word',
+    stagger: true,
+    wrap: (word) => {
+      const mask = document.createElement('span');
+      mask.className = 'hl-mask';
+      mask.append(word);
+      return mask;
+    },
+  }).length;
 
 if (!reducedMotion) {
   // headings, and big statement paragraphs without a heading class
@@ -113,9 +95,11 @@ if (!reducedMotion) {
     },
     { rootMargin: '0px 0px -12% 0px' },
   );
-  for (const el of firsts) {
+  // a slide drawn as `display: contents` has no box to watch: watch its text (all the
+  // reads first, then the writes)
+  const watched = [...firsts].map((el) => (getComputedStyle(el).display === 'contents' ? el.firstElementChild! : el));
+  firsts.forEach((el, i) => {
     el.classList.add('slide-wait');
-    // a slide drawn as `display: contents` has no box to watch: watch its text
-    slideSeen.observe(getComputedStyle(el).display === 'contents' ? el.firstElementChild! : el);
-  }
+    slideSeen.observe(watched[i]);
+  });
 }

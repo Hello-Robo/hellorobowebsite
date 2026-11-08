@@ -123,47 +123,26 @@ const slides = [
 
 <script>
   import { slideScrub } from '../../scripts/slide-scrub';
+  import { pinnedSlides, slideStates } from '../../scripts/pinned';
 
   // Pinned slides: progress 0→1 across the scroller drives the line, the active slide and
-  // the pictures, which uncover one another with the scroll (slide-scrub.ts).
+  // the pictures, which uncover one another with the scroll (slide-scrub.ts). The first part
+  // of the scroll widens the block to full screen (--expand: desktop only).
   for (const scroller of document.querySelectorAll<HTMLElement>('[data-showcase]')) {
     const stage = scroller.querySelector<HTMLElement>('.home-showcase__stage');
+    if (!stage) continue;
     const count = Number(getComputedStyle(scroller).getPropertyValue('--slides')) || 3;
-    const parts = scroller.querySelectorAll<HTMLElement>('.home-showcase__title, .home-showcase__services, .home-showcase__stamp');
-    const pictures = slideScrub([...scroller.querySelectorAll<HTMLElement>('.home-showcase__bg')]);
-    let frame = 0;
-
-    const update = () => {
-      frame = 0;
-      if (!stage) return;
-      const rect = scroller.getBoundingClientRect();
-      // The stage's own height (100vh / 100svh), not window.innerHeight: on phones the
-      // browser toolbar changes innerHeight while scrolling, which would make slides jump
-      const travel = rect.height - stage.offsetHeight;
-      // The first part of the scroll widens the block to full screen (desktop only)
-      const expand = stage.offsetHeight * (Number(getComputedStyle(scroller).getPropertyValue('--expand')) || 0);
-      const clamp = (v: number) => Math.min(1, Math.max(0, v));
-      const enter = expand > 0 ? clamp(-rect.top / expand) : 1;
-      const progress = travel - expand > 0 ? clamp((-rect.top - expand) / (travel - expand)) : 0;
-      stage.style.setProperty('--enter', String(enter));
-      const active = Math.min(count - 1, Math.floor(progress * count));
-      stage.style.setProperty('--progress', String(progress));
-      pictures.set(Math.min(count - 1, Math.max(0, progress * count - 0.5)));
-      if (stage.dataset.active !== String(active)) {
-        stage.dataset.active = String(active);
-        parts.forEach((el) => {
-          const i = Number(el.dataset.slide);
-          el.dataset.state = i < active ? 'past' : i === active ? 'current' : 'next';
-          if (!el.matches('.home-showcase__stamp')) el.setAttribute('aria-hidden', String(i !== active));
-        });
-      }
-    };
-    const request = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    window.addEventListener('scroll', request, { passive: true });
-    window.addEventListener('resize', request);
-    update();
+    const texts = scroller.querySelectorAll<HTMLElement>('.home-showcase__title, .home-showcase__services');
+    // (the stamps sit in an aria-hidden column already)
+    const stamps = scroller.querySelectorAll<HTMLElement>('.home-showcase__stamp');
+    pinnedSlides(scroller, stage, count, {
+      expand: true,
+      pictures: [slideScrub([...scroller.querySelectorAll<HTMLElement>('.home-showcase__bg')])],
+      onSlide: (active) => {
+        slideStates(stamps, active, false);
+        slideStates(texts, active);
+      },
+    });
   }
 </script>
 
@@ -267,32 +246,8 @@ const slides = [
   }
 
   /* ── Text motion, as in the Services scroller: each word / line sits in a mask and slides
-     up through it; the outgoing slide's go up and out, the incoming slide's come up after ── */
-  .mask {
-    display: inline-block;
-    overflow: hidden;
-    vertical-align: top;
-    /* room on every side so no letter is clipped */
-    padding: 0.1em 0.06em 0.14em;
-    margin: -0.1em -0.06em -0.14em;
-  }
-  .mask > span {
-    display: inline-block;
-    transform: translateY(var(--y, 0));
-    transition: transform var(--duration-smooth) var(--ease-out);
-    transition-delay: calc(var(--d, 0) * var(--stagger));
-  }
-  [data-state='next'] .mask > span {
-    --y: 135%;
-  }
-  [data-state='past'] .mask > span {
-    --y: -135%;
-    transition-delay: 0s;
-  }
-  /* incoming words wait a beat so the outgoing ones clear first */
-  [data-state='current'] .mask > span {
-    transition-delay: calc(0.12s + var(--d, 0) * var(--stagger));
-  }
+     up through it (.mask, global.css); the outgoing slide's go up and out, the incoming
+     slide's come up after. The stamp slides through its own mask a beat later ── */
   .home-showcase__stamp img {
     transform: translateY(var(--y, 0));
     transition: transform var(--duration-smooth) var(--ease-out);
@@ -319,7 +274,6 @@ const slides = [
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .mask > span,
     .home-showcase__stamp img {
       transition: none;
     }

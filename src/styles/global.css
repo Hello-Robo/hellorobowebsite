@@ -396,6 +396,46 @@ button {
   transition-delay: calc(var(--d) * 55ms);
 }
 
+/* ── Word masks: a word or line in a clipping box, sliding through it (the slide blocks, the
+   Team cards' names, the menu's links). Room on every side so no letter is clipped: the tight
+   H1 line height (0.95) puts the tops of b / d / h / T and the descenders outside the line
+   box, and big titles' last letters ("y", "e") reach past it on the right ── */
+.mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding: 0.1em 0.06em 0.14em;
+  margin: -0.1em -0.06em -0.14em;
+}
+.mask > * {
+  display: inline-block;
+}
+/* The slide blocks (Services, Robo Radio clips, Careers values, Home showcase / philosophy,
+   the work wheel's services; pinned.ts sets data-state on each slide): the outgoing slide's
+   words go up and out at once, the incoming slide's come up a beat later, one after another,
+   in the direction you scroll. 135%: far enough that no part of a waiting word shows in the
+   mask's extra room */
+[data-state] .mask > span {
+  transform: translateY(var(--y, 0));
+  transition: transform var(--duration-smooth) var(--ease-out);
+  transition-delay: calc(var(--d, 0) * var(--stagger));
+}
+[data-state='next'] .mask > span {
+  --y: 135%;
+}
+[data-state='past'] .mask > span {
+  --y: -135%;
+  transition-delay: 0s;
+}
+[data-state='current'] .mask > span {
+  transition-delay: calc(0.12s + var(--d, 0) * var(--stagger));
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-state] .mask > span {
+    transition: none;
+  }
+}
+
 /* First slide of the slide blocks (Services, Home showcase, project wheel, Robo Radio clips,
    Careers values) waits below its masks until it scrolls into view (headline-reveal.ts);
    then the block's own transition slides it up */

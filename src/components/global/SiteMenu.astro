@@ -42,8 +42,8 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path === href 
         {mainNav.map((item, i) => (
           <li>
             <a class:list={['site-menu__link', 't-h3', { 'is-active': isActive(item.href) }]} href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>
-              <span class="site-menu__mask"><span style={`--d: ${i}`}>{item.label}</span></span>
-              <span class="site-menu__mask" style={`--d: ${i}`}>
+              <span class="mask"><span style={`--d: ${i}`}>{item.label}</span></span>
+              <span class="mask" style={`--d: ${i}`}>
                 <svg class="site-menu__arrow" viewBox="0 0 40 40" fill="none" aria-hidden="true">
                   <path d="M6 20h27M23 10l10 10-10 10" stroke="currentColor" stroke-width="1.5" />
                 </svg>
@@ -70,7 +70,7 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path === href 
         <CrtScreen settings={CRT_SUBTLE} />
         <p class="site-menu__hello-title t-body">Say hello</p>
         <ul class="site-menu__socials t-body">
-          {socials.map((s, i) => <li><a href={s.href} target="_blank" rel="noopener"><span class="site-menu__mask"><span style={`--d: ${i}`}>{s.label}</span></span></a></li>)}
+          {socials.map((s, i) => <li><a href={s.href} target="_blank" rel="noopener"><span class="mask"><span style={`--d: ${i}`}>{s.label}</span></span></a></li>)}
         </ul>
       </section>
     </div>
@@ -232,27 +232,19 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path === href 
     transition: none; /* on at once with its card: no plain photo showing first */
   }
 
-  /* Links and socials: each one slides up through a mask, one after another — the Services
-     list's reveal (same distance, timing and stagger); closing, they drop back down together */
-  .site-menu__mask {
-    display: inline-block;
-    overflow: hidden;
-    vertical-align: top;
-    /* room on every side so no letter is clipped */
-    padding: 0.1em 0.06em 0.14em;
-    margin: -0.1em -0.06em -0.14em;
-  }
-  .site-menu__mask > * {
-    display: inline-block;
+  /* Links and socials: each one slides up through a mask (.mask, global.css), one after
+     another — the Services list's reveal (same distance, timing and stagger); closing, they
+     drop back down together */
+  .site-menu .mask > * {
     transform: translateY(135%);
     transition: transform 0.3s ease;
   }
-  :global(html[data-menu='open']) .site-menu__mask > * {
+  :global(html[data-menu='open']) .site-menu .mask > * {
     transform: none;
     transition: transform var(--duration-smooth) var(--ease-out);
     transition-delay: calc(0.12s + var(--d, 0) * var(--stagger));
   }
-  .site-menu__mask > svg {
+  .site-menu .mask > svg {
     display: block;
   }
 
