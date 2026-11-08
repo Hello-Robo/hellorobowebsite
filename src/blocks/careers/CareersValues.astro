@@ -77,36 +77,16 @@ const lit = (text: string) => {
   // and fills the line on top (--progress); each value gets data-state "past" (scrolled
   // by), "current" or "next". The pictures uncover one another with the scroll.
   import { slideScrub } from '../../scripts/slide-scrub';
+  import { pinnedSlides, slideStates } from '../../scripts/pinned';
 
   for (const root of document.querySelectorAll<HTMLElement>('[data-values]')) {
     const stage = root.querySelector<HTMLElement>('.careers-values__stage');
     const parts = [...root.querySelectorAll<HTMLElement>('.careers-values__copy')];
-    const count = parts.length;
-    if (!stage || !count) continue;
-    const pictures = slideScrub([...root.querySelectorAll<HTMLElement>('.careers-values__pic')]);
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const rect = root.getBoundingClientRect();
-      const travel = rect.height - stage.offsetHeight;
-      const progress = travel > 0 ? Math.min(1, Math.max(0, -rect.top / travel)) : 0;
-      const active = Math.min(count - 1, Math.floor(progress * count));
-      stage.style.setProperty('--progress', String(progress));
-      pictures.set(Math.min(count - 1, Math.max(0, progress * count - 0.5)));
-      if (stage.dataset.active === String(active)) return;
-      stage.dataset.active = String(active);
-      parts.forEach((el) => {
-        const i = Number(el.dataset.index);
-        el.dataset.state = i < active ? 'past' : i === active ? 'current' : 'next';
-        el.setAttribute('aria-hidden', String(i !== active));
-      });
-    };
-    const request = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    window.addEventListener('scroll', request, { passive: true });
-    window.addEventListener('resize', request);
-    update();
+    if (!stage || !parts.length) continue;
+    pinnedSlides(root, stage, parts.length, {
+      pictures: [slideScrub([...root.querySelectorAll<HTMLElement>('.careers-values__pic')])],
+      onSlide: (active) => slideStates(parts, active),
+    });
   }
 </script>
 
@@ -218,29 +198,10 @@ const lit = (text: string) => {
     }
   }
 
-  /* ── Text reveal: words slide up through a mask (same as Services) ── */
-  .mask {
-    display: inline-block;
-    overflow: hidden;
-    vertical-align: top;
-    /* room on every side so no letter is clipped (as on Services): the big titles' last
-       letters ("y", "e") reach past their box on the right */
-    padding: 0.1em 0.06em 0.14em;
-    margin: -0.1em -0.06em -0.14em;
-  }
-  .mask > span {
-    display: inline-block;
-    transform: translateY(var(--y, 0));
-    transition: transform var(--duration-smooth) var(--ease-out);
+  /* ── Text reveal: words slide up through a mask (.mask, global.css: same as Services);
+     here scrolling back, the words coming down wait a beat too ── */
+  .careers-values__copy[data-state='next'] .mask > span {
     transition-delay: calc(0.12s + var(--d, 0) * var(--stagger));
-  }
-  /* far enough that no part of a waiting word shows in the mask's extra room */
-  [data-state='next'] .mask > span {
-    --y: 135%;
-  }
-  [data-state='past'] .mask > span {
-    --y: -135%;
-    transition-delay: 0s;
   }
 
   /* ── Robot: the full right column, down to the page margin at the bottom of the screen,
@@ -269,10 +230,6 @@ const lit = (text: string) => {
     .careers-values__copy[data-state='current'] .careers-values__word {
       animation: none;
       opacity: 1;
-    }
-    .mask > span {
-      transition-duration: 0.01s !important;
-      transition-delay: 0s !important;
     }
   }
 

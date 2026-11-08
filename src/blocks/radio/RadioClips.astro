@@ -101,6 +101,7 @@ const last = topics[topics.length - 1].line / 1648;
 
 <script>
   import { slideScrub } from '../../scripts/slide-scrub';
+  import { pinnedSlides, slideStates } from '../../scripts/pinned';
 
   // Pinned topics: progress 0→1 across the block picks the topic and grows the line.
   // Each slide gets data-state: "past" (scrolled by), "current", or "next"; the clips
@@ -110,33 +111,14 @@ const last = topics[topics.length - 1].line / 1648;
     const slides = [...root.querySelectorAll<HTMLElement>('.radio-clips__slide')];
     if (!stage || !slides.length) continue;
     const boxes = Math.max(...slides.map((s) => s.querySelectorAll('.radio-clips__media').length));
-    const pictures = Array.from({ length: boxes }, (_, b) =>
-      slideScrub(slides.map((s) => s.querySelectorAll<HTMLElement>('.radio-clips__media')[b]).filter(Boolean)),
-    );
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      if (getComputedStyle(stage).position !== 'sticky') return; // mobile: stacked, no pin
-      const rect = root.getBoundingClientRect();
-      const travel = rect.height - stage.offsetHeight;
-      const progress = travel > 0 ? Math.min(1, Math.max(0, -rect.top / travel)) : 0;
-      const active = Math.min(slides.length - 1, Math.floor(progress * slides.length));
-      stage.style.setProperty('--progress', String(progress));
-      const p = Math.min(slides.length - 1, Math.max(0, progress * slides.length - 0.5));
-      pictures.forEach((box) => box.set(p));
-      if (stage.dataset.active === String(active)) return;
-      stage.dataset.active = String(active);
-      slides.forEach((slide, i) => {
-        slide.dataset.state = i < active ? 'past' : i === active ? 'current' : 'next';
-        slide.setAttribute('aria-hidden', String(i !== active));
-      });
-    };
-    const request = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    window.addEventListener('scroll', request, { passive: true });
-    window.addEventListener('resize', request);
-    update();
+    pinnedSlides(root, stage, slides.length, {
+      pictures: Array.from({ length: boxes }, (_, b) =>
+        slideScrub(slides.map((s) => s.querySelectorAll<HTMLElement>('.radio-clips__media')[b]).filter(Boolean)),
+      ),
+      onSlide: (active) => slideStates(slides, active),
+      // only while the stage is pinned
+      when: () => getComputedStyle(stage).position === 'sticky',
+    });
   }
 </script>
 
@@ -221,32 +203,8 @@ const last = topics[topics.length - 1].line / 1648;
     object-fit: cover;
   }
 
-  /* ── Text reveal: each word / line sits in a mask and slides up through it ── */
-  .mask {
-    display: inline-block;
-    overflow: hidden;
-    vertical-align: top;
-    /* room on every side so no letter is clipped (the tight H1 line height) */
-    padding: 0.1em 0.06em 0.14em;
-    margin: -0.1em -0.06em -0.14em;
-  }
-  .mask > span {
-    display: inline-block;
-    transform: translateY(var(--y, 0));
-    transition: transform var(--duration-smooth) var(--ease-out);
-    transition-delay: calc(var(--d, 0) * var(--stagger));
-  }
-  .radio-clips__slide[data-state='next'] .mask > span {
-    --y: 135%;
-  }
-  .radio-clips__slide[data-state='past'] .mask > span {
-    --y: -135%;
-    transition-delay: 0s;
-  }
-  /* Incoming words wait a beat so the outgoing ones clear first */
-  .radio-clips__slide[data-state='current'] .mask > span {
-    transition-delay: calc(0.12s + var(--d, 0) * var(--stagger));
-  }
+  /* ── Text reveal: each word / line sits in a mask and slides up through it (.mask,
+     global.css); the stamp fades up a beat later ── */
   .radio-clips__stamp {
     opacity: 0;
     transform: translateY(calc(16 * var(--px)));
@@ -279,7 +237,6 @@ const last = topics[topics.length - 1].line / 1648;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .mask > span,
     .radio-clips__stamp,
     .radio-clips__media :global(img),
     .radio-clips__clip figcaption {

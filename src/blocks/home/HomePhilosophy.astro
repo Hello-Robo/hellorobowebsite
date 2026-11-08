@@ -71,6 +71,7 @@ const chapters = [
 <script>
   import { slideScrub } from '../../scripts/slide-scrub';
   import { reducedMotion } from '../../scripts/media-query';
+  import { slideStates, whileNear } from '../../scripts/pinned';
 
   /** how far towards the next chapter (share of a chapter's scroll) before it switches */
   const PULL = 0.12;
@@ -92,7 +93,6 @@ const chapters = [
     const pictures = slideScrub([...root.querySelectorAll<HTMLElement>('.home-philosophy__layer')], { drift: false });
     let active = 0;
     let last = 0;
-    let frame = 0;
     let idle = 0;
     let glide = 0;
 
@@ -106,15 +106,10 @@ const chapters = [
       active = i;
       stage.dataset.active = String(i);
       pictures.set(i);
-      texts.forEach((el) => {
-        const j = Number(el.dataset.chapter);
-        el.dataset.state = j < i ? 'past' : j === i ? 'current' : 'next';
-        el.setAttribute('aria-hidden', String(j !== i));
-      });
+      slideStates(texts, i);
     };
 
     const update = () => {
-      frame = 0;
       const span = travel();
       if (span <= 0) return;
       // position in chapters: 0 = pinned on the first, count - 1 = the last
@@ -157,16 +152,15 @@ const chapters = [
       if (Math.abs(target - window.scrollY) >= 2) glideTo(target);
     };
 
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(update);
+    // once the scrolling (or resizing) stops, the magnet
+    const later = () => {
       clearTimeout(idle);
       idle = window.setTimeout(settle, IDLE);
     };
     pictures.set(0);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
+    whileNear(root, update, { onScroll: later });
+    window.addEventListener('resize', later);
     for (const type of ['wheel', 'touchstart', 'keydown', 'pointerdown']) window.addEventListener(type, stop, { passive: true });
-    update();
   }
 </script>
 
@@ -263,39 +257,8 @@ const chapters = [
     color: var(--color-white);
   }
 
-  /* ── Text motion, as in the Home showcase: each word sits in a mask and slides up
-     through it; the outgoing chapter's go up and out, the incoming chapter's come up after ── */
-  .mask {
-    display: inline-block;
-    overflow: hidden;
-    vertical-align: top;
-    /* room on every side so no letter is clipped */
-    padding: 0.1em 0.06em 0.14em;
-    margin: -0.1em -0.06em -0.14em;
-  }
-  .mask > span {
-    display: inline-block;
-    transform: translateY(var(--y, 0));
-    transition: transform var(--duration-smooth) var(--ease-out);
-    transition-delay: calc(var(--d, 0) * var(--stagger));
-  }
-  [data-state='next'] .mask > span {
-    --y: 135%;
-  }
-  [data-state='past'] .mask > span {
-    --y: -135%;
-    transition-delay: 0s;
-  }
-  /* incoming words wait a beat so the outgoing ones clear first */
-  [data-state='current'] .mask > span {
-    transition-delay: calc(0.12s + var(--d, 0) * var(--stagger));
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .mask > span {
-      transition: none;
-    }
-  }
+  /* (text motion, as in the Home showcase: each word sits in a mask and slides up through
+     it — .mask, global.css) */
 
   /* ── Mobile: Figma 10101:7108 — stamp 123 wide at 208 from the top of the block, text
      290 wide (Figma's line breaks), bars 360×194; the other chapters follow suit ── */

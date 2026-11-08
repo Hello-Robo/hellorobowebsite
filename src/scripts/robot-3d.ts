@@ -12,7 +12,6 @@
  * draws one still frame in the head's resting pose.
  */
 import {
-  ACESFilmicToneMapping,
   Color,
   CustomBlending,
   OneFactor,
@@ -28,14 +27,10 @@ import {
   type MeshStandardMaterial,
   type Object3D,
   PerspectiveCamera,
-  PMREMGenerator,
   Scene,
-  SRGBColorSpace,
-  WebGLRenderer,
 } from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { reducedMotion } from './media-query';
+import { createRenderer, drawWhen, loadModel, roomEnvironment } from './three-setup';
 
 const MODEL = '/models/hello-robot.glb';
 const HEAD = 'tripo_part_3';
@@ -204,21 +199,17 @@ function makeBeam() {
 
 export function mountRobot(o: RobotOptions) {
   const fail = () => o.onFail?.();
-  const canvas = document.createElement('canvas');
-  canvas.className = o.className;
-  if (o.label) {
-    canvas.setAttribute('role', 'img');
-    canvas.setAttribute('aria-label', o.label);
-  } else canvas.setAttribute('aria-hidden', 'true');
-
-  let renderer: WebGLRenderer;
-  try {
-    renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
-  } catch {
-    return fail();
-  }
-  renderer.outputColorSpace = SRGBColorSpace;
-  renderer.toneMapping = ACESFilmicToneMapping;
+  const renderer = createRenderer({
+    className: o.className,
+    label: o.label,
+    alpha: true,
+    powerPreference: 'low-power',
+    // 'studio': a touch brighter; 'screen': a little more for the rim light
+    toneMappingExposure: o.light === 'studio' ? 1.05 : 1.1,
+    onLost: fail,
+  });
+  if (!renderer) return fail();
+  const canvas = renderer.domElement;
   renderer.setClearColor(0x000000, 0);
 
   const scene = new Scene();
@@ -229,10 +220,7 @@ export function mountRobot(o: RobotOptions) {
   const IDLE: [number, number, number] = [1, 0.88, 0.74];
   const tint: [number, number, number] = [...IDLE];
   if (o.light === 'studio') {
-    renderer.toneMappingExposure = 1.05;
-    const pmrem = new PMREMGenerator(renderer);
-    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    pmrem.dispose();
+    scene.environment = roomEnvironment(renderer);
     scene.add(new HemisphereLight(0xffffff, 0xb9b4ac, 0.6));
     const key = new DirectionalLight(0xffffff, 1.6);
     key.position.set(-1.5, 2.5, 3);
@@ -247,7 +235,6 @@ export function mountRobot(o: RobotOptions) {
     // his dome straight at the camera), so from behind just the outlines of his head and
     // shoulders shine and the top of his head stays fairly dark; the side screens, off to his left and right at a grazing angle, trace
     // his sides. No fill: next to nothing reaches his back.
-    renderer.toneMappingExposure = 1.1;
     scene.add(new HemisphereLight(0x2a241f, 0x000000, 0.04));
     screenBase = 5;
     screenLight = new DirectionalLight(0xfff1e0, screenBase);
@@ -266,7 +253,6 @@ export function mountRobot(o: RobotOptions) {
   const reduced = reducedMotion;
   let head: Object3D | null = null;
   let ready = false;
-  let visible = true;
   let raf = 0;
   let t0 = 0;
   let glow = 1;
@@ -361,16 +347,15 @@ export function mountRobot(o: RobotOptions) {
     raf = 0;
     if (!t0) t0 = t;
     draw((t - t0) / 1000);
-    // paused while the site menu is open (it's under the menu's blur; see hero-scene.ts)
-    if (visible && !document.hidden && document.documentElement.dataset.menu !== 'open') raf = requestAnimationFrame(tick);
+    // on screen, in a visible tab, the site menu closed (it's under the menu's blur)
+    if (shown()) raf = requestAnimationFrame(tick);
   };
   const run = () => {
     if (ready && !raf && !reduced) raf = requestAnimationFrame(tick);
   };
 
-  new GLTFLoader().load(
-    MODEL,
-    (gltf) => {
+  loadModel(MODEL)
+    .then((gltf) => {
       const root = gltf.scene;
       root.updateMatrixWorld(true);
       const mesh = root.getObjectByName(HEAD) as Mesh | undefined;
@@ -425,21 +410,13 @@ export function mountRobot(o: RobotOptions) {
       draw(0);
       requestAnimationFrame(() => o.onLive?.());
       run();
-    },
-    undefined,
-    fail,
-  );
+    })
+    .catch(fail);
 
   new ResizeObserver(() => {
     if (!ready) return;
     resize();
     renderer.render(scene, camera);
   }).observe(o.host);
-  new IntersectionObserver((entries) => {
-    visible = entries[0].isIntersecting;
-    run();
-  }).observe(o.host);
-  document.addEventListener('visibilitychange', run);
-  new MutationObserver(run).observe(document.documentElement, { attributes: true, attributeFilter: ['data-menu'] });
-  canvas.addEventListener('webglcontextlost', fail);
+  const shown = drawWhen(o.host, run);
 }

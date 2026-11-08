@@ -26,6 +26,7 @@
  * reduced motion.
  */
 import { REDUCED_MOTION } from './media-query';
+import { glProgram } from './gl-program';
 
 /** the curve (their uniforms: distance 34, strength 1; tighter here, so the band is shorter) */
 const DISTANCE = 58;
@@ -40,6 +41,9 @@ const FADE = 160;
 const BELOW = 160;
 /** the widest the corners flare out, as a share of the screen width */
 const FLARE = 0.05 * STRENGTH;
+/** frames in a row with nothing to redraw before the loop rests (until something may have
+ *  moved: a scroll, input, a transition, a picture loading, a change to the page) */
+const QUIET = 6;
 
 const SKIP = '.pt, .site-menu, .nav-pill, .get-in-touch';
 
@@ -150,18 +154,8 @@ function start() {
   const glCanvas = document.createElement('canvas');
   const gl = glCanvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false });
   if (!gl) return;
-  const shader = (type: number, src: string) => {
-    const s = gl.createShader(type)!;
-    gl.shaderSource(s, src);
-    gl.compileShader(s);
-    return s;
-  };
-  const program = gl.createProgram()!;
-  gl.attachShader(program, shader(gl.VERTEX_SHADER, VERTEX));
-  gl.attachShader(program, shader(gl.FRAGMENT_SHADER, FRAGMENT));
-  gl.linkProgram(program);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
-  gl.useProgram(program);
+  const program = glProgram(gl, VERTEX, FRAGMENT);
+  if (!program) return;
   const u = Object.fromEntries(
     ['uView', 'uOrigin', 'uTopPx', 'uDpr', 'uFade', 'uBox', 'uRadius', 'uContent', 'uOpacity'].map((n) => [n, gl.getUniformLocation(program, n)]),
   );
@@ -311,7 +305,9 @@ function start() {
     }
     s.maskImage = `linear-gradient(to top, ${stops.join(', ')})`;
   };
+  /** back to the plain picture; true if it wasn't already */
   function off(item: Item) {
+    const was = item.clip !== null || !!item.placed;
     if (item.clip !== null) {
       item.el.style.clipPath = item.clip;
       item.el.style.maskImage = item.mask;
@@ -322,6 +318,7 @@ function start() {
       item.placed = null;
     }
     item.key = '';
+    return was;
   }
 
   /** what shows of the picture (cut by the frames that are its own size), their rounded
@@ -367,16 +364,33 @@ function start() {
   };
 
   // ---- drawing: every frame while a picture is near the band (scroll, reveals and
-  // the blocks' own scripts all move them), but redrawn only when something changed
+  // the blocks' own scripts all move them), but redrawn only when something changed. After
+  // QUIET frames with nothing to redraw the loop rests; whatever may move a picture wakes it:
+  // scrolling (the page or a box in it), resizing, input, a transition or animation
+  // starting, a picture or video loading or playing, fonts, and any change to the page
+  // (watched only while resting)
   let frame = 0;
+  let quiet = 0;
+  let resting = false;
+  const changes = new MutationObserver(() => run());
   function run() {
+    quiet = 0;
+    if (resting) {
+      resting = false;
+      changes.disconnect();
+    }
     if (!frame) frame = requestAnimationFrame(draw);
   }
   addEventListener('resize', run);
-  addEventListener('scroll', run, { passive: true });
+  document.addEventListener('scroll', run, { passive: true, capture: true });
+  for (const type of ['pointermove', 'pointerdown', 'wheel', 'keydown', 'touchmove', 'transitionrun', 'transitionstart', 'animationstart', 'animationiteration'])
+    document.addEventListener(type, run, { passive: true, capture: true });
+  for (const type of ['load', 'loadeddata', 'play', 'playing', 'seeked']) document.addEventListener(type, run, { capture: true });
+  document.fonts?.addEventListener('loadingdone', run);
 
-  function draw() {
+  const draw = () => {
     frame = 0;
+    let changed = false;
     const vw = innerWidth;
     const vh = innerHeight;
     const dpr = Math.min(2, devicePixelRatio || 1);
@@ -425,12 +439,12 @@ function start() {
     for (const job of jobs) {
       const { item } = job;
       if (!job.shape || !job.region) {
-        off(item);
+        if (off(item)) changed = true;
         continue;
       }
       const tex = item.el instanceof HTMLImageElement ? imageTexture(item.el, job.r!.width, job.r!.height) : videoTexture(item.el);
       if (!tex) {
-        off(item);
+        if (off(item)) changed = true;
         continue;
       }
       const [rx, ry, rw, rh] = job.region;
@@ -441,6 +455,7 @@ function start() {
       const inPlace = job.at && Math.abs(job.at.left - rx) < 0.5 && Math.abs(job.at.top - ry) < 0.5;
       if (key === item.key && inPlace && !job.playing) continue;
       item.key = key;
+      changed = true;
 
       // place the canvas over the region: its css position is in the page, so find the
       // page's offset (and any scale on the way) from where it is now
@@ -501,8 +516,14 @@ function start() {
       const r = job.r!;
       cut(item, Math.max(0, (r.bottom - (fadeTop + FADE)) * job.k!), FADE * job.k!, opacity);
     }
-    if (near.size) run();
-  }
+    if (!near.size) return;
+    quiet = changed ? 0 : quiet + 1;
+    if (quiet < QUIET) frame = requestAnimationFrame(draw);
+    else {
+      resting = true;
+      changes.observe(document.documentElement, { attributes: true, childList: true, characterData: true, subtree: true });
+    }
+  };
   run();
 }
 

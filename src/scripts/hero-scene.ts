@@ -18,10 +18,9 @@
  * drawing. With reduced motion the head doesn't look around on its own and doesn't breathe.
  */
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { sfx } from './sound';
 import { reducedMotion } from './media-query';
+import { createRenderer, drawWhen, loadModel, roomEnvironment } from './three-setup';
 /** Defaults (the prototype's tuned values); the CMS overrides all but head / pivot */
 const DEFAULTS = {
   head: 'tripo_part_3', // mesh that turns as the head
@@ -142,31 +141,21 @@ export function mountHeroScene(o: {
   const config: HeroSettings = { ...DEFAULTS, ...o.config };
   const reduceMotion = reducedMotion;
 
-  let renderer: THREE.WebGLRenderer;
-  try {
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-  } catch {
+  const created = createRenderer({ className: o.className, label: o.label, toneMappingExposure: 1.05, onLost: () => fail() });
+  if (!created) {
     o.onFail?.();
     return;
   }
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+  const renderer: THREE.WebGLRenderer = created;
   renderer.setClearColor(0xffffff, 1);
   renderer.autoClear = false;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
   const canvas = renderer.domElement;
-  canvas.className = o.className;
-  if (o.label) {
-    canvas.setAttribute('role', 'img');
-    canvas.setAttribute('aria-label', o.label);
-  }
   o.host.appendChild(canvas);
 
   // Robot: neutral studio light; the background never lights or reflects on him.
   // (×π: three r155+ uses physical light units, the prototype was r147)
   const scene = new THREE.Scene();
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environment = roomEnvironment(renderer);
   const key = new THREE.DirectionalLight(0xffffff, 1.6 * Math.PI);
   key.position.set(1.2, 2.0, 2.2);
   const rim = new THREE.DirectionalLight(0xffd9c4, 1.1 * Math.PI);
@@ -259,9 +248,8 @@ export function mountHeroScene(o: {
   // ── model + head pivot (a "rig" without bones) ──
   const rig: { stage?: THREE.Group; body?: THREE.Group; pivot?: THREE.Group } = {};
   let live = false;
-  new GLTFLoader().load(
-    o.modelUrl,
-    ({ scene: model }) => {
+  loadModel(o.modelUrl)
+    .then(({ scene: model }) => {
       // shine and texture: the model is fully matte (roughness 0.82), so each part gets a
       // clear lacquer on top (glossy highlights and room reflections) over a finely grained
       // surface (grain(), below); colours and textures stay as they are
@@ -303,10 +291,8 @@ export function mountHeroScene(o: {
       model.add(rig.pivot);
       rig.pivot.updateMatrixWorld(true);
       if (head) rig.pivot.attach(head);
-    },
-    undefined,
-    () => fail(),
-  );
+    })
+    .catch(() => fail());
   new THREE.TextureLoader().load(
     o.bgUrl,
     (tex) => {
@@ -450,27 +436,17 @@ export function mountHeroScene(o: {
     if (running) raf = requestAnimationFrame(tick);
   }
 
-  // only draw while the hero is on screen and the tab is visible
-  let onScreen = true;
+  // only draw while the hero is on screen, the tab is visible and the site menu closed
   let running = false;
   const update = () => {
-    // paused while the site menu is open: it's behind the menu's full-screen blur, and
-    // redrawing under that blur made the menu's fades stutter
-    const menuOpen = document.documentElement.dataset.menu === 'open';
-    const should = !failed && onScreen && !document.hidden && !menuOpen;
+    const should = !failed && shown();
     if (should && !running) {
       running = true;
       clock.getDelta();
       if (!raf) raf = requestAnimationFrame(tick);
     } else if (!should) running = false;
   };
-  new IntersectionObserver(([e]) => {
-    onScreen = e.isIntersecting;
-    update();
-  }).observe(o.host);
-  document.addEventListener('visibilitychange', update);
-  new MutationObserver(update).observe(document.documentElement, { attributes: true, attributeFilter: ['data-menu'] });
-  canvas.addEventListener('webglcontextlost', fail);
+  const shown = drawWhen(o.host, update);
   update();
 }
 

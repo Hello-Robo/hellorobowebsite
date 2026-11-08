@@ -16,7 +16,6 @@
  * The model is meshopt-compressed (EXT_meshopt_compression), hence the decoder.
  */
 import {
-  ACESFilmicToneMapping,
   AnimationMixer,
   Box3,
   Clock,
@@ -33,21 +32,18 @@ import {
   MeshLambertMaterial,
   LoopOnce,
   PerspectiveCamera,
-  PMREMGenerator,
   Scene,
   SRGBColorSpace,
   Vector3,
-  WebGLRenderer,
   PCFSoftShadowMap,
   type AnimationAction,
   type Material,
   type Object3D,
 } from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { sfx } from './sound';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { createRenderer, drawWhen, loadModel, roomEnvironment } from './three-setup';
 
 const MODEL = '/models/rcpt-01.glb';
 
@@ -152,20 +148,12 @@ export interface PrinterOptions {
 }
 
 export function mountPrinter(o: PrinterOptions) {
-  const canvas = document.createElement('canvas');
-  canvas.className = o.className;
-  canvas.setAttribute('aria-hidden', 'true');
-
-  let renderer: WebGLRenderer;
-  try {
-    renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
-  } catch {
+  const renderer = createRenderer({ className: o.className, alpha: true, powerPreference: 'low-power', onLost: o.onFail });
+  if (!renderer) {
     o.onFail?.();
     return null;
   }
-  renderer.outputColorSpace = SRGBColorSpace;
-  renderer.toneMapping = ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1;
+  const canvas = renderer.domElement;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = PCFSoftShadowMap;
 
@@ -173,10 +161,8 @@ export function mountPrinter(o: PrinterOptions) {
   // strong key from the upper left (as the light falls on the page) that casts shadows —
   // gears on the case, the rollers in their cavity — and a cool rim from behind on the right
   const scene = new Scene();
-  const pmrem = new PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environment = roomEnvironment(renderer);
   scene.environmentIntensity = 0.55;
-  pmrem.dispose();
   const key = new DirectionalLight(0xfff6ec, 3.2);
   key.position.set(-2.2, 3, 2.6);
   key.castShadow = true;
@@ -305,11 +291,8 @@ export function mountPrinter(o: PrinterOptions) {
     camera.updateProjectionMatrix();
   };
 
-  const loader = new GLTFLoader();
-  loader.setMeshoptDecoder(MeshoptDecoder);
-  loader.load(
-    MODEL,
-    (gltf) => {
+  loadModel(MODEL, (loader) => loader.setMeshoptDecoder(MeshoptDecoder))
+    .then((gltf) => {
       const model = gltf.scene;
       // centre it and scale it to 1 unit tall
       const box = new Box3().setFromObject(model);
@@ -366,13 +349,11 @@ export function mountPrinter(o: PrinterOptions) {
       draw(0);
       o.onLive?.();
       run();
-    },
-    undefined,
-    () => {
+    })
+    .catch(() => {
       renderer.dispose();
       o.onFail?.();
-    },
-  );
+    });
 
   const clock = new Clock();
   const draw = (dt: number) => {
@@ -389,26 +370,21 @@ export function mountPrinter(o: PrinterOptions) {
     renderer.render(scene, camera);
   };
 
-  // ── Draw only while on screen and the tab is visible
-  let visible = false;
+  // ── Draw only while on screen and the tab is visible (a print goes on under the menu)
   let raf = 0;
   const loop = () => {
     raf = 0;
-    if (!ready || !visible || document.hidden) return;
+    if (!ready || !shown()) return;
     draw(Math.min(0.05, clock.getDelta()));
     // still: keep drawing only while a receipt prints
     if (feeding || printAction?.isRunning()) raf = requestAnimationFrame(loop);
   };
   const run = () => {
-    if (raf || !ready || !visible || document.hidden) return;
+    if (raf || !ready || !shown()) return;
     clock.getDelta();
     raf = requestAnimationFrame(loop);
   };
-  new IntersectionObserver((entries) => {
-    visible = entries.some((e) => e.isIntersecting);
-    run();
-  }).observe(o.host);
-  document.addEventListener('visibilitychange', run);
+  const shown = drawWhen(o.host, run, { menu: false });
   new ResizeObserver(() => {
     if (!ready) return;
     size();

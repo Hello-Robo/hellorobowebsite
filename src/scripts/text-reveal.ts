@@ -16,6 +16,7 @@
 
 import { uncovered } from './uncovered';
 import { reducedMotion } from './media-query';
+import { splitWords } from './split-words';
 
 const TEXT = 'main p, main li, main blockquote, main dd';
 const SKIP = [
@@ -36,43 +37,23 @@ const LOAD_DELAY = 350;
 /** `start`: when it began lighting up (ms) */
 type Para = { el: HTMLElement; words: HTMLElement[]; last: number[]; start: number };
 
-function split(el: HTMLElement): HTMLElement[] {
-  const words: HTMLElement[] = [];
-  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
-    // text inside links stays as it is (and keeps its own hover)
-    acceptNode: (n) => (n.parentElement?.closest('a, button') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
-  });
-  const texts: Text[] = [];
-  for (let t = walker.nextNode(); t; t = walker.nextNode()) texts.push(t as Text);
-  for (const text of texts) {
-    const frag = document.createDocumentFragment();
-    for (const part of text.nodeValue!.split(/(\s+)/)) {
-      if (!part) continue;
-      if (/^\s+$/.test(part)) {
-        frag.append(part);
-        continue;
-      }
-      const w = document.createElement('span');
-      w.className = 'tr-word';
-      w.textContent = part;
-      words.push(w);
-      frag.append(w);
-    }
-    text.replaceWith(frag);
-  }
-  return words;
-}
-
 if (!reducedMotion) {
+  // which paragraphs: all the reads first (style included), then the splitting, so the page
+  // isn't laid out again for every paragraph
+  const candidates = [...document.querySelectorAll<HTMLElement>(TEXT)].filter(
+    (el) =>
+      !el.closest(SKIP) &&
+      !el.querySelector('.mask, .hl-mask') &&
+      // a list item holding paragraphs: the paragraphs do it
+      !el.querySelector('p, li, blockquote, dd') &&
+      el.textContent!.trim().length >= 30 &&
+      // body sizes only (a big statement without a heading class is still a headline)
+      parseFloat(getComputedStyle(el).fontSize) <= 26,
+  );
   const paras: Para[] = [];
-  for (const el of document.querySelectorAll<HTMLElement>(TEXT)) {
-    if (el.closest(SKIP) || el.querySelector('.mask, .hl-mask')) continue;
-    // a list item holding paragraphs: the paragraphs do it
-    if (el.querySelector('p, li, blockquote, dd')) continue;
-    if (el.textContent!.trim().length < 30) continue;
-    // body sizes only (a big statement without a heading class is still a headline)
-    if (parseFloat(getComputedStyle(el).fontSize) > 26) continue;
-    const words = split(el);
+  for (const el of candidates) {
+    // text inside links stays as it is (and keeps its own hover)
+    const words = splitWords(el, { className: 'tr-word', skip: 'a, button', space: /\s+/ });
     if (words.length < 4) continue;
     paras.push({ el, words, last: [], start: 0 });
   }
@@ -114,13 +95,9 @@ if (!reducedMotion) {
     if (!frame) frame = requestAnimationFrame(update);
   };
 
-  // everything starts dim, except what's already been scrolled past
-  const later: Para[] = [];
-  for (const p of paras) {
-    if (p.el.getBoundingClientRect().bottom <= 0) continue;
-    paint(p, 0);
-    later.push(p);
-  }
+  // everything starts dim, except what's already been scrolled past (measured first, then dimmed)
+  const later = paras.filter((p) => p.el.getBoundingClientRect().bottom > 0);
+  later.forEach((p) => paint(p, 0));
   // plays once it's on screen, like the headlines (what's on screen when the page opens:
   // once the page transition has uncovered it, a moment after the headlines)
   let opening = true;

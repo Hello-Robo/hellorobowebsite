@@ -21,6 +21,8 @@
  * of varying transparency (no blend mode: Chrome draws mix-blend-mode over a video frame
  * with black patches): scanlines, mask, flicker, roll band, static and vignette darken it.
  * Curvature and colour fringing need the picture's own pixels, so they don't apply there.
+ * A canvas moved into another box (the Team page's one card screen, moved to the card that
+ * opens) follows it on a "crt:move" event: it draws that box's picture at once.
  */
 interface Props {
   /** Override any Figma property by its name (mask, scanlines, curvature, …) */
@@ -55,6 +57,7 @@ const { overlay = false, mosaic = false } = Astro.props;
 
 <script>
   import { isDesktop, reducedMotion } from '../../scripts/media-query';
+  import { glProgram } from '../../scripts/gl-program';
   // Fragment shader: Figma's fs_main, line for line (WGSL → GLSL ES 1.0)
   const FRAG = `
 precision highp float;
@@ -278,28 +281,20 @@ void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
   const desktop = isDesktop();
 
   for (const canvas of document.querySelectorAll<HTMLCanvasElement>('canvas[data-crt]')) {
-    const box = canvas.parentElement;
+    const parent = canvas.parentElement;
     const gl = desktop ? canvas.getContext('webgl', { premultipliedAlpha: true, alpha: true }) : null;
-    if (!box || !gl) {
+    if (!parent || !gl) {
       canvas.hidden = true;
       continue;
     }
+    /** the box it covers (and draws the picture of): its parent */
+    let box: HTMLElement = parent;
     const p = JSON.parse(canvas.dataset.crt || '{}');
-    const compile = (type: number, src: string) => {
-      const s = gl.createShader(type)!;
-      gl.shaderSource(s, src);
-      gl.compileShader(s);
-      return s;
-    };
-    const prog = gl.createProgram()!;
-    gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
-    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+    const prog = glProgram(gl, VERT, FRAG);
+    if (!prog) {
       canvas.hidden = true;
       continue;
     }
-    gl.useProgram(prog);
     // Figma's quad: position + uv, uv (0,0) at the top left
     const quad = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, quad);
@@ -435,7 +430,8 @@ void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
     };
     // "crt:update" on the box: redraw now, even while hidden (the menu swaps its photo while
     // closed, so the screen already shows the new one the moment it opens — no blink)
-    box.addEventListener('crt:update', () => draw(performance.now()));
+    const redraw = () => draw(performance.now());
+    box.addEventListener('crt:update', redraw);
     let timer = 0;
     let frame = 0;
     const later = () => {
@@ -453,8 +449,11 @@ void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
     frame = requestAnimationFrame(loop);
     // Off screen (the Home hero once scrolled past, the Showcase before it's reached), a
     // full-screen shader pass every frame was pure waste: rest, and start again as it nears
-    new IntersectionObserver(
-      ([e]) => {
+    const near = new IntersectionObserver(
+      (entries) => {
+        // (the box's latest; not one it was moved out of)
+        const e = entries.filter((x) => x.target === box).pop();
+        if (!e) return;
         onScreen = e.isIntersecting;
         if (onScreen && !frame) {
           clearTimeout(timer);
@@ -462,7 +461,23 @@ void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
         }
       },
       { rootMargin: '100px 0px' },
-    ).observe(box);
+    );
+    near.observe(box);
+    // moved into another box: watch that one, and draw its picture now (not a frame of the
+    // last box's), then carry on from there
+    canvas.addEventListener('crt:move', () => {
+      const to = canvas.parentElement;
+      if (!to || to === box) return;
+      near.unobserve(box);
+      box.removeEventListener('crt:update', redraw);
+      box = to;
+      near.observe(box);
+      box.addEventListener('crt:update', redraw);
+      clearTimeout(timer);
+      if (frame) cancelAnimationFrame(frame);
+      redraw();
+      frame = requestAnimationFrame(loop);
+    });
     // the menu opening: its pictures draw at once (this runs before the next frame is
     // painted), so the first frame of the opening already shows the right, CRT'd picture —
     // no stale frame, no pop a quarter second later
