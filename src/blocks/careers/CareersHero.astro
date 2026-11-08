@@ -43,11 +43,12 @@ const ratio = photos.reduce((sum, p) => sum + p.width / p.height, 0);
 </section>
 
 <script>
+  import { reducedMotion } from '../../scripts/media-query';
   // Photo strip: slides horizontally with the page scroll, eased so it trails the
   // scroll softly. 0 at the top of the page → 1 once the hero has scrolled away.
   const strip = document.querySelector<HTMLElement>('[data-careers-strip]');
   const hero = strip?.closest<HTMLElement>('section');
-  if (strip && hero && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (strip && hero && !reducedMotion) {
     let shown = 0;
     let frame = 0;
     const target = () => Math.min(1, Math.max(0, -hero.getBoundingClientRect().top / hero.offsetHeight));

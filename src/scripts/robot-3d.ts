@@ -35,6 +35,7 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { reducedMotion } from './media-query';
 
 const MODEL = '/models/hello-robot.glb';
 const HEAD = 'tripo_part_3';
@@ -262,7 +263,7 @@ export function mountRobot(o: RobotOptions) {
 
   const fovY = o.fov ?? 18;
   const camera = new PerspectiveCamera(fovY, 1, 0.1, 20);
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduced = reducedMotion;
   let head: Object3D | null = null;
   let ready = false;
   let visible = true;

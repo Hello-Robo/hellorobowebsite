@@ -19,6 +19,7 @@
  */
 
 import { makeCanvas, pixelFrame } from './pixel';
+import { reducedMotion } from './media-query';
 
 const SELECTOR = [
   '.button',
@@ -417,7 +418,7 @@ function setup(btn: HTMLElement, labelSelector?: string, opts: Options = {}) {
   });
 }
 
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduced = reducedMotion;
 
 /** The same hover for another element: its `label` (selector) scrambles, its `picture`
  *  (selector, in opts) pixelates like the icons */

@@ -7,7 +7,8 @@
  * (scripts/video-play.ts), so a page full of them doesn't run a phone out of memory.
  * Style it like an image: the class lands on the <img> / <video>.
  * `mobileVideo`: a lighter file phones (up to 1023px wide) play instead (e.g. a project's
- * reel cropped to portrait, 540×960 H.264: the full reels are 1080p WebM, too heavy there).
+ * reel cropped to portrait, 540×960 H.264). Without it, a video from the S3 web/ folder
+ * plays its -mobile.mp4 twin on phones (below).
  * Videos ask for CORS (crossorigin) so bottom-bend.ts may draw them; a hosted file gets
  * ?v=2 on its address (not ?cors: S3 reads that as a request for the bucket's settings),
  * so a copy the browser saved before the bucket allowed CORS is never reused, and a video
@@ -29,7 +30,14 @@ interface Props {
 const { media, alt = '', widths, sizes, loading = 'lazy', class: className, mobileVideo } = Astro.props;
 const isVideo = 'video' in media;
 const type = isVideo && /\.webm(\?|$)/i.test(media.video) ? 'video/webm' : 'video/mp4';
-const videoSrc = isVideo && /^https?:/i.test(media.video) ? `${media.video}${media.video.includes('?') ? '&' : '?'}v=2` : isVideo ? media.video : '';
+/** a hosted file gets ?v=2 (see above) */
+const hosted = (url: string) => (/^https?:/i.test(url) ? `${url}${url.includes('?') ? '&' : '?'}v=2` : url);
+const videoSrc = isVideo ? hosted(media.video) : '';
+/** Videos in the S3 bucket's web/ folder come in pairs: <name>.mp4 (≤1920 wide) and
+ *  <name>-mobile.mp4 (960 wide, lighter), both H.264 so phones decode them in hardware.
+ *  Phones get the mobile one unless the caller gave a lighter file of its own. */
+const S3_WEB = /^https:\/\/hellorobosite\.s3\.us-east-2\.amazonaws\.com\/web\/(?!.*-mobile\.mp4$).+\.mp4$/;
+const phoneSrc = mobileVideo ?? (isVideo && S3_WEB.test(media.video) ? hosted(media.video.replace(/\.mp4$/, '-mobile.mp4')) : undefined);
 ---
 {'youtube' in media ? (
   <iframe
@@ -52,7 +60,7 @@ const videoSrc = isVideo && /^https?:/i.test(media.video) ? `${media.video}${med
     aria-label={alt || undefined}
     aria-hidden={alt ? undefined : 'true'}
   >
-    {mobileVideo && <source src={mobileVideo} type="video/mp4" media="(max-width: 1023px)" />}
+    {phoneSrc && <source src={phoneSrc} type="video/mp4" media="(max-width: 1023px)" />}
     <source src={videoSrc} type={type} />
   </video>
 ) : 'format' in media && media.format === 'gif' ? (

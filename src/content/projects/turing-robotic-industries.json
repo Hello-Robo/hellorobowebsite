@@ -9,7 +9,7 @@
     "Development"
   ],
   "reveal": {
-    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/tri+video+1.webm"
+    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/turing-robotic-industries-video.mp4"
   },
   "background": "#1D1D1F",
   "micrographics": {
@@ -21,7 +21,7 @@
       "type": "media",
       "images": [
         {
-          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/tri+video+1.webm"
+          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/turing-robotic-industries-video.mp4"
         }
       ]
     },

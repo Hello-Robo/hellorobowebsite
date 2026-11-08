@@ -183,6 +183,7 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
   import { slideScrub } from '../../scripts/slide-scrub';
   import { sfx } from '../../scripts/sound';
   import { blinkLogo } from '../../scripts/robo-logo';
+  import { reducedMotion } from '../../scripts/media-query';
 
   // NDA projects don't open: a click on one blinks its NDA tag instead — 100% → 30% → 100%,
   // 4 times in 1s — with the contact form's "nope" sound. Covers the desktop wheel, the phone
@@ -230,7 +231,7 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
 
     // Smooth follow: the drum eases toward `target`, time-based so it feels the same at
     // any frame rate. SMOOTH = seconds to cover ~63% of the remaining turn.
-    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduceMotion = reducedMotion;
     const SMOOTH = reduceMotion ? 0.001 : 0.16;
     // Magnetic detents: the drum sticks a little to the project at the front, then moves
     // quickly to the next one, as if each name were pulled into place.
@@ -432,6 +433,8 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
       };
       const update = () => {
         frame = 0;
+        // phones hide this wheel (.only-desktop; they get the cards): nothing to turn
+        if (!root.offsetWidth) return;
         const rect = root.getBoundingClientRect();
         const travel = rect.height - stage.offsetHeight;
         const expand = expandOf();

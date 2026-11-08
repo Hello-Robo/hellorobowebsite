@@ -143,13 +143,6 @@ export async function getEntry(c: CmsCollection, id: string): Promise<Entry | nu
   return { id, data: await readJson(repo, file) };
 }
 
-export async function suggestId(c: CmsCollection, title: string) {
-  const base = slugify(title) || c.collection;
-  let id = base;
-  for (let n = 2; await repo.exists(entryFile(c, id)); n++) id = `${base}-${n}`;
-  return id;
-}
-
 // --- Validate ---
 
 type MediaRef = string | { video: string } | { youtube: string };

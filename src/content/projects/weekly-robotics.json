@@ -7,7 +7,7 @@
     "Brand Identity"
   ],
   "reveal": {
-    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/Weekly+Robotics+Reel+Final.webm"
+    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/weekly-robotics-reel.mp4"
   },
   "background": "#151518",
   "micrographics": {
@@ -19,7 +19,7 @@
       "type": "media",
       "images": [
         {
-          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/Weekly+Robotics+Reel+Final.webm"
+          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/weekly-robotics-reel.mp4"
         }
       ]
     },
@@ -51,7 +51,7 @@
       "type": "media",
       "images": [
         {
-          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/screencasr.webm"
+          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/weekly-robotics-screencast.mp4"
         }
       ]
     },
@@ -71,7 +71,7 @@
       "type": "media",
       "images": [
         {
-          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/1Frame+2131331262.webm"
+          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/weekly-robotics-frame.mp4"
         }
       ]
     },
@@ -90,7 +90,9 @@
     {
       "type": "media",
       "images": [
-        "../../assets/projects/weekly-robotics/weekly-robotics-06-0299ba.gif"
+        {
+          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/weekly-robotics-06.mp4"
+        }
       ]
     },
     {
@@ -103,7 +105,7 @@
       "type": "media",
       "images": [
         {
-          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/screen_2.webm"
+          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/weekly-robotics-screen-2.mp4"
         }
       ]
     },

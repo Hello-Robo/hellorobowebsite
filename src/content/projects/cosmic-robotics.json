@@ -8,7 +8,7 @@
     "Product Strategy"
   ],
   "reveal": {
-    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/Cosmic+Robotic+Reel+V7.webm"
+    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/cosmic-robotics-reel.mp4"
   },
   "background": "#000000",
   "micrographics": {
@@ -20,7 +20,7 @@
       "type": "media",
       "images": [
         {
-          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/Cosmic+Robotic+Reel+V7.webm"
+          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/cosmic-robotics-reel.mp4"
         }
       ]
     },

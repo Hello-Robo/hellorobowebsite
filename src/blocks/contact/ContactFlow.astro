@@ -276,6 +276,7 @@ const services = [
 <script>
   import { sfx } from '../../scripts/sound';
   import { blinkLogo } from '../../scripts/robo-logo';
+  import { PHONE, isDesktop, reducedMotion } from '../../scripts/media-query';
 
   type Group = { x: number; y: number; n?: string; lines: string[]; m?: [number, number] };
   type Logs = Record<string, { a: Group[]; b?: Group[] }>;
@@ -285,7 +286,7 @@ const services = [
   type Printer = { print: (receipt: HTMLCanvasElement) => void };
   const printers = new WeakMap<HTMLElement, Printer>();
   for (const host of document.querySelectorAll<HTMLElement>('[data-printer-3d]')) {
-    if (!matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)').matches) break;
+    if (!isDesktop()) break;
     const block = host.closest<HTMLElement>('.contact');
     const near = new IntersectionObserver(
       (entries) => {
@@ -304,7 +305,7 @@ const services = [
   }
 
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduced = reducedMotion;
 
   /** Wraps every word of `el` in spans (for the title rise and the lead light-up) */
   function splitWords(el: HTMLElement, wrap: (word: HTMLElement) => Node, wordClass: string) {
@@ -371,7 +372,7 @@ const services = [
   }
   /** how deep each screen is: going to a deeper one moves the titles up, back moves them down */
   const DEPTH: Record<string, number> = { start: 0, name: 1, message: 1, email: 2, sent: 2, company: 3, mission: 4, done: 5 };
-  const phone = matchMedia('(max-width: 1023px)');
+  const phone = matchMedia(PHONE);
 
   /** The faint mono log in one box: shows a screen's groups and types them out line by
    *  line while the block is on screen; once done it rests, then rewrites a few lines. */

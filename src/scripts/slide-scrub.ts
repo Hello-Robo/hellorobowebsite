@@ -14,6 +14,7 @@
  * picture inside (img / video) gets the drift. `wrap`: the wheels go round, so after the
  * last picture comes the first.
  */
+import { PHONE, reducedMotion } from './media-query';
 
 /** share of a picture's scroll the uncovering takes */
 const WIDTH = 0.85;
@@ -24,9 +25,9 @@ const ZOOM_TO = 1.13;
 /** seconds the shown position takes to cover ~63% of the way to the input */
 const SOFT = 0.22;
 
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduced = reducedMotion;
 /** phones: no will-change (each would keep a full-screen picture as a layer of its own) */
-const phone = matchMedia('(max-width: 1023px)').matches;
+const phone = matchMedia(PHONE).matches;
 const clamp = (v: number) => Math.min(1, Math.max(0, v));
 /** soft in and out */
 const ease = (t: number) => 0.5 - Math.cos(Math.PI * t) / 2;

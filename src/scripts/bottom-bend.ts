@@ -25,6 +25,7 @@
  * allows it (CORS). Desktop with a mouse only (theirs is off on phones too); off for
  * reduced motion.
  */
+import { REDUCED_MOTION } from './media-query';
 
 /** the curve (their uniforms: distance 34, strength 1; tighter here, so the band is shorter) */
 const DISTANCE = 58;
@@ -105,7 +106,7 @@ type Item = {
 };
 
 const desktop = matchMedia('(hover: hover) and (pointer: fine)');
-const still = matchMedia('(prefers-reduced-motion: reduce)');
+const still = matchMedia(REDUCED_MOTION);
 
 const clips = (cs: CSSStyleDeclaration) => cs.overflowX !== 'visible' || cs.overflowY !== 'visible';
 

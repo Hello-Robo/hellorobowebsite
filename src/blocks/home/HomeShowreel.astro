@@ -9,14 +9,10 @@
  * (page margins, 1648×925) to the full screen — the video fills the screen underneath and a
  * clip around it widens, so nothing is resized frame by frame. Phones: full-bleed as before.
  */
-import fs from 'node:fs';
 import VideoSlot from '../../components/ui/VideoSlot.astro';
+import { showreel } from '../../data/showreel';
 
-const has = (f: string) => fs.existsSync(`public/videos/${f}`);
-const src = has('showreel.mp4') ? '/videos/showreel.mp4' : undefined;
-const mobileSrc = has('showreel-mobile.mp4') ? '/videos/showreel-mobile.mp4' : undefined;
-const webm = has('showreel.webm') ? '/videos/showreel.webm' : undefined;
-const poster = has('showreel-poster.jpg') ? '/videos/showreel-poster.jpg' : undefined;
+const { src, mobileSrc, webm, poster } = showreel;
 ---
 <section class="home-showreel" aria-label="Showreel" data-showreel>
   <div class="home-showreel__stage">

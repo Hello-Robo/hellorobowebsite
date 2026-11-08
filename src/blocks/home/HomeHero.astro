@@ -60,8 +60,9 @@ const heroData = JSON.stringify({ ...heroSettings, background: background?.src ?
 </section>
 
 <script>
+  import { isDesktop } from '../../scripts/media-query';
   // the WebGL hero: three.js, the model and the background are only fetched on desktop
-  if (matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px)').matches) {
+  if (isDesktop()) {
     import('../../scripts/hero-robot').catch(() =>
       document.querySelector('.home-hero')?.classList.add('is-robot-fallback'),
     );

@@ -69,8 +69,9 @@ function split(h: HTMLElement) {
 }
 
 import { uncovered } from './uncovered';
+import { reducedMotion } from './media-query';
 
-if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+if (!reducedMotion) {
   // headings, and big statement paragraphs without a heading class
   const big = [...document.querySelectorAll<HTMLElement>('main p')].filter((p) => !p.matches(HEADLINES) && parseFloat(getComputedStyle(p).fontSize) > 26);
   const heads = [...document.querySelectorAll<HTMLElement>(HEADLINES), ...big].filter(

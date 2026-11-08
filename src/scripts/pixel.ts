@@ -1,7 +1,7 @@
 /**
- * Pixel helpers shared by the hover effect (button-hover.ts) and the menu reveal: draw
- * something at a fraction of its resolution, leave some blocks out, scale it back up
- * without smoothing — the chunky "pixel" look.
+ * Pixel helpers for the hover effect (button-hover.ts): draw something at a fraction of its
+ * resolution, leave some blocks out, scale it back up without smoothing — the chunky
+ * "pixel" look.
  */
 
 /**
@@ -43,64 +43,4 @@ export function makeCanvas(w: number, h: number) {
   canvas.style.width = `${w}px`;
   canvas.style.height = `${h}px`;
   return canvas;
-}
-
-/** pixel size (relative to the art) and share of blocks left out, frame by frame */
-export const ICON_STEPS: [number, number][] = [
-  [6, 0.45],
-  [4, 0.3],
-  [3, 0.2],
-  [2, 0.1],
-];
-
-/** An <svg> or <img> as a drawable image (currentColor resolved), or null */
-export function drawable(el: SVGSVGElement | HTMLImageElement): Promise<CanvasImageSource | null> {
-  // a picture not loaded yet (lazy) isn't waited for: it just shows as it is
-  if (el instanceof HTMLImageElement) return el.complete && el.naturalWidth ? el.decode().then(() => el, () => null) : Promise.resolve(null);
-  const box = el.getBoundingClientRect();
-  const svg = el.cloneNode(true) as SVGSVGElement;
-  svg.setAttribute('width', String(box.width));
-  svg.setAttribute('height', String(box.height));
-  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  const img = new Image();
-  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg.outerHTML.replaceAll('currentColor', getComputedStyle(el).color))}`;
-  return img.decode().then(() => img, () => null);
-}
-
-/**
- * Pixelates `el` (an icon or picture) into view: it is hidden, a canvas on top of it goes
- * through the pixel steps, then the real thing comes back. `host` is the positioned box the
- * canvas sits in. Returns a function that stops it early.
- */
-export function pixelIn(el: SVGSVGElement | HTMLImageElement, host: HTMLElement, delay = 0, stepMs = 60) {
-  const timers: number[] = [];
-  let canvas: HTMLCanvasElement | null = null;
-  const stop = () => {
-    timers.forEach(clearTimeout);
-    canvas?.remove();
-    el.style.visibility = '';
-  };
-  el.style.visibility = 'hidden';
-  drawable(el).then((art) => {
-    if (!art) return stop();
-    const box = el.getBoundingClientRect();
-    const own = host.getBoundingClientRect();
-    canvas = makeCanvas(box.width, box.height);
-    canvas.style.position = 'absolute';
-    // inset first: setting it afterwards wiped left / top and misplaced the pixels
-    canvas.style.inset = 'auto';
-    canvas.style.left = `${box.left - own.left - host.clientLeft}px`;
-    canvas.style.top = `${box.top - own.top - host.clientTop}px`;
-    const c = canvas;
-    ICON_STEPS.forEach(([size, holes], i) =>
-      timers.push(
-        window.setTimeout(() => {
-          if (!c.isConnected) host.append(c);
-          pixelFrame(c, size, holes, (s, w, h) => s.drawImage(art, 0, 0, w, h));
-        }, delay + i * stepMs),
-      ),
-    );
-    timers.push(window.setTimeout(stop, delay + ICON_STEPS.length * stepMs));
-  });
-  return stop;
 }

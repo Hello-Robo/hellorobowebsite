@@ -8,6 +8,7 @@
  * On a "nope" (a contact form error, a click on an NDA project) it blinks 4 times in a
  * row: blinkLogo() below, on every screen size (still not with reduced motion).
  */
+import { isDesktop, reducedMotion } from './media-query';
 
 /** Blink the nav robot `times` times, one blink every 250 ms (the NDA tag's rhythm) */
 export const blinkLogo = (times = 4) => dispatchEvent(new CustomEvent('robo:blink', { detail: times }));
@@ -28,8 +29,8 @@ const REACH = 160;
 const EASE = 0.12;
 const BLINK = 0.21;
 
-const desktop = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px)');
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const desktop = { get matches() { return isDesktop(); } };
+const reduced = reducedMotion;
 
 if (logo && face && !reduced) {
   let x = 0;
