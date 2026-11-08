@@ -84,6 +84,11 @@ export async function saveLibraryUpload(file: File, by?: string): Promise<Librar
     const text = data.toString('utf8');
     if (!/<svg[\s>]/i.test(text)) throw new CmsError(`“${file.name}” is not a valid SVG`);
     if (UNSAFE_SVG.test(text)) throw new CmsError(`“${file.name}” contains scripts or links, which aren’t allowed`);
+    // Figma exports a grain / noise texture as thousands of tiny copies (<use>) of one huge
+    // shape. A single such stamp cost phones 100–250 MB of memory and crashed the site on
+    // iPhones; those are exported as PNG / WebP (at 3×) instead
+    if ((text.match(/<use[\s>]/gi)?.length ?? 0) > 200)
+      throw new CmsError(`“${file.name}” has a grain texture made of thousands of shapes, which phones can’t handle — export it as PNG or WebP (3×) instead`);
   }
   const base = slugify(file.name.replace(/\.[^.]+$/, '')) || 'micrographic';
   const name = `${base}-${randomBytes(3).toString('hex')}${ext}`;
