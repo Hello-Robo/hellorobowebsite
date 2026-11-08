@@ -81,7 +81,7 @@ src/
     BaseLayout.astro    the shell every page uses
   components/
     global/             GetInTouch, NavPill, SiteMenu, PreFooterCTA, Footer, FooterWordmark
-    ui/                 Button, ArrowLink, Divider, WebGLSlot, VideoSlot, BlockPlaceholder
+    ui/                 Button, ArrowLink, Divider, WebGLSlot, VideoSlot
     icons/              Icon (corners, hex, hex-pin, back, arrow, dots), RoboLogo
   blocks/               page blocks — one folder per page, one block per file
     home/ work/ services/ careers/ position/ radio/ episode/ project/ team/ contact/

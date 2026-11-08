@@ -1,7 +1,7 @@
 /**
  * Page to page transition — after the reference (and toyfight.co): the page shrinks to 90%
- * towards the middle of the screen, on black, and black columns rise from the bottom, a beat
- * apart left to right, until the screen is black (Figma "transition" 10434:7805). Then the
+ * towards the middle of the screen, on black (desktop), and black columns rise from the
+ * bottom, a beat apart left to right, until the screen is black (Figma "transition" 10434:7805). Then the
  * loading screen shows, the same as on the first page of a visit: site micrographics
  * flicking past and a 1px loading bar that fills as the new page loads (load()); then the
  * columns drop back down, left to right, and the page shows.
@@ -15,6 +15,9 @@
 
 const html = document.documentElement;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+/** the shrink is desktop only: on a phone, scaling the whole page made it one huge layer
+ *  (every block of a long page at once) just as the next page starts loading */
+const desktop = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px)');
 const KEY = 'pt';
 
 /** the columns start rising this far into the page's shrink to 90% (SHRINK, below): they
@@ -116,8 +119,10 @@ function unshrink() {
 /** Shrink the page, cover it, show the loading screen, then go to `url` */
 async function leave(url: string) {
   html.classList.remove('pt-out');
-  shrink();
-  await wait(SHRINK_LEAD_MS);
+  if (desktop.matches) {
+    shrink();
+    await wait(SHRINK_LEAD_MS);
+  }
   html.classList.add('pt-in');
   await wait(COVER_MS);
   document.querySelector<HTMLElement>('[data-pt-bar]')?.style.setProperty('--p', '0');

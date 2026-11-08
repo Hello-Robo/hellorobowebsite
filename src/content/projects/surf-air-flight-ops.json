@@ -8,7 +8,7 @@
     "Video Production"
   ],
   "reveal": {
-    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/SURFOS_REEL_2.mp4"
+    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/surf-air-reel.mp4"
   },
   "background": "#FFFFFF",
   "micrographics": {
@@ -20,7 +20,7 @@
       "type": "media",
       "images": [
         {
-          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/SURFOS_REEL_2.mp4"
+          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/surf-air-reel.mp4"
         }
       ]
     },

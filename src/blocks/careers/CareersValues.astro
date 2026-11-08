@@ -63,7 +63,7 @@ const lit = (text: string) => {
       <WebGLSlot name="careers-robot" class="careers-values__media">
         {values.map((v, i) => (
           <div class="careers-values__pic" style={`z-index: ${i + 1}`}>
-            <Image src={v.image} alt={v.imageAlt} widths={[816, 1632]} sizes="(min-width: 1728px) 816px, (min-width: 1024px) 48vw, calc(100vw - 32px)" loading="lazy" />
+            <Image src={v.image} alt={v.imageAlt} widths={[816, 1200, 1632]} sizes="(min-width: 1728px) 816px, (min-width: 1024px) 48vw, calc(100vw - 32px)" loading="lazy" />
           </div>
         ))}
       </WebGLSlot>

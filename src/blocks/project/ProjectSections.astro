@@ -28,7 +28,7 @@ const { sections, name } = Astro.props.project.data;
           <Media
             media={img}
             alt={`${name} — project visual`}
-            widths={s.images.length === 1 ? [1648, 3310] : [818, 1636]}
+            widths={s.images.length === 1 ? [828, 1240, 1648, 3310] : [818, 1240, 1636]}
             sizes={s.images.length === 1 ? '(min-width: 1728px) 1648px, 95vw' : '(max-width: 1023px) 100vw, (min-width: 1728px) 818px, 48vw'}
             loading="lazy"
           />

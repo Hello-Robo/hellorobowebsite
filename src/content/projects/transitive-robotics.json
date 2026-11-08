@@ -8,7 +8,7 @@
     "UX/UI"
   ],
   "reveal": {
-    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/TR+Reel+Horizontal.webm"
+    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/transitive-robotics-reel.mp4"
   },
   "background": "#151518",
   "micrographics": {
@@ -20,7 +20,7 @@
       "type": "media",
       "images": [
         {
-          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/TR+Reel+Horizontal.webm"
+          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/transitive-robotics-reel.mp4"
         }
       ]
     },
@@ -43,7 +43,7 @@
       "type": "media",
       "images": [
         {
-          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/Video+Case+study.webm"
+          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/transitive-robotics-case-study.mp4"
         }
       ]
     },
@@ -57,7 +57,7 @@
       "type": "media",
       "images": [
         {
-          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/duo.webm"
+          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/transitive-robotics-duo.mp4"
         }
       ]
     },
@@ -65,7 +65,7 @@
       "type": "media",
       "images": [
         {
-          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/TR+intro.webm"
+          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/transitive-robotics-intro.mp4"
         }
       ]
     },
@@ -97,7 +97,7 @@
       "type": "media",
       "images": [
         {
-          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/19.webm"
+          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/transitive-robotics-19.mp4"
         }
       ]
     },
@@ -111,7 +111,7 @@
       "type": "media",
       "images": [
         {
-          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/212.webm"
+          "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/transitive-robotics-212.mp4"
         }
       ]
     },
