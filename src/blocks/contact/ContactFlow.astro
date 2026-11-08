@@ -1271,9 +1271,14 @@ const services = [
   /* Screens with a field (Name, Email, Company, Quick word): the pair 80 under the field's
      line instead of at the bottom (--field-line set by the script, following the message
      box as it grows) — never lower than the bottom spot */
-  .has-field-line :is(.contact__back, .contact__submit) {
-    top: min(calc(var(--field-line) + 80 * var(--px)), calc(100% - 60 * var(--px) - var(--button-height)));
-    bottom: auto;
+  /* (desktop only: phones lay the pair out in the flow under the field. There a press made the
+     button position: relative for its pixel effect, and this top then threw it ~300px down
+     mid-tap — Next "vanished" without submitting, Go back jumped away) */
+  @media (min-width: 1024px) {
+    .has-field-line :is(.contact__back, .contact__submit) {
+      top: min(calc(var(--field-line) + 80 * var(--px)), calc(100% - 60 * var(--px) - var(--button-height)));
+      bottom: auto;
+    }
   }
   /* Steps 01–03 (Next) and Quick word (Submit): beside Go back, dimmed until the field is filled */
   .contact__submit--next {
@@ -1309,7 +1314,10 @@ const services = [
       aspect-ratio: auto;
       height: 100vh;
       height: 100svh;
-      min-height: 694px;
+      /* the screen's visible height (Safari's bars showing: ~660px on current iPhones). Not
+         Figma's 694: taller than the screen, the block's bottom (the third card, Go back /
+         Submit on the mission) sat under the Menu bar. The tallest screen needs ~610 */
+      min-height: 600px;
     }
     .contact__screen {
       gap: 20px;
@@ -1427,6 +1435,10 @@ const services = [
     .contact__back,
     .contact__submit {
       position: static;
+      /* no desktop offsets (bottom 60, left 247…): a press makes the button position:
+         relative for its pixel effect (button-hover.ts), and these then moved it out from
+         under the finger mid-tap — Next never submitted, Go back jumped away */
+      inset: auto;
       flex: 1 1 0;
       width: auto;
       min-width: 0;
