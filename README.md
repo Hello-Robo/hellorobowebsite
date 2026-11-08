@@ -400,6 +400,12 @@ The first run also creates `CMS_SESSION_SECRET`. Then open http://localhost:4321
 - **Graphics are SVG only** (logos, icons, stamps, micrographics). Export from Figma
   with text outlined, run `npm run svg`, compare with the original at 4× zoom.
   Never remove `id`s (masks depend on them).
+  **Except grain-textured stamps:** Figma exports a grain / noise texture as thousands of
+  tiny copies (`<use>`) of one huge shape. Phones choke on them — one such stamp cost
+  100–250 MB of memory, and the footer + contact stickers together crashed iPhones near the
+  end of every page. Check with `grep -c "<use" file.svg`: anything in the hundreds gets
+  flattened to a 3× WebP wrapped in an SVG of the same name and size (as the 24 stamps in
+  `public/images` now are), or exported as PNG / WebP. The CMS refuses such SVG uploads.
 - **Photos** are 2× PNG exports in `src/assets/`, served as WebP by `astro:assets`.
 - **The one orange:** recolor any other orange in an exported SVG to `#FF6B03`.
 
