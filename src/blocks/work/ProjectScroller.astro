@@ -24,17 +24,13 @@
  * Services and the project's mark change as on the Services page: the lines slide out of
  * their masks one after another and the mark slides through its own a beat later, in the
  * direction the wheel turns (the outgoing ones leave the way it's going). Hovering a name lights it up.
- * Mobile, Home (Figma Home 10101:9021, 390×694 card): no wheel — the projects are full-screen
- * slides that pin and change on scroll, like the Home showcase: the photo slides in,
- * name / services / VIEW swap, and the bright segment of the line shows the progress.
- * Mobile, Work page (`infinite`): a flat, lighter wheel instead — WorkWheelMobile.
+ * Phones (Home and the Work page): this block is desktop only; the pages add WorkWheelMobile,
+ * a flat, lighter wheel (Home: `featured`, the same projects as here).
  * Projects come from the projects collection (CMS), in `order`; the first is in front. Home
  * shows only the ones ticked "Featured" in the CMS Home page section; the Work page all.
  */
 import { getCollection } from 'astro:content';
 import Media from '../../components/ui/Media.astro';
-import { mobileReel } from '../../data/project-reels';
-import Button from '../../components/ui/Button.astro';
 import CrtScreen from '../../components/ui/CrtScreen.astro';
 
 interface Props {
@@ -43,10 +39,8 @@ interface Props {
   framed?: boolean;
   /** Work page: the wheel takes the scroll input itself and turns endlessly (no page scroll) */
   infinite?: boolean;
-  /** Limit the number of mobile slides (default: every project) */
-  mobileLimit?: number;
 }
-const { as: Tag = 'section', framed = false, infinite = false, mobileLimit } = Astro.props;
+const { as: Tag = 'section', framed = false, infinite = false } = Astro.props;
 
 const all = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
 // Home: the projects ticked "Featured" in the CMS (Home page), still in the Projects order
@@ -75,8 +69,6 @@ const faces = Array.from({ length: FACES }, (_, i) => {
 // the CMS, the globe when it has none; it changes with the active project
 const markOf = (p: (typeof projects)[number]) => p.data.micrographics.left ?? '/images/home/work-globe.svg';
 const wheelData = JSON.stringify({ step: STEP, fade: FADE, faces: FACES, items: projects.map((p) => ({ name: p.data.name, href: `/work/${p.id}`, nda: p.data.nda })) });
-// Mobile slides: every project once, in order
-const cards = projects.slice(0, mobileLimit ?? projects.length);
 // CRT shader settings that differ from CrtScreen's defaults (Figma 10100:11974)
 const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
 ---
@@ -138,47 +130,6 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
 </Tag>
 )}
 
-{/* Work page (infinite): phones get WorkWheelMobile instead of these slides */}
-{!infinite && (
-<Tag class="project-cards theme-dark only-mobile" aria-label="Selected work" style={`--count: ${cards.length}`} data-project-slides>
-  <div class="project-cards__stage" data-active="0">
-    <div class="project-cards__bgs">
-      {cards.map((c, i) => (
-        <div class:list={['project-cards__bg', { 'is-current': i === 0 }]} data-index={i}>
-          <Media class="project-card__bg" media={c.data.reveal} mobileVideo={mobileReel(c.id)} widths={[800, 1600]} sizes="275vw" loading="lazy" />
-        </div>
-      ))}
-    </div>
-    <div class="project-wheel__shade" aria-hidden="true"></div>
-    <div class="project-scroller__scanlines" aria-hidden="true"></div>
-    {cards.map((c, i) => (
-      <img class:list={['project-card__mark', { 'is-current': i === 0 }]} data-index={i} src={markOf(c)} alt="" height="56" loading="lazy" />
-    ))}
-
-    <div class="project-card__info">
-      <hr class="project-card__rule" />
-      <div class="project-cards__stack">
-        {cards.map((c, i) => (
-          <article class:list={['project-card', { 'is-current': i === 0 }]} data-index={i} aria-hidden={i > 0 ? 'true' : undefined}>
-            <h3 class="project-card__title t-h2">
-              {/* Home: no VIEW button (too small there) — the name itself opens the project */}
-              {framed && !c.data.nda ? <a href={`/work/${c.id}`} tabindex={i > 0 ? '-1' : undefined}>{c.data.name}</a> : c.data.name}
-              {c.data.nda && <img class="project-card__nda" src="/images/project/nda.svg" alt="Under NDA" width="46" height="32" />}
-            </h3>
-            <div class="project-card__row">
-              <ul class="project-card__services t-body t-body2-mobile">
-                {c.data.services.map((s) => <li>{s}</li>)}
-              </ul>
-              {!c.data.nda && !framed && <Button href={`/work/${c.id}`} variant="light" size="small" tabindex={i > 0 ? '-1' : undefined}>View</Button>}
-            </div>
-          </article>
-        ))}
-      </div>
-    </div>
-  </div>
-</Tag>
-)}
-
 <script>
   import { slideScrub } from '../../scripts/slide-scrub';
   import { sfx } from '../../scripts/sound';
@@ -187,10 +138,10 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
 
   // NDA projects don't open: a click on one blinks its NDA tag instead — 100% → 30% → 100%,
   // 4 times in 1s — with the contact form's "nope" sound. Covers the desktop wheel, the phone
-  // wheel (WorkWheelMobile) and the phone cards.
+  // wheel (WorkWheelMobile).
   document.addEventListener('click', (e) => {
-    const name = (e.target as HTMLElement).closest('.project-wheel__name, .work-wheel__row, .project-card__title');
-    const tag = name?.querySelector<HTMLElement>('.project-wheel__nda, .work-wheel__nda, .project-card__nda');
+    const name = (e.target as HTMLElement).closest('.project-wheel__name, .work-wheel__row');
+    const tag = name?.querySelector<HTMLElement>('.project-wheel__nda, .work-wheel__nda');
     // a name away from the front only turns the wheel (below)
     if (!tag || name!.matches('.project-wheel__name:not(.is-front), .work-wheel__row[aria-hidden="true"]')) return;
     tag.getAnimations().forEach((a) => a.cancel());
@@ -433,7 +384,7 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
       };
       const update = () => {
         frame = 0;
-        // phones hide this wheel (.only-desktop; they get the cards): nothing to turn
+        // phones hide this wheel (.only-desktop; they get WorkWheelMobile): nothing to turn
         if (!root.offsetWidth) return;
         const rect = root.getBoundingClientRect();
         const travel = rect.height - stage.offsetHeight;
@@ -454,46 +405,6 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
       offset = target;
       place(offset);
     }
-  }
-
-  // Mobile: pinned project slides. Progress 0→1 across the block picks the slide and
-  // fills the line. Measured against the stage's own height so the phone toolbar
-  // showing / hiding doesn't make slides jump.
-  for (const root of document.querySelectorAll<HTMLElement>('[data-project-slides]')) {
-    const stage = root.querySelector<HTMLElement>('.project-cards__stage');
-    // the photos uncover one another with the scroll, like every slideshow (slide-scrub.ts)
-    const pictures = slideScrub([...root.querySelectorAll<HTMLElement>('.project-cards__bg')]);
-    const slides = [...root.querySelectorAll<HTMLElement>('.project-card, .project-card__mark')];
-    const count = root.querySelectorAll('.project-card').length;
-    if (!stage || !count) continue;
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      if (!stage.offsetHeight) return; // hidden on desktop
-      const rect = root.getBoundingClientRect();
-      const travel = rect.height - stage.offsetHeight;
-      const progress = travel > 0 ? Math.min(1, Math.max(0, -rect.top / travel)) : 0;
-      const active = String(Math.min(count - 1, Math.floor(progress * count)));
-      stage.style.setProperty('--progress', String(progress));
-      pictures.set(Math.min(count - 1, Math.max(0, progress * count - 0.5)));
-      if (stage.dataset.active !== active) {
-        stage.dataset.active = active;
-        slides.forEach((el) => {
-          const on = el.dataset.index === active;
-          el.classList.toggle('is-current', on);
-          if (el.classList.contains('project-card')) {
-            el.setAttribute('aria-hidden', String(!on));
-            el.querySelector('a')?.setAttribute('tabindex', on ? '0' : '-1');
-          }
-        });
-      }
-    };
-    const request = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    window.addEventListener('scroll', request, { passive: true });
-    window.addEventListener('resize', request);
-    update();
   }
 </script>
 
@@ -564,14 +475,10 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
   .project-wheel__bg.is-current {
     visibility: visible;
   }
-  /* 30% black over every background, under the names (the mobile cards) */
+  /* a darker layer over the backgrounds (70%) */
   .project-wheel__shade {
     position: absolute;
     inset: 0;
-    background: rgb(0 0 0 / 0.3);
-  }
-  /* the desktop wheel (Home and Work): a darker layer over the backgrounds (70%) */
-  .project-wheel .project-wheel__shade {
     background: rgb(0 0 0 / 0.7);
   }
   .project-wheel :global(.project-wheel__bg-media) {
@@ -725,137 +632,6 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
     .project-wheel__services .mask > span,
     .project-wheel__mark img {
       transition: none;
-    }
-  }
-
-  /* CRT lines on the mobile cards */
-  .project-scroller__scanlines {
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.18) 0 1px, transparent 1px 3px);
-    pointer-events: none;
-  }
-
-  /* ── Mobile: pinned project slides (Figma card 390×694, now full screen) ── */
-  /* One screen per project; the stage stays pinned while they pass */
-  .project-cards {
-    position: relative;
-    height: calc(var(--count) * 100svh);
-  }
-  .project-cards__stage {
-    position: sticky;
-    top: 0;
-    height: 100svh;
-    overflow: hidden;
-    background: var(--color-black);
-    --progress: 0;
-  }
-  /* Photos uncover one another with the scroll (slide-scrub.ts), in a layer of their own
-     under the cards; same crop as desktop (the still's glowing edges stay outside) */
-  .project-cards__bgs {
-    position: absolute;
-    inset: 0;
-    isolation: isolate;
-  }
-  .project-cards__bg {
-    position: absolute;
-    inset: 0;
-    visibility: hidden;
-  }
-  .project-cards__bg.is-current {
-    visibility: visible;
-  }
-  .project-cards :global(.project-card__bg) {
-    position: absolute;
-    left: 50%;
-    top: calc(-146 / 694 * 100%);
-    height: calc(966 / 694 * 100%);
-    width: auto;
-    min-width: 100%;
-    max-width: none;
-    object-fit: cover;
-    transform: translateX(-50%);
-  }
-  .project-card__mark {
-    position: absolute;
-    filter: brightness(0) invert(1); /* every mark white on the wheel */
-    left: var(--page-margin);
-    top: var(--space-20);
-    width: auto;
-    height: calc(56 * var(--px));
-    opacity: 0;
-    transition: opacity 0.4s ease;
-  }
-  .project-card__mark.is-current {
-    opacity: 1;
-  }
-  /* Rule, name 24 below, services + VIEW 44 below — kept 20 above the nav pill */
-  .project-card__info {
-    position: absolute;
-    left: var(--page-margin);
-    right: var(--page-margin);
-    bottom: calc(20px + var(--nav-height) + 20px);
-  }
-  .project-card__rule {
-    position: relative;
-    margin: 0;
-    border: 0;
-    border-top: var(--line-width) solid var(--line-on-dark);
-    overflow: visible;
-  }
-  /* Progress through the projects: the bright segment grows */
-  .project-card__rule::before {
-    content: '';
-    position: absolute;
-    top: calc(var(--line-width) * -1);
-    left: 0;
-    width: calc(var(--progress) * 100%);
-    border-top: var(--line-width) solid var(--line-strong-on-dark);
-  }
-  /* All projects share one cell; only the current one shows */
-  .project-cards__stack {
-    display: grid;
-  }
-  .project-card {
-    grid-area: 1 / 1;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(12px);
-    transition:
-      opacity 0.4s ease,
-      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
-      visibility 0s linear 0.4s;
-  }
-  .project-card.is-current {
-    opacity: 1;
-    visibility: visible;
-    transform: none;
-    transition-delay: 0.15s, 0.15s, 0s;
-  }
-  /* NDA tag after the title on the phone cards (46×32 in Figma, ~60% here) */
-  .project-card__nda {
-    display: inline-block;
-    width: 30px;
-    height: auto;
-    margin-left: 8px;
-    vertical-align: top;
-  }
-  .project-card__title {
-    margin-top: var(--space-24);
-  }
-  .project-card__row {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    margin-top: calc(44 * var(--px));
-  }
-  .project-card__services {
-    display: grid;
-    gap: var(--space-16);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .project-card {
-      transform: none;
     }
   }
 </style>

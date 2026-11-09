@@ -1,6 +1,6 @@
 ---
 /**
- * Work page — the project wheel on phones (≤ 1023px)
+ * Work page and Home — the project wheel on phones (≤ 1023px)
  * A lighter, flat version of the desktop drum (ProjectScroller, Figma "Portfolio page"
  * 10100:11973) with the same structure: full screen, the active project's photo behind
  * a 60% black layer and CRT lines, the globe mark, the project names as a wheel, and the
@@ -13,13 +13,22 @@
  * as the list turns, round and round (slide-scrub.ts). The list is repeated LOOPS
  * times and quietly re-centred on the middle copy when the scrolling stops, so it turns
  * endlessly in both directions, like the desktop Work wheel.
- * Projects come from the projects collection (CMS), in `order`.
+ * Projects come from the projects collection (CMS), in `order`. `featured` (Home): only the
+ * ones ticked "Featured" in the CMS Home page section, as on the desktop Home wheel.
  */
 import { getCollection } from 'astro:content';
 import Media from '../../components/ui/Media.astro';
 import { mobileReel } from '../../data/project-reels';
 
-const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+interface Props {
+  /** Home: only the projects ticked "Featured" in the CMS Home page (all when none are) */
+  featured?: boolean;
+}
+const { featured = false } = Astro.props;
+
+const all = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+const picked = featured ? ((await getCollection('home'))[0]?.data.featured ?? []) : [];
+const projects = picked.length ? all.filter((p) => picked.includes(p.id)) : all;
 // The mark: each project's first (round) micrographic from the CMS, the globe when it has none
 const markOf = (p: (typeof projects)[number]) => p.data.micrographics.left ?? '/images/home/work-globe.svg';
 const LOOPS = 5;
