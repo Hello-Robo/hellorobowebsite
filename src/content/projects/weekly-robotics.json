@@ -6,9 +6,7 @@
     "UX/UI",
     "Brand Identity"
   ],
-  "reveal": {
-    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/weekly-robotics-reel.mp4"
-  },
+  "reveal": "../../assets/projects/weekly-robotics/cover-still.jpg",
   "background": "#151518",
   "micrographics": {
     "left": "/images/services/stamp-interface.svg",

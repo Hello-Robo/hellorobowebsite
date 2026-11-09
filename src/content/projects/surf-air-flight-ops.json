@@ -7,9 +7,7 @@
     "Brand Identity",
     "Video Production"
   ],
-  "reveal": {
-    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/surf-air-reel.mp4"
-  },
+  "reveal": "../../assets/projects/surf-air-flight-ops/cover-still.jpg",
   "background": "#FFFFFF",
   "micrographics": {
     "left": "/images/menu/menu-micrographic.svg",

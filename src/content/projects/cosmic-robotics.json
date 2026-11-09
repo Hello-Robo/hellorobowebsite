@@ -7,9 +7,7 @@
     "User Research",
     "Product Strategy"
   ],
-  "reveal": {
-    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/cosmic-robotics-reel.mp4"
-  },
+  "reveal": "../../assets/projects/cosmic-robotics/cover-still.jpg",
   "background": "#000000",
   "micrographics": {
     "left": "/images/radio/badge-episode.svg",
