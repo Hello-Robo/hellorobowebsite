@@ -19,7 +19,8 @@
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
+import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { sfx } from './sound';
 import { reducedMotion } from './media-query';
 /** Defaults (the prototype's tuned values); the CMS overrides all but head / pivot */
@@ -166,10 +167,10 @@ export function mountHeroScene(o: {
   // (×π: three r155+ uses physical light units, the prototype was r147)
   const scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environment = pmrem.fromScene(studioEnvironment(), 0.02).texture;
   const key = new THREE.DirectionalLight(0xffffff, 1.6 * Math.PI);
   key.position.set(1.2, 2.0, 2.2);
-  const rim = new THREE.DirectionalLight(0xffd9c4, 1.1 * Math.PI);
+  const rim = new THREE.DirectionalLight(0xffd9c4, 1.7 * Math.PI);
   rim.position.set(-1.6, 1.4, -1.8);
   scene.add(key, rim, new THREE.HemisphereLight(0xffffff, 0x8a8580, 0.35 * Math.PI));
   // Photographer's flash, now and then: a bright, cool-white burst from just beside the camera
@@ -179,6 +180,71 @@ export function mountHeroScene(o: {
   flash.position.set(-0.5, 1.5, 3);
   scene.add(flash);
   const camera = new THREE.PerspectiveCamera(26, 1, 0.01, 20);
+
+  // Post: the robot is drawn into his own HDR buffer, shaded by ambient occlusion (GTAO, half
+  // resolution), his brightest glints bloomed (a dual-filter blur down and up a mip chain),
+  // then tone-mapped and laid over the background (see POST below)
+  const robotRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 });
+  const gtao = new GTAOPass(scene, camera, 1, 1);
+  gtao.output = GTAOPass.OUTPUT.Off; // only compute it; the composite reads it
+  gtao.updateGtaoMaterial({ radius: POST.aoRadius, distanceExponent: 1.5, thickness: 1, scale: 1, samples: 16 });
+  const bloomMips = Array.from({ length: 5 }, () => new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType }));
+  const quad = new FullScreenQuad();
+  const postMat = (frag: string, uniforms: Record<string, THREE.IUniform>, blending: THREE.Blending = THREE.NoBlending) =>
+    new THREE.ShaderMaterial({
+      uniforms: { src: { value: null }, texel: { value: new THREE.Vector2() }, ...uniforms },
+      vertexShader: BG_VERT,
+      fragmentShader: frag,
+      blending,
+      depthTest: false,
+      depthWrite: false,
+      toneMapped: false,
+    });
+  const prefilterMat = postMat(BLOOM_PREFILTER, {
+    threshold: { value: POST.bloomThreshold },
+    knee: { value: POST.bloomKnee },
+  });
+  const downMat = postMat(BLOOM_DOWN, {});
+  const upMat = postMat(BLOOM_UP, {}, THREE.AdditiveBlending);
+  const compositeMat = new THREE.ShaderMaterial({
+    uniforms: {
+      robot: { value: robotRT.texture },
+      ao: { value: gtao.pdRenderTarget.texture },
+      bloom: { value: bloomMips[0].texture },
+      aoStrength: { value: POST.aoStrength },
+      bloomStrength: { value: POST.bloomStrength },
+    },
+    vertexShader: BG_VERT,
+    fragmentShader: COMPOSITE,
+    // premultiplied "over": the robot covers the background, his bloom adds light to it
+    blending: THREE.CustomBlending,
+    blendSrc: THREE.OneFactor,
+    blendDst: THREE.OneMinusSrcAlphaFactor,
+    depthTest: false,
+    depthWrite: false,
+    // tone mapping and sRGB come from the renderer (toneMapping(), linearToOutputTexel())
+    toneMapped: true,
+  });
+  const blit = (mat: THREE.ShaderMaterial, src: THREE.WebGLRenderTarget, target: THREE.WebGLRenderTarget) => {
+    mat.uniforms.src.value = src.texture;
+    mat.uniforms.texel.value.set(1 / src.width, 1 / src.height);
+    renderer.setRenderTarget(target);
+    quad.material = mat;
+    quad.render(renderer);
+  };
+  function drawRobot() {
+    renderer.setRenderTarget(robotRT);
+    renderer.setClearColor(0x000000, 0);
+    renderer.clear();
+    renderer.render(scene, camera);
+    // @ts-expect-error: with output Off the pass reads no buffers
+    gtao.render(renderer, null, null);
+    blit(prefilterMat, robotRT, bloomMips[0]);
+    for (let i = 1; i < bloomMips.length; i++) blit(downMat, bloomMips[i - 1], bloomMips[i]);
+    for (let i = bloomMips.length - 2; i >= 0; i--) blit(upMat, bloomMips[i + 1], bloomMips[i]);
+    renderer.setRenderTarget(null);
+    renderer.setClearColor(0xffffff, 1);
+  }
 
   // Background: a full-screen quad, each pixel casts a ray onto the virtual sphere.
   const bgScene = new THREE.Scene();
@@ -237,6 +303,10 @@ export function mountHeroScene(o: {
     camera.lookAt(0, cy, 0);
     camera.updateProjectionMatrix();
     bgUniforms.aspect.value = camera.aspect;
+    const db = renderer.getDrawingBufferSize(new THREE.Vector2());
+    robotRT.setSize(db.x, db.y);
+    gtao.setSize(Math.ceil(db.x / 2), Math.ceil(db.y / 2));
+    bloomMips.forEach((rt, i) => rt.setSize(Math.max(1, Math.ceil(db.x / 2 ** (i + 1))), Math.max(1, Math.ceil(db.y / 2 ** (i + 1)))));
   }
   new ResizeObserver(layout).observe(o.host);
   layout();
@@ -279,10 +349,11 @@ export function mountHeroScene(o: {
           g = new THREE.MeshPhysicalMaterial();
           THREE.MeshStandardMaterial.prototype.copy.call(g, m);
           g.defines = { STANDARD: '', PHYSICAL: '' };
-          g.roughness = Math.min(m.roughness, 0.52);
-          g.clearcoat = 0.8;
-          g.clearcoatRoughness = 0.12;
-          g.envMapIntensity = 1.4;
+          g.roughness = Math.min(m.roughness, 0.34);
+          g.clearcoat = 1;
+          g.clearcoatRoughness = 0.04;
+          g.specularIntensity = 1;
+          g.envMapIntensity = 2.1;
           grain(g, grainFreq);
           glossy.set(m, g);
           m.dispose();
@@ -386,6 +457,7 @@ export function mountHeroScene(o: {
     const f = flashLevel(clock.elapsedTime);
     flash.intensity = FLASH.peak * f;
     scene.environmentIntensity = 1 + 1.2 * f; // the room reflections brighten with it
+    glowUniform.value = GLOW.strength * (1 + GLOW.flashBoost * f); // and so does his edge glow
     const t = clock.elapsedTime;
     const c = config;
     if (rig.pivot && rig.body && rig.stage) {
@@ -437,10 +509,13 @@ export function mountHeroScene(o: {
       renderer.setRenderTarget(null);
       renderer.setClearColor(0xffffff, 1);
     }
+    if (rig.stage) drawRobot();
     renderer.clear();
     if (bgUniforms.map.value) renderer.render(bgScene, bgCamera);
-    renderer.clearDepth();
-    renderer.render(scene, camera);
+    if (rig.stage) {
+      quad.material = compositeMat;
+      quad.render(renderer);
+    }
 
     // shown once both the robot and the background are in
     if (!live && rig.stage && bgUniforms.map.value) {
@@ -474,11 +549,102 @@ export function mountHeroScene(o: {
   update();
 }
 
+/** Post settings: ambient occlusion `aoRadius` (world units) and how much it darkens (0..1);
+ * bloom: linear brightness where glints start to bloom, the softness of that start, and how
+ * strong the bloom is */
+const POST = { aoRadius: 0.05, aoStrength: 0.8, bloomThreshold: 1.6, bloomKnee: 0.4, bloomStrength: 0.22 };
+
+const BLOOM_PREFILTER = `
+uniform sampler2D src; uniform vec2 texel; uniform float threshold, knee;
+varying vec2 vUv;
+void main(){
+  vec3 c = 0.25 * (texture2D(src, vUv + texel * vec2(-0.5, -0.5)).rgb + texture2D(src, vUv + texel * vec2(0.5, -0.5)).rgb
+                 + texture2D(src, vUv + texel * vec2(-0.5, 0.5)).rgb + texture2D(src, vUv + texel * vec2(0.5, 0.5)).rgb);
+  float br = max(c.r, max(c.g, c.b));
+  float soft = clamp(br - threshold + knee, 0.0, 2.0 * knee);
+  soft = soft * soft / (4.0 * knee + 1e-4);
+  gl_FragColor = vec4(c * max(soft, br - threshold) / max(br, 1e-4), 1.0);
+}`;
+const BLOOM_DOWN = `
+uniform sampler2D src; uniform vec2 texel;
+varying vec2 vUv;
+void main(){
+  vec3 s = texture2D(src, vUv).rgb * 4.0;
+  s += texture2D(src, vUv - texel).rgb + texture2D(src, vUv + texel).rgb;
+  s += texture2D(src, vUv + vec2(texel.x, -texel.y)).rgb + texture2D(src, vUv - vec2(texel.x, -texel.y)).rgb;
+  gl_FragColor = vec4(s / 8.0, 1.0);
+}`;
+const BLOOM_UP = `
+uniform sampler2D src; uniform vec2 texel;
+varying vec2 vUv;
+void main(){
+  vec3 s = texture2D(src, vUv + vec2(-2.0, 0.0) * texel).rgb + texture2D(src, vUv + vec2(2.0, 0.0) * texel).rgb;
+  s += texture2D(src, vUv + vec2(0.0, -2.0) * texel).rgb + texture2D(src, vUv + vec2(0.0, 2.0) * texel).rgb;
+  s += 2.0 * (texture2D(src, vUv + vec2(-1.0, -1.0) * texel).rgb + texture2D(src, vUv + vec2(1.0, -1.0) * texel).rgb
+            + texture2D(src, vUv + vec2(-1.0, 1.0) * texel).rgb + texture2D(src, vUv + vec2(1.0, 1.0) * texel).rgb);
+  gl_FragColor = vec4(s / 12.0, 1.0);
+}`;
+const COMPOSITE = `
+uniform sampler2D robot, ao, bloom;
+uniform float aoStrength, bloomStrength;
+varying vec2 vUv;
+void main(){
+  vec4 r = texture2D(robot, vUv);
+  float a = r.a;
+  vec3 base = a > 1e-4 ? r.rgb / a : vec3(0.0);
+  base *= mix(1.0, texture2D(ao, vUv).r, aoStrength);
+  vec3 b = texture2D(bloom, vUv).rgb * bloomStrength;
+  vec3 inside = linearToOutputTexel(vec4(toneMapping(base + b), 1.0)).rgb;
+  vec3 outside = linearToOutputTexel(vec4(toneMapping(b), 1.0)).rgb;
+  gl_FragColor = vec4(inside * a + outside * (1.0 - a), a);
+}`;
+
+/** The reflections on his lacquer: a photo studio instead of a generic room — a grey cyc,
+ * lighter overhead and dark towards the floor, with big softboxes (above-front, two tall
+ * strips at the sides, a warm one behind, a low fill card) bright enough (HDR) to give long,
+ * clean highlights that bloom */
+function studioEnvironment() {
+  const env = new THREE.Scene();
+  env.add(
+    new THREE.Mesh(
+      new THREE.SphereGeometry(10, 32, 16),
+      new THREE.ShaderMaterial({
+        side: THREE.BackSide,
+        vertexShader:
+          'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader:
+          'varying vec3 vDir; void main(){ gl_FragColor = vec4(mix(vec3(0.14, 0.135, 0.13), vec3(0.5, 0.5, 0.51), smoothstep(-0.6, 0.8, vDir.y)), 1.0); }',
+      }),
+    ),
+  );
+  const box = (w: number, h: number, power: number, color: number, x: number, y: number, z: number) => {
+    const m = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, h),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(power), side: THREE.DoubleSide }),
+    );
+    m.position.set(x, y, z);
+    m.lookAt(0, 0, 0);
+    env.add(m);
+  };
+  box(3, 2, 9, 0xffffff, 1.5, 4, 3); // key softbox, above and in front
+  box(0.6, 5, 7, 0xffffff, -4, 1, 1.5); // tall strip, left
+  box(0.6, 5, 5, 0xffffff, 4, 1, 0.5); // tall strip, right
+  box(4, 0.8, 6, 0xffd9c4, 0, 2.5, -4); // warm rim, behind
+  box(4, 1.5, 1.5, 0xffffff, 0, -0.5, 4.5); // low fill card, front
+  return env;
+}
+
 /** The robot's surface grain: a fine, slightly uneven texture like a powder-coated or
  * bead-blasted part, felt in how the light catches it (not painted on). `cells` across the
  * model's longest side; `bump` how far it tilts the surface (about the steepest slope); `rough` how much the gloss varies
  * between patches */
 const GRAIN = { cells: 420, bump: 0.12, rough: 0.22 };
+
+/** The robot's edge glow: a warm light that wraps his silhouette, strongest where the
+ * surface turns away from the camera (fresnel). `strength` 0 = off; `power` higher = a
+ * thinner rim; `flashBoost` how much brighter it gets during a photographer's flash */
+const GLOW = { color: [1.0, 0.78, 0.6], strength: 0.45, power: 4.5, flashBoost: 1.5 };
+const glowUniform = { value: GLOW.strength };
 
 /** Adds the grain to `mat`: 3D value noise on each part's own coordinates (the model's UVs
  * are an AI unwrap in many small islands, a tiled map would show their seams), so it sticks
@@ -536,7 +702,18 @@ function grain(mat: THREE.MeshPhysicalMaterial, freq: number) {
           vec3 slope = sign(det) * (hx * r1 + hy * r2);
           normal = normalize(abs(det) * normal - (${GRAIN.bump.toFixed(3)} / grainFreq) * slope);
         }`,
-      );
+      )
+      .replace(
+        '#include <opaque_fragment>',
+        `{
+          // edge glow (GLOW, above): fresnel on the smooth geometry normal, added as light
+          float glowRim = pow(1.0 - saturate(dot(normalize(vNormal), normalize(vViewPosition))), ${GLOW.power.toFixed(3)});
+          outgoingLight += vec3(${GLOW.color.map((c) => c.toFixed(3)).join(', ')}) * glowRim * glowLevel;
+        }
+        #include <opaque_fragment>`,
+      )
+      .replace('#include <common>', '#include <common>\nuniform float glowLevel;');
+    shader.uniforms.glowLevel = glowUniform;
   };
   mat.customProgramCacheKey = () => 'robot-grain';
 }
