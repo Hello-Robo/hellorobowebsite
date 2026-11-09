@@ -8,9 +8,7 @@
     "Web Design",
     "Development"
   ],
-  "reveal": {
-    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/turing-robotic-industries-video.mp4"
-  },
+  "reveal": "../../assets/projects/turing-robotic-industries/cover-still.jpg",
   "background": "#1D1D1F",
   "micrographics": {
     "left": "/images/project/badge-25.svg",

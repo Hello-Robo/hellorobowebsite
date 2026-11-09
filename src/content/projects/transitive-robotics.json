@@ -7,9 +7,7 @@
     "Brand Identity",
     "UX/UI"
   ],
-  "reveal": {
-    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/transitive-robotics-reel.mp4"
-  },
+  "reveal": "../../assets/projects/transitive-robotics/cover-still.jpg",
   "background": "#151518",
   "micrographics": {
     "left": "/images/menu/menu-micrographic.svg",

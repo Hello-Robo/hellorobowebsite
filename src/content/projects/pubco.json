@@ -6,9 +6,7 @@
     "UX/UI",
     "Brand identity"
   ],
-  "reveal": {
-    "video": "https://hellorobosite.s3.us-east-2.amazonaws.com/web/pubco-cover.mp4"
-  },
+  "reveal": "../../assets/projects/pubco/cover-still.jpg",
   "micrographics": {},
   "sections": [],
   "credits": [],
