@@ -14,7 +14,8 @@
  * three ways in show right away), never touches the URL.
  * On /contact it starts there too and keeps the step in the URL hash (so Back works).
  * Titles only: no lead lines under them, except on the two "sent" screens.
- * Send posts the answers to /api/contact (saved for the CMS "Contact form responses").
+ * Send posts the answers to /api/contact (saved for the CMS "Contact form responses"), with
+ * the anti-spam token the form fetches from there once the visitor starts on it.
  */
 import { getCollection } from 'astro:content';
 import Icon from '../../components/icons/Icon.astro';
@@ -722,6 +723,37 @@ const services = [
       });
     });
 
+    // Anti-spam (see /api/contact): a signed token, fetched once the visitor starts on the
+    // form; the server drops sends without one, or sent too soon after it (MIN_FILL_MS there)
+    let token: Promise<{ value: string; at: number }> | null = null;
+    const getToken = () =>
+      (token ??= fetch('/api/contact', { cache: 'no-store' })
+        .then((r) => r.json())
+        .then((j: { token: string }) => ({ value: j.token, at: Date.now() }))
+        .catch((err) => {
+          token = null; // try again next time
+          throw err;
+        }));
+    for (const type of ['pointerdown', 'focusin', 'keydown'] as const)
+      root.addEventListener(type, () => void getToken().catch(() => {}), { once: true, passive: true });
+    const MIN_FILL_MS = 3200; // a little over the server's 3 s
+    /** Posts with a token at least MIN_FILL_MS old; a stale one is replaced once */
+    async function post(body: Record<string, unknown>, again = true): Promise<Response> {
+      const t = await getToken();
+      const wait = MIN_FILL_MS - (Date.now() - t.at);
+      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, token: t.value }),
+      });
+      if (res.status === 409 && again) {
+        token = null;
+        return post(body, false);
+      }
+      return res;
+    }
+
     /** Sends the project brief or the quick word; a missing answer opens its step */
     async function send(form: HTMLFormElement) {
       const button = form.querySelector<HTMLButtonElement>('[data-send]')!;
@@ -749,11 +781,7 @@ const services = [
 
       button.ariaBusy = 'true';
       try {
-        const res = await fetch('/api/contact', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
+        const res = await post(body);
         const reply = await res.json().catch(() => null);
         if (!res.ok) throw new Error(reply?.error ?? 'Something went wrong');
         setError(form, '');

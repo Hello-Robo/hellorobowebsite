@@ -11,8 +11,10 @@
  * line (seekable) and a sound button at the end (the video plays with sound; it mutes it).
  * An episode page is about its one episode: no previous / next, just play / pause, the
  * line (longer, from where previous was to the sound button) and sound.
- * Play is a click, so browsers let it start with sound; if one still refuses (it can when
- * the player took a while to load), it plays muted and the sound button shows that.
+ * Play is a click, so browsers let it start with sound. Phones only allow that when the
+ * video starts right in the tap, so there the player loads ahead (hidden) as the TV comes
+ * near the screen. If a browser still refuses, it plays muted, the sound button shows
+ * that, and the next tap on play / the screen brings the sound back.
  * They play the episodes that have a video, newest first: the hero starts with the
  * newest, an episode page with its own; previous / next load the next one straight into
  * the same screen (no transition), and the next one starts when an episode ends.
@@ -303,48 +305,81 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
       player?.unloadModule?.('cc');
     };
 
+    // The YouTube player, loaded but not playing (hidden until the first play). Phones load it
+    // ahead, as the TV comes near the screen: they only allow sound when the video starts
+    // straight from the tap, and loading the player after the tap took too long — so it
+    // started muted. Desktop browsers remember the click, so there it loads on the first play.
+    let ready: Promise<YTPlayer> | null = null;
+    let started = false;
+    let autoMuted = false; // muted by the browser, not the visitor: the next tap brings sound back
+    const prepare = () =>
+      (ready ??= loadApi().then(
+        (YT) =>
+          new Promise<YTPlayer>((resolve) => {
+            const p = new YT.Player(mount, {
+              host: 'https://www.youtube-nocookie.com',
+              videoId: list[index].id,
+              playerVars: { autoplay: 0, controls: 0, rel: 0, playsinline: 1, modestbranding: 1, iv_load_policy: 3, cc_load_policy: 0, disablekb: 1, fs: 0 },
+              events: {
+                onReady: () => {
+                  player = p;
+                  fit();
+                  resolve(p);
+                },
+                onStateChange: (e: { data: number }) => onState(YT, p, e.data),
+              },
+            });
+          }),
+      ));
+    // Play it with sound (unless the visitor muted it): straight from the tap when the player
+    // is already loaded
+    const begin = (p: YTPlayer) => {
+      started = true;
+      if (sound) p.unMute();
+      else p.mute();
+      p.playVideo();
+      announce();
+      const YT = w.YT!;
+      // the browser still refused to start it with sound: play muted instead
+      setTimeout(() => {
+        const state = p.getPlayerState();
+        if (sound && state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.BUFFERING) {
+          setSound(false);
+          autoMuted = true;
+          p.playVideo();
+        }
+      }, 1500);
+    };
     const start = async () => {
-      if (player) return player;
+      if (player && started) return player;
       root.classList.add('is-on');
-      const YT = await loadApi();
-      return new Promise<YTPlayer>((resolve) => {
-        const p = new YT.Player(mount, {
-          host: 'https://www.youtube-nocookie.com',
-          videoId: list[index].id,
-          playerVars: { autoplay: 1, mute: sound ? 0 : 1, controls: 0, rel: 0, playsinline: 1, modestbranding: 1, iv_load_policy: 3, cc_load_policy: 0, disablekb: 1, fs: 0 },
-          events: {
-            onReady: () => {
-              player = p;
-              fit();
-              if (sound) p.unMute();
-              else p.mute();
-              p.playVideo();
-              announce();
-              resolve(p);
-              // the browser refused to start it with sound: play muted instead
-              setTimeout(() => {
-                const state = p.getPlayerState();
-                if (sound && state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.BUFFERING) {
-                  setSound(false);
-                  p.playVideo();
-                }
-              }, 1500);
-            },
-            onStateChange: (e: { data: number }) => {
-              if (e.data === YT.PlayerState.PLAYING) {
-                noCaptions();
-                if (pendingSeek !== null && p.getDuration()) {
-                  p.seekTo(pendingSeek * p.getDuration(), true);
-                  pendingSeek = null;
-                }
-                setPlaying(true);
-              }
-              else if (e.data === YT.PlayerState.PAUSED) setPlaying(false);
-              else if (e.data === YT.PlayerState.ENDED) go(1);
-            },
-          },
-        });
-      });
+      // no await when the player is loaded: it starts inside the tap
+      const p = player ?? (await prepare());
+      if (!started) begin(p);
+      return p;
+    };
+    if (matchMedia('(hover: none)').matches) {
+      const near = new IntersectionObserver(
+        (entries) => {
+          if (!entries.some((e) => e.isIntersecting)) return;
+          near.disconnect();
+          prepare();
+        },
+        { rootMargin: '400px 0px' },
+      );
+      near.observe(root);
+    }
+    const onState = (YT: YTNamespace, p: YTPlayer, state: number) => {
+      if (!started) return; // loaded ahead, not played yet
+      if (state === YT.PlayerState.PLAYING) {
+        noCaptions();
+        if (pendingSeek !== null && p.getDuration()) {
+          p.seekTo(pendingSeek * p.getDuration(), true);
+          pendingSeek = null;
+        }
+        setPlaying(true);
+      } else if (state === YT.PlayerState.PAUSED) setPlaying(false);
+      else if (state === YT.PlayerState.ENDED) go(1);
     };
     // Previous / next: the other episode loads straight into the same screen
     const go = async (step: number) => {
@@ -359,9 +394,11 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
     };
 
     const toggle = () => {
-      if (!player) return void start();
-      if (playing) player.pauseVideo();
-      else player.playVideo();
+      if (!player || !started) return void start();
+      if (playing) return player.pauseVideo();
+      // the browser had muted it: this tap is allowed to bring the sound back
+      if (autoMuted) setSound(true);
+      player.playVideo();
     };
     playBtn.addEventListener('click', toggle);
     root.querySelector('[data-toggle]')!.addEventListener('click', toggle);
@@ -369,6 +406,7 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
     root.querySelector('[data-next]')?.addEventListener('click', () => go(1));
     function setSound(on: boolean) {
       sound = on;
+      autoMuted = false;
       root.classList.toggle('is-sound', on);
       soundBtn.setAttribute('aria-pressed', String(on));
       soundBtn.setAttribute('aria-label', on ? 'Mute' : 'Sound on');
@@ -392,7 +430,7 @@ const crt = { scanlines: 59, scanlineSize: 3, vignette: 24, curvature: 0, jitter
     seek.addEventListener('change', async () => {
       seeking = false;
       const at = Number(seek.value) / 1000;
-      if (!player) {
+      if (!player || !started) {
         pendingSeek = at;
         return void start();
       }

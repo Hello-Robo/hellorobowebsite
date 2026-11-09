@@ -114,6 +114,38 @@ export async function countResponses(): Promise<number> {
   return (await readdir(DIR)).filter((f) => f.endsWith('.json')).length;
 }
 
+/** When a response came in, from its id (`YYYYMMDD-HHMMSS-xxxxxx`, UTC) */
+const idTime = (id: string) => {
+  const m = id.match(/^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})/);
+  return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : 0;
+};
+const hourPrefix = (t: number) => new Date(t).toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 11);
+
+/**
+ * How many responses came in during the last `ms` (from file names only): the contact
+ * endpoint's cap against floods. On Blob only the hours in question are listed.
+ */
+export async function countRecentResponses(ms: number): Promise<number> {
+  const since = Date.now() - ms;
+  const prefixes = new Set<string>();
+  for (let t = since; t <= Date.now() + 3600_000; t += 3600_000) prefixes.add(hourPrefix(Math.min(t, Date.now())));
+  const fresh = (name: string) => idTime(path.basename(name, '.json')) >= since;
+  if (inBlob) {
+    let n = 0;
+    for (const prefix of prefixes) {
+      let cursor: string | undefined;
+      do {
+        const page = await list({ prefix: `${BLOB_PREFIX}${prefix}`, cursor, limit: 1000 });
+        n += page.blobs.filter((b) => b.pathname.endsWith('.json') && fresh(b.pathname)).length;
+        cursor = page.hasMore ? page.cursor : undefined;
+      } while (cursor);
+    }
+    return n;
+  }
+  if (!existsSync(DIR)) return 0;
+  return (await readdir(DIR)).filter((f) => f.endsWith('.json') && fresh(f)).length;
+}
+
 /** Newest first */
 export async function listResponses(): Promise<ContactResponse[]> {
   let entries: ContactResponse[];

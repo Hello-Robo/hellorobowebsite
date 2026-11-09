@@ -406,6 +406,10 @@ The first run also creates `CMS_SESSION_SECRET`. Then open http://localhost:4321
   end of every page. Check with `grep -c "<use" file.svg`: anything in the hundreds gets
   flattened to a 3× WebP wrapped in an SVG of the same name and size (as the 24 stamps in
   `public/images` now are), or exported as PNG / WebP. The CMS refuses such SVG uploads.
+  **Also no `<mask>` or `filter=` in a graphic:** Safari (and every iPhone browser) draws
+  masked or filtered SVGs at 1×, so they look pixelated on phones. Check with
+  `grep -l "<mask\|filter=" file.svg`; flatten those the same way (3× WebP in an SVG), or
+  drop the filter when it does nothing (Figma often adds a 0.01 blur).
 - **Photos** are 2× PNG exports in `src/assets/`, served as WebP by `astro:assets`.
 - **The one orange:** recolor any other orange in an exported SVG to `#FF6B03`.
 
