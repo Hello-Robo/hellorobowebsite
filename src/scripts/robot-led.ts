@@ -174,6 +174,18 @@ function ledTicker(messages: string[]) {
   ledUniforms.ledTickerW.value = canvas.width;
 }
 
+/** Robo Radio: the strip repeats the episode on the TV ("ROBO RADIO 14: ALEJANDRO OTALORA"),
+ * between pairs of micrographics, instead of a random variant (tv-robot.ts calls this before
+ * the robot mounts, and again whenever the episode changes) */
+let shownTitle = '';
+export function ledTitle(title: string) {
+  used = true;
+  const t = title.trim().toUpperCase();
+  if (!t || t === shownTitle) return;
+  shownTitle = t;
+  ledTicker([`{arrows} ${t} {globe}`, `{hr} ${t} {barcode}`, `{target} ${t} {dino}`, `{checker} ${t} {kettlebell}`]);
+}
+
 /** Picks what the strip shows (once per page): a random variant, or the one ?led= names */
 let used = false;
 export function ledUse() {

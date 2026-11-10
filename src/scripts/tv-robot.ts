@@ -17,10 +17,15 @@
  * as if the scene changed. A dark stretch lights him dimly, a yellow one tints him yellow.
  * Idle (nothing playing) it's the TV's warm white.
  *
+ * LED strip round his head (robot-led.ts): it repeats the episode on the TV, title and
+ * speaker ("ROBO RADIO 14: ALEJANDRO OTALORA"), between micrographics, and switches when the
+ * episode does (RadioTV writes its id to data-current; the titles are in data-playlist).
+ *
  * Desktop only (RadioTV imports this only there); if WebGL or the model fails, the photo
  * comes back. Placement comes from RadioTV (data-head-x / -y / -share on the host).
  */
 import { mountRobot } from './robot-3d';
+import { ledTitle } from './robot-led';
 
 const LOOK_UP = -0.16; // rad: tilted up to the screen
 const YAW = 0.24; // rad: following the picture side to side
@@ -82,6 +87,21 @@ for (const host of document.querySelectorAll<HTMLElement>('[data-tv-robot]')) {
   let scene = 0;
   let sceneAt = 0;
   const color: RGB = [0, 0, 0];
+  // the LED strip: the current episode's title (the first in the playlist until one is set)
+  if (tv) {
+    let playlist: { id: string; title: string }[] = [];
+    try {
+      playlist = JSON.parse(tv.dataset.playlist || '[]');
+    } catch {
+      /* no titles: the strip shows one of its own variants */
+    }
+    const showEpisode = () => {
+      const ep = playlist.find((p) => p.id === tv.dataset.current) ?? playlist[0];
+      if (ep) ledTitle(ep.title);
+    };
+    showEpisode();
+    new MutationObserver(showEpisode).observe(tv, { attributes: true, attributeFilter: ['data-current'] });
+  }
   mountRobot({
     host,
     className: 'radio-tv__robot-canvas',
