@@ -23,6 +23,7 @@ import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { sfx } from './sound';
 import { reducedMotion } from './media-query';
+import { ledStrip, ledTick, ledUse } from './robot-led';
 /** Defaults (the prototype's tuned values); the CMS overrides all but head / pivot */
 const DEFAULTS = {
   head: 'tripo_part_3', // mesh that turns as the head
@@ -141,6 +142,7 @@ export function mountHeroScene(o: {
   onFail?: () => void;
 }) {
   const config: HeroSettings = { ...DEFAULTS, ...o.config };
+  ledUse(); // what the LED strip round his head says (robot-led.ts)
   const reduceMotion = reducedMotion;
 
   let renderer: THREE.WebGLRenderer;
@@ -633,176 +635,6 @@ function studioEnvironment() {
   box(4, 0.8, 6, 0xffd9c4, 0, 2.5, -4); // warm rim, behind
   box(4, 1.5, 1.5, 0xffffff, 0, -0.5, 4.5); // low fill card, front
   return env;
-}
-
-/** The LED strip round his head: the black visor band of the model (heights y0..y1, in the
- * head mesh's units ×100, measured from its texture) becomes a dot-matrix display under the
- * clear coat. A ticker of messages and little pixel graphics runs round it, right to left as
- * seen from the front; at the front it leaves a window for his two LED eyes, which blink now
- * and then. `cols` dots round the full circle, `rows` dots tall; `speed` in dots per second;
- * `power` how bright a lit dot is (HDR: high enough to bloom), `off` the faint glow of an
- * unlit one. Put a sprite in the messages as {name}. */
-const LED = {
-  y0: 0.9478,
-  y1: 0.9762,
-  cols: 360,
-  rows: 11,
-  speed: 14,
-  color: '#ff6b03', // brand orange
-  power: 4.5,
-  off: 0.025,
-  eyes: true,
-  messages: ['{robot} HELLO ROBO', '{heart} MAKE THE WORLD SAY YES TO YOUR ROBOT', '{star} DESIGN FOR ROBOTICS', '{bolt} SAY HELLO! {smile}'],
-};
-
-/** 5×7 LED font: each glyph is 7 rows, 5 bits per row (16 = leftmost dot) */
-const FONT: Record<string, number[]> = {
-  A: [14, 17, 17, 31, 17, 17, 17], B: [30, 17, 17, 30, 17, 17, 30], C: [14, 17, 16, 16, 16, 17, 14],
-  D: [30, 17, 17, 17, 17, 17, 30], E: [31, 16, 16, 30, 16, 16, 31], F: [31, 16, 16, 30, 16, 16, 16],
-  G: [14, 17, 16, 23, 17, 17, 15], H: [17, 17, 17, 31, 17, 17, 17], I: [14, 4, 4, 4, 4, 4, 14],
-  J: [7, 2, 2, 2, 2, 18, 12], K: [17, 18, 20, 24, 20, 18, 17], L: [16, 16, 16, 16, 16, 16, 31],
-  M: [17, 27, 21, 21, 17, 17, 17], N: [17, 17, 25, 21, 19, 17, 17], O: [14, 17, 17, 17, 17, 17, 14],
-  P: [30, 17, 17, 30, 16, 16, 16], Q: [14, 17, 17, 17, 21, 18, 13], R: [30, 17, 17, 30, 20, 18, 17],
-  S: [15, 16, 16, 14, 1, 1, 30], T: [31, 4, 4, 4, 4, 4, 4], U: [17, 17, 17, 17, 17, 17, 14],
-  V: [17, 17, 17, 17, 17, 10, 4], W: [17, 17, 17, 21, 21, 21, 10], X: [17, 17, 10, 4, 10, 17, 17],
-  Y: [17, 17, 10, 4, 4, 4, 4], Z: [31, 1, 2, 4, 8, 16, 31],
-  '0': [14, 17, 19, 21, 25, 17, 14], '1': [4, 12, 4, 4, 4, 4, 14], '2': [14, 17, 1, 2, 4, 8, 31],
-  '3': [31, 2, 4, 2, 1, 17, 14], '4': [2, 6, 10, 18, 31, 2, 2], '5': [31, 16, 30, 1, 1, 17, 14],
-  '6': [6, 8, 16, 30, 17, 17, 14], '7': [31, 1, 2, 4, 8, 8, 8], '8': [14, 17, 17, 14, 17, 17, 14],
-  '9': [14, 17, 17, 15, 1, 2, 12], '-': [0, 0, 0, 31, 0, 0, 0], '!': [4, 4, 4, 4, 4, 0, 4],
-  '.': [0, 0, 0, 0, 0, 12, 12], '?': [14, 17, 1, 2, 4, 0, 4], '/': [1, 1, 2, 4, 8, 16, 16],
-  '&': [12, 18, 20, 8, 21, 18, 13],
-};
-
-/** Mini graphics, at most LED.rows tall (# = lit) */
-const SPRITES: Record<string, string[]> = {
-  heart: ['.##...##.', '####.####', '#########', '#########', '.#######.', '..#####..', '...###...', '....#....'],
-  robot: [
-    '.....#.....', '....###....', '.#########.', '#.........#', '#.##...##.#', '#.##...##.#',
-    '#.........#', '#..#####..#', '#.........#', '.#########.',
-  ],
-  star: ['....#....', '....#....', '...###...', '#########', '.#######.', '..#####..', '..##.##..', '.##...##.', '#.......#'],
-  bolt: ['...###', '..###.', '..##..', '.###..', '.#####', '....##', '...##.', '..##..', '..#...', '.#....', '#.....'],
-  smile: ['..#####..', '.#.....#.', '#.#...#.#', '#.......#', '#.#...#.#', '#..###..#', '.#.....#.', '..#####..'],
-};
-
-const ledUniforms = {
-  ledMap: { value: null as THREE.Texture | null },
-  ledTickerW: { value: 1 },
-  ledScroll: { value: 0 },
-  ledOpen: { value: 1 }, // the eyes: 1 open, 0 shut (blink)
-  ledColor: { value: new THREE.Color(LED.color) },
-};
-
-/** Draws the ticker (all messages, sprites and gaps in a row) one pixel per LED, lit = white */
-function ledTicker(): THREE.Texture {
-  const cols: boolean[][] = []; // columns of LED.rows dots, top first
-  const blank = () => cols.push(new Array(LED.rows).fill(false));
-  const draw = (rows: string[] | number[][]) => {
-    const h = rows.length;
-    const top = Math.floor((LED.rows - h) / 2);
-    const w = Math.max(...rows.map((r) => r.length));
-    for (let x = 0; x < w; x++) {
-      const col = new Array(LED.rows).fill(false);
-      for (let y = 0; y < h; y++) col[top + y] = (rows[y] as ArrayLike<string | number>)[x] === '#' || (rows[y] as ArrayLike<string | number>)[x] === 1;
-      cols.push(col);
-    }
-  };
-  const glyph = (bits: number[]) => draw(bits.map((r) => [16, 8, 4, 2, 1].map((b) => (r & b ? 1 : 0))));
-  for (const msg of LED.messages) {
-    for (const part of msg.split(/(\{\w+\})/)) {
-      const sprite = part.match(/^\{(\w+)\}$/);
-      if (sprite) {
-        if (SPRITES[sprite[1]]) draw(SPRITES[sprite[1]]);
-        blank();
-        continue;
-      }
-      for (const ch of part.toUpperCase()) {
-        if (ch === ' ') for (let i = 0; i < 3; i++) blank();
-        else if (FONT[ch]) {
-          glyph(FONT[ch]);
-          blank();
-        }
-      }
-    }
-    for (let i = 0; i < 24; i++) blank(); // gap between messages
-  }
-  const canvas = document.createElement('canvas');
-  canvas.width = cols.length;
-  canvas.height = LED.rows;
-  const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#fff';
-  cols.forEach((col, x) => col.forEach((on, y) => on && ctx.fillRect(x, y, 1, 1)));
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.magFilter = tex.minFilter = THREE.NearestFilter;
-  tex.generateMipmaps = false;
-  tex.colorSpace = THREE.NoColorSpace;
-  ledUniforms.ledTickerW.value = canvas.width;
-  return tex;
-}
-
-/** Each frame: scrolls the ticker by whole dots and blinks the eyes (every 2.5–6 s, 0.14 s).
- * With reduced motion it stands still and doesn't blink. */
-let nextBlink = 3;
-function ledTick(t: number, still: boolean) {
-  if (still) return;
-  ledUniforms.ledScroll.value = Math.floor(t * LED.speed);
-  if (t > nextBlink + 0.14) nextBlink = t + 2.5 + Math.random() * 3.5;
-  ledUniforms.ledOpen.value = t > nextBlink ? 0 : 1;
-}
-
-/** Puts the LED strip into the head's shader (see LED) */
-function ledStrip(shader: THREE.WebGLProgramParametersWithUniforms) {
-  ledUniforms.ledMap.value ??= ledTicker();
-  Object.assign(shader.uniforms, ledUniforms);
-  const f = (n: number) => n.toFixed(5);
-  shader.fragmentShader = shader.fragmentShader
-    .replace(
-      '#include <common>',
-      `#include <common>
-      uniform sampler2D ledMap;
-      uniform float ledTickerW, ledScroll, ledOpen;
-      uniform vec3 ledColor;`,
-    )
-    .replace(
-      '#include <color_fragment>',
-      `#include <color_fragment>
-      // the strip: black glass in place of the painted band
-      vec3 ledP = vGrainPos * 100.0;
-      float ledBand = smoothstep(${f(LED.y0)}, ${f(LED.y0 + 0.0012)}, ledP.y) * (1.0 - smoothstep(${f(LED.y1 - 0.0012)}, ${f(LED.y1)}, ledP.y));
-      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.012), ledBand);`,
-    )
-    .replace(
-      '#include <emissivemap_fragment>',
-      `#include <emissivemap_fragment>
-      if (ledBand > 0.0) {
-        // which dot: round the head (0.5 = straight ahead) and up the strip
-        vec2 ledCell = vec2((atan(ledP.x, ledP.z) / 6.2831853 + 0.5) * ${f(LED.cols)},
-                            (ledP.y - ${f(LED.y0)}) / ${f(LED.y1 - LED.y0)} * ${f(LED.rows)});
-        vec2 ledId = floor(ledCell);
-        float ledD = length(fract(ledCell) - 0.5);
-        float ledAA = fwidth(ledD);
-        float ledDot = 1.0 - smoothstep(0.36 - ledAA, 0.36 + ledAA, ledD);
-        float ledOn;
-        float ledC = ledId.x - ${f(LED.cols / 2)} + 0.5; // dots from the front centre, ±0.5, ±1.5…
-        if (${LED.eyes ? 'true' : 'false'} && abs(ledC) < 15.0) {
-          // the eyes: two 6×7 blocks with clipped corners; shut, only the middle row stays lit
-          float ex = abs(abs(ledC) - 9.0), ey = abs(ledId.y - 5.0);
-          ledOn = (ex <= 2.5 && ey <= mix(0.0, 3.0, ledOpen) && !(ex > 2.0 && ey > 2.5)) ? 1.0 : 0.0;
-        } else {
-          float tx = mod(ledId.x + ledScroll, ledTickerW);
-          ledOn = texture2D(ledMap, vec2((tx + 0.5) / ledTickerW, (ledId.y + 0.5) / ${f(LED.rows)})).r;
-        }
-        totalEmissiveRadiance += ledColor * ledBand * ledDot * (ledOn * ${f(LED.power)} + ${f(LED.off)});
-      }`,
-    )
-    .replace(
-      '#include <roughnessmap_fragment>',
-      `#include <roughnessmap_fragment>
-      roughnessFactor = mix(roughnessFactor, 0.18, ledBand);`,
-    );
 }
 
 /** The robot's surface grain: a fine, slightly uneven texture like a powder-coated or

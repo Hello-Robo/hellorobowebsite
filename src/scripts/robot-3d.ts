@@ -36,6 +36,7 @@ import {
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { reducedMotion } from './media-query';
+import { ledStrip, ledTick, ledUniforms, ledUse } from './robot-led';
 
 const MODEL = '/models/hello-robot.glb';
 const HEAD = 'tripo_part_3';
@@ -221,6 +222,11 @@ export function mountRobot(o: RobotOptions) {
   renderer.toneMapping = ACESFilmicToneMapping;
   renderer.setClearColor(0x000000, 0);
 
+  // the LED strip round his head (robot-led.ts, the same as on the home hero); seen from
+  // behind, its seam (where the dots wrap round) moves to the front, out of view
+  ledUse();
+  ledUniforms.ledBack.value = o.view === 'back' ? 1 : 0;
+
   const scene = new Scene();
   let screenLight: DirectionalLight | null = null;
   let screenBase = 0;
@@ -318,6 +324,7 @@ export function mountRobot(o: RobotOptions) {
   };
 
   const draw = (s: number) => {
+    ledTick(s, reduced);
     if (head) {
       const p = o.head(reduced ? 0 : s);
       head.rotation.set(p.pitch, p.yaw, p.roll, 'YXZ');
@@ -407,6 +414,15 @@ export function mountRobot(o: RobotOptions) {
                 #include <opaque_fragment>`,
               );
           };
+        }
+        if (obj === mesh) {
+          // his head: the LED strip on top of whatever the material already does
+          const before = m.onBeforeCompile;
+          m.onBeforeCompile = (shader, r) => {
+            before.call(m, shader, r);
+            ledStrip(shader);
+          };
+          m.customProgramCacheKey = () => `robot-led-${o.light}`;
         }
       });
       if (o.beam && head) {
