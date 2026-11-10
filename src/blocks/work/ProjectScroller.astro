@@ -80,7 +80,7 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
         <div class="project-wheel__bgs">
           {projects.map((p, i) => (
             <div class:list={['project-wheel__bg', { 'is-current': i === 0 }]} data-index={i}>
-              <Media class="project-wheel__bg-media" media={p.data.reveal} widths={[1400, 2406]} sizes="140vw" loading="lazy" />
+              <Media class="project-wheel__bg-media" media={p.data.reveal} widths={[1400, 2406]} sizes="100vw" loading="lazy" />
             </div>
           ))}
         </div>
@@ -456,8 +456,9 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
     inset: 0;
   }
 
-  /* Backgrounds: the Figma crop (2406×1555 at -339, -235), sliding in per project; in a
-     layer of their own, so the sliding pictures stay under the names */
+  /* Backgrounds: fill the frame, sliding in per project; in a layer of their own, so the
+     sliding pictures stay under the names. Not oversized: slide-scrub.ts already zooms the
+     picture 1.1–1.13× for its drift, which is all the slack it needs */
   .project-wheel__bgs {
     position: absolute;
     inset: 0;
@@ -465,10 +466,7 @@ const crt = { flicker: 22, noise: 8, rollSpeed: 0.35 };
   }
   .project-wheel__bg {
     position: absolute;
-    left: calc(-339 / 1728 * 100%);
-    top: calc(-235 / 1117 * 100%);
-    width: calc(2406 / 1728 * 100%);
-    height: calc(1555 / 1117 * 100%);
+    inset: 0;
     visibility: hidden;
   }
   /* without JS the first shows; with it, slide-scrub.ts shows the ones in play */
