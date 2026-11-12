@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 
-/** The LED strip round his head: the black visor band of the model (heights y0..y1, in the
- * head mesh's units ×100, measured from its texture) becomes a dot-matrix display under the
- * clear coat. A ticker of messages and little pixel graphics runs round it, right to left as
+/** The LED strip round his head: the recessed visor band of the head model
+ * (public/models/sentinel-head.glb; heights y0..y1 in model units, the robot is 1 tall)
+ * becomes a dot-matrix display under the clear coat. A ticker of messages and little pixel graphics runs round it, right to left as
  * seen from the front. `cols` dots round the full circle, `rows` dots tall; `speed` in dots
  * per second; `power` how bright a lit dot is (HDR: high enough to bloom), `off` the faint
  * glow of an unlit one. `eyes`: a window at the front with two blinking LED eyes. What it
@@ -13,8 +13,8 @@ import * as THREE from 'three';
  * Each puts ledStrip() into his head material's shader and calls ledUse() once and ledTick()
  * every frame. */
 const LED = {
-  y0: 0.9478,
-  y1: 0.9762,
+  y0: 0.945,
+  y1: 0.978,
   cols: 360,
   rows: 11,
   speed: 14,
@@ -271,8 +271,8 @@ export function ledStrip(shader: THREE.WebGLProgramParametersWithUniforms) {
       '#include <color_fragment>',
       `#include <color_fragment>
       // the strip: black glass in place of the painted band
-      vec3 ledP = vLedPos * 100.0;
-      float ledBand = smoothstep(${f(LED.y0)}, ${f(LED.y0 + 0.0012)}, ledP.y) * (1.0 - smoothstep(${f(LED.y1 - 0.0012)}, ${f(LED.y1)}, ledP.y));
+      vec3 ledP = vLedPos;
+      float ledBand = smoothstep(${f(LED.y0)}, ${f(LED.y0 + 0.0006)}, ledP.y) * (1.0 - smoothstep(${f(LED.y1 - 0.0006)}, ${f(LED.y1)}, ledP.y));
       diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.012), ledBand);`,
     )
     .replace(

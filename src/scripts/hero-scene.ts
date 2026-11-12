@@ -1,7 +1,7 @@
 /**
  * Home hero — one WebGL scene (ported from the "robot-hero draft v2" prototype):
- * - the robot (public/models/hello-robot.glb, with a slight glossy lacquer) cropped at the
- *   torso; his head follows the
+ * - the robot (public/models/hello-robot.glb, its head swapped for public/models/
+ *   sentinel-head.glb, with a slight glossy lacquer) cropped at the torso; his head follows the
  *   mouse, the body takes a little of the turn; after a few seconds without the mouse he
  *   looks around on his own; he "breathes" slightly;
  * - now and then a photographer's flash lights him and the sphere for a moment and casts
@@ -135,6 +135,8 @@ export function mountHeroScene(o: {
   host: HTMLElement;
   className: string;
   modelUrl: string;
+  /** the head model, in the body's units and place; it stands in for the body's own head */
+  headUrl: string;
   bgUrl: string;
   config?: Partial<HeroSettings>;
   label?: string;
@@ -331,9 +333,16 @@ export function mountHeroScene(o: {
   // ── model + head pivot (a "rig" without bones) ──
   const rig: { stage?: THREE.Group; body?: THREE.Group; pivot?: THREE.Group } = {};
   let live = false;
-  new GLTFLoader().load(
-    o.modelUrl,
-    ({ scene: model }) => {
+  const loader = new GLTFLoader();
+  Promise.all([loader.loadAsync(o.modelUrl), loader.loadAsync(o.headUrl)]).then(
+    ([{ scene: model }, { scene: headModel }]) => {
+      // the body's own head goes; the head model's mesh takes its name and place
+      model.getObjectByName(config.head)?.removeFromParent();
+      const headMesh = headModel.getObjectByProperty('type', 'Mesh');
+      if (headMesh) {
+        headMesh.name = config.head;
+        model.add(headMesh);
+      }
       // shine and texture: the model is fully matte (roughness 0.82), so each part gets a
       // clear lacquer on top (glossy highlights and room reflections) over a finely grained
       // surface (grain(), below); colours and textures stay as they are
@@ -351,9 +360,15 @@ export function mountHeroScene(o: {
           g = new THREE.MeshPhysicalMaterial();
           THREE.MeshStandardMaterial.prototype.copy.call(g, m);
           g.defines = { STANDARD: '', PHYSICAL: '' };
-          g.roughness = Math.min(m.roughness, 0.34);
-          g.clearcoat = 1;
-          g.clearcoatRoughness = 0.04;
+          if (mesh.name === config.head) {
+            // the head is matte plastic: no lacquer, a soft sheen only
+            g.roughness = 0.62;
+            g.clearcoat = 0;
+          } else {
+            g.roughness = Math.min(m.roughness, 0.34);
+            g.clearcoat = 1;
+            g.clearcoatRoughness = 0.04;
+          }
           g.specularIntensity = 1;
           g.envMapIntensity = 2.1;
           grain(g, grainFreq, mesh.name === config.head); // the head also gets the LED strip
@@ -377,7 +392,6 @@ export function mountHeroScene(o: {
       rig.pivot.updateMatrixWorld(true);
       if (head) rig.pivot.attach(head);
     },
-    undefined,
     () => fail(),
   );
   new THREE.TextureLoader().load(
