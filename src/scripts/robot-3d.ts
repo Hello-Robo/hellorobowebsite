@@ -1,8 +1,9 @@
 /**
- * The Hello Robo robot as a live 3D model (public/models/hello-robot.glb) on a transparent
- * canvas. Shared by the home hero (seen from the front) and the Robo Radio TV (seen from
- * behind, watching the screen). The body stays still; only the head (tripo_part_3 in the
- * model, hung from a pivot at the neck) moves, as the caller's `head` function says.
+ * The Hello Robo robot as a live 3D model (public/models/hello-robot.glb, its head swapped
+ * for public/models/sentinel-head.glb) on a transparent canvas. Shared by the home hero
+ * (seen from the front) and the Robo Radio TV (seen from behind, watching the screen). The
+ * body stays still; only the head (hung from a pivot at the neck) moves, as the caller's
+ * `head` function says.
  *
  * Framing: the caller says where the head's middle sits in the canvas (fractions of its
  * width / height) and how much of the width the head takes; the camera is placed to match.
@@ -39,10 +40,11 @@ import { reducedMotion } from './media-query';
 import { ledStrip, ledTick, ledUniforms, ledUse } from './robot-led';
 
 const MODEL = '/models/hello-robot.glb';
-const HEAD = 'tripo_part_3';
+const HEAD_MODEL = '/models/sentinel-head.glb'; // in the body's units and place
+const HEAD = 'tripo_part_3'; // the body's own head, which the head model replaces
 const NECK_Y = 0.872; // where the head sits on the neck (model units, the robot is 1 tall)
-const HEAD_MID_Y = 0.937; // the head's middle
-const HEAD_W = 0.27; // the head's width
+const HEAD_MID_Y = 0.965; // the head's middle
+const HEAD_W = 0.3; // the head's width
 
 export type HeadPose = { pitch: number; yaw: number; roll: number };
 
@@ -375,12 +377,18 @@ export function mountRobot(o: RobotOptions) {
     if (ready && !raf && !reduced) raf = requestAnimationFrame(tick);
   };
 
-  new GLTFLoader().load(
-    MODEL,
-    (gltf) => {
+  const loader = new GLTFLoader();
+  Promise.all([loader.loadAsync(MODEL), loader.loadAsync(HEAD_MODEL)]).then(
+    ([gltf, headGltf]) => {
       const root = gltf.scene;
+      // the body's own head goes; the head model's mesh takes its name and place
+      root.getObjectByName(HEAD)?.removeFromParent();
+      const mesh = headGltf.scene.getObjectByProperty('type', 'Mesh') as Mesh | undefined;
+      if (mesh) {
+        mesh.name = HEAD;
+        root.add(mesh);
+      }
       root.updateMatrixWorld(true);
-      const mesh = root.getObjectByName(HEAD) as Mesh | undefined;
       if (mesh) {
         // hang the head from a pivot at the neck, keeping where it is
         const pivot = new Group();
@@ -394,9 +402,10 @@ export function mountRobot(o: RobotOptions) {
         const m = (obj as Mesh).material as MeshStandardMaterial | undefined;
         if (!m || !('metalness' in m) || done.has(m)) return;
         done.add(m);
-        // the model came from FBX Phong: tone the metal down, it reads as painted plastic
-        m.metalness = 0.15;
-        m.roughness = 0.55;
+        // the body came from FBX Phong: tone the metal down, it reads as painted plastic;
+        // the head is matte plastic
+        m.metalness = obj === mesh ? 0 : 0.15;
+        m.roughness = obj === mesh ? 0.65 : 0.55;
         m.envMapIntensity = 0.9;
         if (o.light === 'screen') {
           // dark and glossy, so the edges catch crisp, bright highlights
@@ -442,7 +451,6 @@ export function mountRobot(o: RobotOptions) {
       requestAnimationFrame(() => o.onLive?.());
       run();
     },
-    undefined,
     fail,
   );
 
