@@ -12,8 +12,8 @@
  * with --px); the two bottom rows run past the right edge, as drawn. Phones get the same
  * rows laid out as flex rows (fewer numerals per row), the robot under them.
  *
- * The robot is a placeholder: swap src/assets/404/robot.png for the final picture; the
- * layout doesn't depend on it beyond its 350×552 box (any portrait picture works).
+ * The robot (Figma 10542:2200, the transparent source image) is its own slot: swap
+ * src/assets/404/robot.png freely; the layout only fixes its width (350) and feet line.
  */
 import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
@@ -85,8 +85,9 @@ const rows: Row[] = [
 <style>
   .not-found {
     position: relative;
-    /* the frame is 1154 tall; the robot's feet at 1110, the footer starts at 1154 */
-    height: calc(1154 * var(--px));
+    /* the frame is 1154 tall with the robot's feet at 1110; 200 of empty space added under
+       the robot before the footer */
+    height: calc(1354 * var(--px));
     overflow: hidden;
     overflow: clip;
     color: var(--color-orange);
@@ -121,7 +122,9 @@ const rows: Row[] = [
   .not-found__robot {
     position: absolute;
     left: calc(719 * var(--px));
-    top: calc(558 * var(--px));
+    /* anchored to the feet (Figma: 1110 of 1154, + the 200 under), so a picture of another
+       height stands on the same line */
+    bottom: calc(244 * var(--px));
     width: calc(350 * var(--px));
   }
   .not-found__robot img {
@@ -134,7 +137,7 @@ const rows: Row[] = [
   @media (max-width: 1023px) {
     .not-found {
       height: auto;
-      padding: 72px 0 0;
+      padding: 72px 0 200px; /* 200 of empty space under the robot */
       display: flex;
       flex-direction: column;
     }
