@@ -1,0 +1,192 @@
+---
+/**
+ * 404 — Figma "robo radio single episode" frame (10541:84), its "home" section (1728×1154):
+ * https://www.figma.com/design/9SsfbCUY7KcxjZpCuRpDxf/Hello-Robo-Website-2026?node-id=10541-84
+ *
+ * A field of orange "404"s in five rows, biggest at the top and shrinking towards the
+ * middle of the page, with three micrographics dropped in among them and the robot picture
+ * standing in the middle, in front of the smallest rows. The nav pill gets the back button
+ * (to the home page), then the footer follows as on every page (no pre-footer block).
+ *
+ * Desktop: every row and item sits where Figma puts it (x / y / size in Figma px, scaled
+ * with --px); the two bottom rows run past the right edge, as drawn. Phones get the same
+ * rows laid out as flex rows (fewer numerals per row), the robot under them.
+ *
+ * The robot is a placeholder: swap src/assets/404/robot.png for the final picture; the
+ * layout doesn't depend on it beyond its 350×552 box (any portrait picture works).
+ */
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import robot from '../assets/404/robot.png';
+
+type Item = { kind: 'num' } | { kind: 'stamp'; src: string; w: number; h: number; dy?: number };
+interface Row {
+  /** Figma y of the row's text boxes, font size (text box height / 0.95) */
+  y: number;
+  size: number;
+  /** items with their Figma x; the numerals' order decides which survive on phones */
+  items: { x: number; item: Item }[];
+}
+
+const num: Item = { kind: 'num' };
+const europe: Item = { kind: 'stamp', src: '/images/404/stamp-europe.svg', w: 265, h: 88, dy: 36 };
+const restricted: Item = { kind: 'stamp', src: '/images/404/stamp-restricted.png', w: 157, h: 36 };
+const bulba: Item = { kind: 'stamp', src: '/images/404/stamp-bulba.png', w: 91, h: 36, dy: -4 };
+
+const seq = (start: number, step: number, count: number) => Array.from({ length: count }, (_, i) => ({ x: start + i * step, item: num }));
+
+const rows: Row[] = [
+  { y: 51, size: 224, items: seq(28, 424, 4) },
+  { y: 315, size: 130, items: [{ x: 28, item: num }, { x: 355, item: europe }, ...seq(744, 358, 3)] },
+  { y: 504, size: 57, items: seq(46, 219.2, 8) },
+  { y: 627, size: 39, items: seq(-38, 199, 13) },
+  {
+    y: 732,
+    size: 29.5,
+    items: [{ x: 120, item: restricted }, ...seq(401, 219, 4), { x: 1241, item: bulba }, ...seq(1496, 219, 10)],
+  },
+];
+---
+<BaseLayout title="Page not found" description="This page doesn’t exist. Head back to Hello Robo." prefooter={false} back="/">
+  <section class="not-found" aria-labelledby="not-found-title">
+    <h1 id="not-found-title" class="visually-hidden">404 — page not found</h1>
+    <a class="visually-hidden" href="/">Back to the home page</a>
+
+    <div class="not-found__field" aria-hidden="true">
+      {rows.map((row, r) => (
+        <div class="not-found__row" style={`--y: ${row.y}; --size: ${row.size}`} data-row={r + 1}>
+          {row.items.map(({ x, item }) =>
+            item.kind === 'num' ? (
+              <span class="not-found__num" style={`--x: ${x}`}>404</span>
+            ) : (
+              <img
+                class="not-found__stamp"
+                src={item.src}
+                alt=""
+                width={item.w}
+                height={item.h}
+                style={`--x: ${x}; --w: ${item.w}; --dy: ${item.dy ?? 0}`}
+                loading="eager"
+                decoding="async"
+              />
+            )
+          )}
+        </div>
+      ))}
+    </div>
+
+    {/* Placeholder robot (Figma "robot", 350×552 at 719/558): its own slot and asset, swap freely */}
+    <div class="not-found__robot">
+      <Image src={robot} alt="" widths={[700, 1050]} sizes="(max-width: 1023px) 240px, 350px" loading="eager" fetchpriority="high" />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .not-found {
+    position: relative;
+    /* the frame is 1154 tall; the robot's feet at 1110, the footer starts at 1154 */
+    height: calc(1154 * var(--px));
+    overflow: hidden;
+    overflow: clip;
+    color: var(--color-orange);
+  }
+  .not-found__field {
+    position: absolute;
+    inset: 0;
+  }
+  .not-found__row {
+    position: absolute;
+    top: calc(var(--y) * var(--px));
+    left: 0;
+    right: 0;
+    font-size: calc(var(--size) * var(--px));
+    line-height: 0.95;
+    letter-spacing: -0.06em;
+    white-space: nowrap;
+  }
+  .not-found__num {
+    position: absolute;
+    left: calc(var(--x) * var(--px));
+    top: 0;
+    font-variant-numeric: lining-nums;
+  }
+  .not-found__stamp {
+    position: absolute;
+    left: calc(var(--x) * var(--px));
+    top: calc(var(--dy) * var(--px));
+    width: calc(var(--w) * var(--px));
+    height: auto;
+  }
+  .not-found__robot {
+    position: absolute;
+    left: calc(719 * var(--px));
+    top: calc(558 * var(--px));
+    width: calc(350 * var(--px));
+  }
+  .not-found__robot img {
+    width: 100%;
+    height: auto;
+  }
+
+  /* ── Phones (≤ 1023px): the same rows, as flex rows of 2 / 3 / 4 / 5 / 5 items with the
+     stamps kept in rows 2 and 5, the robot under them ── */
+  @media (max-width: 1023px) {
+    .not-found {
+      height: auto;
+      padding: 72px 0 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .not-found__field {
+      position: static;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      padding-inline: var(--page-margin);
+    }
+    .not-found__row {
+      position: static;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    .not-found__num,
+    .not-found__stamp {
+      position: static;
+    }
+    .not-found__row[data-row='1'] { font-size: 88px; }
+    .not-found__row[data-row='2'] { font-size: 52px; }
+    .not-found__row[data-row='3'] { font-size: 32px; }
+    .not-found__row[data-row='4'] { font-size: 22px; }
+    .not-found__row[data-row='5'] { font-size: 16px; }
+    /* how many of each row survive (stamps count): 2 / 3 / 4 / 5 / 5 */
+    .not-found__row[data-row='1'] > :nth-child(n + 3),
+    .not-found__row[data-row='2'] > :nth-child(n + 4),
+    .not-found__row[data-row='3'] > :nth-child(n + 5),
+    .not-found__row[data-row='4'] > :nth-child(n + 6),
+    .not-found__row[data-row='5'] > :nth-child(n + 7),
+    .not-found__row[data-row='5'] > :nth-child(4) {
+      display: none;
+    }
+    .not-found__stamp {
+      /* half their Figma size (the skyline one, between two numerals, 132 wide) */
+      width: calc(var(--w) * 0.5px);
+    }
+    .not-found__row[data-row='2'] {
+      gap: 12px;
+    }
+    .not-found__row[data-row='5'] {
+      gap: 8px;
+    }
+    .not-found__row[data-row='5'] .not-found__stamp {
+      width: calc(var(--w) * 0.62px);
+    }
+    .not-found__robot {
+      position: static;
+      width: 240px;
+      margin: 48px auto 0;
+    }
+  }
+</style>
