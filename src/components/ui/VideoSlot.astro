@@ -4,6 +4,8 @@
  * With `src` it plays the video (muted + looping when `autoplay`, and only while it can be
  * seen: scripts/video-play.ts);
  * without it, it shows the poster or a black area of the same size.
+ * A hosted video (https) is asked for with CORS so bottom-bend.ts may draw it; one that can't
+ * load that way loads without it (it just won't bend), as in Media.astro.
  */
 interface Props {
   ratio: string;
@@ -19,6 +21,7 @@ interface Props {
   class?: string;
 }
 const { ratio, mobileRatio, src, mobileSrc, webm, poster, alt = '', autoplay = false, class: className } = Astro.props;
+const hosted = !!src && /^https?:/i.test(src);
 ---
 <div class:list={['video-slot', className]} style={`--ratio: ${ratio}; --ratio-mobile: ${mobileRatio ?? ratio}`}>
   {src ? (
@@ -29,6 +32,7 @@ const { ratio, mobileRatio, src, mobileSrc, webm, poster, alt = '', autoplay = f
       playsinline
       loop
       data-autoplay={autoplay ? '' : undefined}
+      crossorigin={hosted ? 'anonymous' : undefined}
       preload="none"
       aria-label={alt || undefined}
     >
@@ -40,6 +44,19 @@ const { ratio, mobileRatio, src, mobileSrc, webm, poster, alt = '', autoplay = f
     <img class="video-slot__media" src={poster} alt={alt} loading="lazy" decoding="async" />
   ) : null}
 </div>
+
+<script>
+  // A hosted video that can't load with CORS loads without it: shown flat, never a blank gap
+  document.querySelectorAll<HTMLVideoElement>('video.video-slot__media[crossorigin]').forEach((v) => {
+    const plain = () => {
+      if (!v.hasAttribute('crossorigin')) return;
+      v.removeAttribute('crossorigin');
+      v.load();
+    };
+    if (v.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) plain();
+    else v.querySelector('source:last-of-type')?.addEventListener('error', plain, { once: true });
+  });
+</script>
 
 <style>
   .video-slot {

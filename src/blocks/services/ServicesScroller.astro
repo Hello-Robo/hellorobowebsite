@@ -9,19 +9,24 @@
  * - Left (label, title, stamp, services): words, lines and the stamp slide out of their
  *   masks and the next service's slide in, in the direction you scroll (style reference:
  *   telhaclarke.com.au/studio).
- * - Right: the next image slides in from the bottom over the previous one.
+ * - Right: the next image slides in from the bottom over the previous one. Each is a reel
+ *   (data/reels.ts) playing over its Figma still, which shows until the video has a frame.
  * Motion uses the tokens in tokens.css (--ease-out, --duration-*, --stagger).
  * Mobile: the three services stacked, as before (no pin).
  */
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import Divider from '../../components/ui/Divider.astro';
+import ReelVideo from '../../components/ui/ReelVideo.astro';
+import type { Reel } from '../../data/reels';
 
 interface Service {
   title: string;
   services: string[];
   image: ImageMetadata;
   imageAlt: string;
+  /** the reel that plays over the image */
+  video?: Reel;
   /** Stamp next to the title: src, size and offset inside the left column (Figma px) */
   stamp: { src: string; w: number; h: number; x: number; y: number };
 }
@@ -61,7 +66,10 @@ const { items } = Astro.props;
               </ul>
             </div>
             <div class="services-scroller__media" style={`z-index: ${i + 1}`}>
-              <Image src={item.image} alt={item.imageAlt} widths={[818, 1200, 1636]} sizes="(min-width: 1728px) 818px, (min-width: 1024px) 48vw, calc(100vw - 32px)" loading="lazy" />
+              <div class="services-scroller__picture" data-drift>
+                <Image src={item.image} alt={item.imageAlt} widths={[818, 1200, 1636]} sizes="(min-width: 1728px) 818px, (min-width: 1024px) 48vw, calc(100vw - 32px)" loading="lazy" />
+                {item.video && <ReelVideo reel={item.video} />}
+              </div>
             </div>
           </div>
         );
@@ -239,7 +247,15 @@ const { items } = Astro.props;
     background: none;
     visibility: hidden;
   }
-  .services-scroller__media :global(img) {
+  /* the still and its reel, in one box so they drift together (slide-scrub.ts) */
+  .services-scroller__picture {
+    position: absolute;
+    inset: 0;
+  }
+  .services-scroller__media :global(img),
+  .services-scroller__media :global(video) {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -248,7 +264,7 @@ const { items } = Astro.props;
   @media (prefers-reduced-motion: reduce) {
     .mask > span,
     .services-scroller__stamp img,
-    .services-scroller__media :global(img) {
+    .services-scroller__picture {
       transition-duration: 0.01s !important;
       transition-delay: 0s !important;
     }

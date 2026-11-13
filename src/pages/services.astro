@@ -7,6 +7,7 @@ import ServicesBuilding from '../blocks/services/ServicesBuilding.astro';
 import branding from '../assets/services/branding.png';
 import interfaceImg from '../assets/services/interface.png';
 import video from '../assets/services/video.png';
+import { reels } from '../data/reels';
 ---
 <BaseLayout title={'Services'} prefooter="building">
   <ServicesHero />
@@ -17,6 +18,7 @@ import video from '../assets/services/video.png';
         title: 'Through branding',
         services: ['Robot Brand Identity', 'Brand Strategy & Positioning', 'Robot Naming & Nomenclature', 'Motion Identity', 'Tone of Voice'],
         image: branding,
+        video: reels.brand,
         imageAlt: 'Robot brand identity — subscriber stats on a rounded display',
         stamp: { src: '/images/services/stamp-branding.svg', w: 134, h: 137, x: 469, y: 179 },
       },
@@ -24,6 +26,7 @@ import video from '../assets/services/video.png';
         title: 'Through interface',
         services: ['HRI Design', 'Robot Management UI', 'Fleet Management UI', 'Operator Dashboard', 'Observability Interface'],
         image: interfaceImg,
+        video: reels.ui,
         imageAlt: 'Fleet operator app showing incident reports',
         stamp: { src: '/images/services/stamp-interface.svg', w: 120, h: 107, x: 457, y: 199 },
       },
@@ -31,6 +34,7 @@ import video from '../assets/services/video.png';
         title: 'Through video production',
         services: ['Robot Cinematic Videos', 'Product Launch Films', 'Brand Films', 'Product Demos', 'Founder Stories', 'Pilot Case Studies'],
         image: video,
+        video: reels.videoProduction,
         imageAlt: 'Aerial view of a solar field build site',
         stamp: { src: '/images/services/stamp-video.svg', w: 121, h: 72, x: 586, y: 215 },
       },

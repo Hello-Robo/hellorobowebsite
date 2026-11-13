@@ -7,6 +7,8 @@
  *   3 "Make the market say yes"    — 10203:481
  * https://www.figma.com/design/9SsfbCUY7KcxjZpCuRpDxf/Hello-Robo-Website-2026?node-id=10203-131
  * Mobile: slides "block 1 / block 2 / block" (10101:14507, 10101:14838, 10101:15206), 390×694.
+ * Each slide's picture is a reel (data/reels.ts: Brand, UI, Video production) playing over
+ * the Figma still, which shows until the video has a frame.
  *
  * Scroll (desktop): the block starts inside the page layout (40 side margins, as the
  * Figma photo block 1648×1117) and pins when it reaches the top. The first half
@@ -23,6 +25,8 @@
 import { Image } from 'astro:assets';
 import Divider from '../../components/ui/Divider.astro';
 import CrtScreen from '../../components/ui/CrtScreen.astro';
+import ReelVideo from '../../components/ui/ReelVideo.astro';
+import { reels } from '../../data/reels';
 import world from '../../assets/home/showcase-photo.png';
 import operators from '../../assets/home/showcase-operators.jpg';
 import market from '../../assets/home/showcase-market.jpg';
@@ -36,6 +40,7 @@ const slides = [
   {
     word: 'world',
     image: world,
+    video: reels.brand,
     alt: 'A person holding a tablet showing a robotics product interface',
     // Slide 1's photo has no shade baked in; slides 2–3 were exported with Figma's 30% shade
     shade: true,
@@ -45,6 +50,7 @@ const slides = [
   {
     word: 'operators',
     image: operators,
+    video: reels.ui,
     alt: 'Aerial view of a solar field with a module installation chart',
     shade: false,
     stamp: { src: '/images/services/stamp-interface.svg', w: 120, h: 107 },
@@ -53,6 +59,7 @@ const slides = [
   {
     word: 'market',
     image: market,
+    video: reels.videoProduction,
     alt: 'Close-up of a solar panel corner on black',
     shade: false,
     stamp: { src: '/images/services/stamp-video.svg', w: 121, h: 72 },
@@ -66,14 +73,17 @@ const slides = [
     <div class="home-showcase__stage" data-active="0">
       {slides.map((s, i) => (
         <div class="home-showcase__bg" data-slide={i} data-slide-state={i === 0 ? 'current' : 'next'} style={`z-index: ${i}`}>
-          <Image
-            class="home-showcase__photo"
-            src={s.image}
-            alt={s.alt}
-            widths={[1200, 1728, 2600, 3456]}
-            sizes="100vw"
-            loading="lazy"
-          />
+          <div class="home-showcase__picture" data-drift>
+            <Image
+              class="home-showcase__photo"
+              src={s.image}
+              alt={s.alt}
+              widths={[1200, 1728, 2600, 3456]}
+              sizes="100vw"
+              loading="lazy"
+            />
+            <ReelVideo class="home-showcase__photo" reel={s.video} />
+          </div>
           {s.shade && <div class="home-showcase__shade" aria-hidden="true"></div>}
         </div>
       ))}
@@ -201,6 +211,11 @@ const slides = [
   }
   .home-showcase__bg[data-slide-state='next'] {
     visibility: hidden;
+  }
+  /* the still and its reel, in one box so they drift together (slide-scrub.ts) */
+  .home-showcase__picture {
+    position: absolute;
+    inset: 0;
   }
   .home-showcase :global(.home-showcase__photo) {
     position: absolute;

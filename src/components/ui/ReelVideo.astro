@@ -1,0 +1,45 @@
+---
+/**
+ * ReelVideo — one of the studio's hosted reels (data/reels.ts) as a moving picture: muted,
+ * looping, inline, playing only while it can be seen (scripts/video-play.ts). Phones get the
+ * lighter -mobile.mp4; desktop the WebM original, with the MP4 as the fallback.
+ * Style it like an image: the class lands on the <video>. Put it over the still it replaces
+ * (the still shows until the video has a frame, and if the video can't load).
+ * Asked for with CORS so bottom-bend.ts may draw it; a video that can't load that way loads
+ * without it (it just won't bend), as in Media.astro.
+ */
+import type { Reel } from '../../data/reels';
+
+interface Props {
+  reel: Reel;
+  class?: string;
+}
+const { reel, class: className } = Astro.props;
+---
+<video
+  class:list={['reel-video', className]}
+  muted
+  loop
+  playsinline
+  data-autoplay
+  crossorigin="anonymous"
+  preload="none"
+  aria-hidden="true"
+>
+  <source src={reel.mobileSrc} type="video/mp4" media="(max-width: 1023px)" />
+  <source src={reel.webm} type="video/webm" />
+  <source src={reel.src} type="video/mp4" />
+</video>
+
+<script>
+  // A video that can't load with CORS loads without it: shown flat, never a blank gap
+  document.querySelectorAll<HTMLVideoElement>('video.reel-video[crossorigin]').forEach((v) => {
+    const plain = () => {
+      if (!v.hasAttribute('crossorigin')) return;
+      v.removeAttribute('crossorigin');
+      v.load();
+    };
+    if (v.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) plain();
+    else v.querySelector('source:last-of-type')?.addEventListener('error', plain, { once: true });
+  });
+</script>
