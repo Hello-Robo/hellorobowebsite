@@ -11,8 +11,9 @@
  * switch between picture i and i + 1 happens around p = i + 0.5 (where the blocks switch
  * their text), the uncovering taking WIDTH of a picture's share of the scroll.
  * Layers: absolutely placed, one per picture, in their frame (which clips them); the
- * picture inside (img / video) gets the drift. `wrap`: the wheels go round, so after the
- * last picture comes the first.
+ * picture inside (img / video, or the box marked data-drift when a still and its video sit
+ * together) gets the drift. `wrap`: the wheels go round, so after the last picture comes the
+ * first.
  */
 import { PHONE, reducedMotion } from './media-query';
 
@@ -44,7 +45,7 @@ type Options = {
 
 export function slideScrub(layers: HTMLElement[], { frame = null, wrap = false, smooth = true, drift = true }: Options = {}) {
   const n = layers.length;
-  const inners = layers.map((l) => (drift ? l.querySelector<HTMLElement>('img, video') : null));
+  const inners = layers.map((l) => (drift ? (l.querySelector<HTMLElement>('[data-drift]') ?? l.querySelector<HTMLElement>('img, video')) : null));
   layers.forEach((l, i) => {
     l.style.transition = 'none';
     l.style.translate = 'none';

@@ -93,7 +93,7 @@ src/
 public/
   fonts/                licensed fonts (git-ignored)
   images/<page>/        SVG graphics (stamps, logos, micrographics), a few PNGs
-  videos/               showreel.mp4 / .webm / poster go here (see videos/README.md)
+  videos/               local videos (see videos/README.md); the reels are hosted (src/data/reels.ts)
 svgo.config.mjs         SVG optimization settings (keeps ids and viewBox)
 .claude/launch.json     dev server config for the Claude preview
 ```
@@ -204,7 +204,7 @@ Every block file starts with a comment naming its Figma node and link.
 |---|---|---|---|
 | Home | `home/HomeHero` — title, receipt sphere, robot (WebGL poster) | 10093:119 | Figma |
 | | `home/HomeIntro` — stamp + mission text | 10093:145 | Figma |
-| | `home/HomeShowreel` — video (`public/videos/showreel.mp4`) | 10093:183 | Figma |
+| | `home/HomeShowreel` — video (the General reel, `src/data/reels.ts`) | 10093:183 | Figma |
 | | `home/HomePhilosophy` — "300 robotics companies" + bars (WebGL poster) | 10093:185 | Figma |
 | | `home/HomeShowcase` — "What it took…" + 3 pinned slides (world / operators / market) | 10093:250, 10203:131, 10203:481 | Figma (block 1 / 2 / block) |
 | | `home/HomeClients` — text + logo wall + stamps | 10093:577 | Figma (logo rows) |
