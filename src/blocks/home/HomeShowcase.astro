@@ -42,8 +42,9 @@ const slides = [
     image: world,
     video: reels.brand,
     alt: 'A person holding a tablet showing a robotics product interface',
-    // Slide 1's photo has no shade baked in; slides 2–3 were exported with Figma's 30% shade
-    shade: true,
+    // Every slide is shaded 20% darker (over the reel); slide 1's still had no shade baked in
+    // (slides 2–3 were exported with Figma's 30% shade), so it keeps its 30% on top: 1 − 0.7 × 0.8
+    shade: 0.44,
     stamp: { src: '/images/services/stamp-branding.svg', w: 134, h: 137 },
     services: ['Robot Brand Identity', 'Brand Strategy & Positioning', 'Robot Naming & Nomenclature', 'Motion Identity', 'Tone of Voice'],
   },
@@ -52,7 +53,7 @@ const slides = [
     image: operators,
     video: reels.ui,
     alt: 'Aerial view of a solar field with a module installation chart',
-    shade: false,
+    shade: 0.2,
     stamp: { src: '/images/services/stamp-interface.svg', w: 120, h: 107 },
     services: ['HRI Design', 'Robot Management UI', 'Fleet Management UI', 'Operator Dashboard', 'Observability Interface'],
   },
@@ -61,7 +62,7 @@ const slides = [
     image: market,
     video: reels.videoProduction,
     alt: 'Close-up of a solar panel corner on black',
-    shade: false,
+    shade: 0.2,
     stamp: { src: '/images/services/stamp-video.svg', w: 121, h: 72 },
     services: ['Robot Cinematic Videos', 'Product Launch Films', 'Brand Films', 'Product Demos', 'Founder Stories', 'Pilot Case Studies'],
   },
@@ -84,7 +85,7 @@ const slides = [
             />
             <ReelVideo class="home-showcase__photo" reel={s.video} />
           </div>
-          {s.shade && <div class="home-showcase__shade" aria-hidden="true"></div>}
+          <div class="home-showcase__shade" style={`--shade: ${s.shade}`} aria-hidden="true"></div>
         </div>
       ))}
 
@@ -227,7 +228,7 @@ const slides = [
   .home-showcase__shade {
     position: absolute;
     inset: 0;
-    background: rgb(0 0 0 / 0.3);
+    background: rgb(0 0 0 / var(--shade, 0.2));
   }
 
   /* Rule at 683, content row at 714 in the 1728×1117 frame (scaled to the screen height) */
