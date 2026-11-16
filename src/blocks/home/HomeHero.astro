@@ -4,12 +4,11 @@
  * Figma: 1.0 home → "1 hero" (10093:119), 1728×1117
  * https://www.figma.com/design/9SsfbCUY7KcxjZpCuRpDxf/Hello-Robo-Website-2026?node-id=10093-119
  *
- * Marked "3d web gl". On desktop one WebGL scene replaces the pictures
+ * Marked "3d web gl". On every device one WebGL scene replaces the pictures
  * (src/scripts/hero-robot.ts → hero-scene.ts): the 3D robot, cropped at the torso, follows
  * the mouse with his head; behind him the sticker graphics lie on a virtual sphere that turns
  * against the head. Its settings and that picture are edited in the CMS (Home page → Hero
- * (3D, desktop)). The still pictures show while it loads and come
- * back if it can't (no WebGL, model failed). Phones and tablets keep the still pictures.
+ * (3D)). The still pictures show only if it can't run (no WebGL, model failed). Phones and tablets get the same scene.
  *
  * CRT: Figma's CRT screen shader (CrtScreen, overlay) lies over the picture and the robot,
  * with the Showcase section's settings; the title sits above it, untouched. The hero's bottom
@@ -60,12 +59,10 @@ const heroData = JSON.stringify({ ...heroSettings, background: background?.src ?
 </section>
 
 <script>
-  import { isDesktop } from '../../scripts/media-query';
-  // the WebGL hero: three.js, the model and the background are only fetched on desktop
-  // (anywhere it doesn't run, e.g. an iPad with a trackpad, the still pictures show)
+  // the WebGL hero, on every device (phones and tablets too); the still pictures show only
+  // if it can't run
   const stills = () => document.querySelector('.home-hero')?.classList.add('is-robot-fallback');
-  if (isDesktop()) import('../../scripts/hero-robot').catch(stills);
-  else stills();
+  import('../../scripts/hero-robot').catch(stills);
 </script>
 
 <style>
@@ -122,14 +119,12 @@ const heroData = JSON.stringify({ ...heroSettings, background: background?.src ?
   .home-hero :global(.is-robot-live .home-hero__robot-canvas) {
     opacity: 1;
   }
-  /* desktop: the old stills (the receipt sphere, the photo robot) never show while the 3D
-     scene loads: the hero stays white until it fades in. They come back only if it can't run
+  /* the old stills (the receipt sphere, the photo robot) never show while the 3D scene
+     loads: the hero stays white until it fades in. They come back only if it can't run
      (.is-robot-fallback) */
-  @media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
-    .home-hero:not(.is-robot-fallback) :global(.home-hero__sphere),
-    .home-hero:not(.is-robot-fallback) .home-hero__robot-frame {
-      visibility: hidden;
-    }
+  .home-hero:not(.is-robot-fallback) :global(.home-hero__sphere),
+  .home-hero:not(.is-robot-fallback) .home-hero__robot-frame {
+    visibility: hidden;
   }
   .home-hero__title {
     position: absolute;

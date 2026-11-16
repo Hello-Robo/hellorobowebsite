@@ -15,7 +15,7 @@
  * The settings and the background picture come from the CMS (Home page → Hero (3D,
  * desktop)); anything left out there takes the defaults below.
  *
- * Desktop only (HomeHero imports this only there). Off screen or in a hidden tab it stops
+ * On every device (phones at a lower pixel ratio, to spare memory). Off screen or in a hidden tab it stops
  * drawing. With reduced motion the head doesn't look around on its own and doesn't breathe.
  */
 import * as THREE from 'three';
@@ -23,7 +23,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { sfx } from './sound';
-import { reducedMotion } from './media-query';
+import { reducedMotion, isDesktop } from './media-query';
 /** Defaults (the prototype's tuned values); the CMS overrides all but head */
 const DEFAULTS = {
   head: 'head', // the object that turns as the head (its origin is on the neck's axis)
@@ -54,6 +54,9 @@ const EDGE_BLUR = 2.5;
 // Part of the model kept in frame: from the chest to just above the head (model units,
 // the robot is 1 tall; his antennae reach 1.0).
 const FRAME = { top: 1.08, bottom: 0.54, width: 0.55 };
+// On a tall (portrait) screen: share of FRAME.width that fits across, and how much higher
+// (model units) the camera looks.
+const PORTRAIT = { width: 0.7, raise: 0.06 };
 
 const BG_VERT = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
 const BG_FRAG = `
@@ -151,7 +154,7 @@ export function mountHeroScene(o: {
     o.onFail?.();
     return;
   }
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, isDesktop() ? 2 : 1.5));
   renderer.setClearColor(0xffffff, 1);
   renderer.autoClear = false;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -265,11 +268,15 @@ export function mountHeroScene(o: {
     shadowRT.setSize(Math.max(1, Math.round(w / 4)), Math.max(1, Math.round(h / 4)));
     camera.aspect = w / h;
     const halfV = THREE.MathUtils.degToRad(camera.fov / 2);
+    // a tall (phone) screen: fitting his full width would show him down to the hips, so it
+    // fits a narrower band (the shoulders run off the sides) and looks a little higher, which
+    // keeps the head and shoulders under the title
+    const portrait = camera.aspect < 1;
     const dist = Math.max(
       (FRAME.top - FRAME.bottom) / (2 * Math.tan(halfV)),
-      FRAME.width / (2 * Math.tan(halfV) * camera.aspect),
+      (FRAME.width * (portrait ? PORTRAIT.width : 1)) / (2 * Math.tan(halfV) * camera.aspect),
     );
-    const cy = (FRAME.top + FRAME.bottom) / 2;
+    const cy = (FRAME.top + FRAME.bottom) / 2 + (portrait ? PORTRAIT.raise : 0);
     camera.position.set(0, cy + 0.03, dist);
     camera.lookAt(0, cy, 0);
     camera.updateProjectionMatrix();

@@ -196,11 +196,11 @@ export const CMS_COLLECTIONS: CmsCollection[] = [
         13,
         'The logos in the Clients block, in its 13 places, row by row from the top left (3, 2, 3, 2, 3). Click a logo to swap it, or upload a new one. A place can hold a micrographic instead.',
       ),
-      // The hero's 3D scene on desktop (src/scripts/hero-scene.ts). Phones keep the still pictures.
+      // The hero's 3D scene (src/scripts/hero-scene.ts), on every device.
       {
         kind: 'group',
         key: 'hero',
-        label: 'Hero (3D, desktop)',
+        label: 'Hero (3D)',
         hint: 'The robot that follows the mouse and the graphics sphere behind him. Desktop only; phones show the still pictures.',
         fields: [
           {
