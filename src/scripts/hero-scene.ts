@@ -60,8 +60,9 @@ const PORTRAIT = { width: 0.7, raise: 0.06 };
 
 const BG_VERT = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
 const BG_FRAG = `
+#define PORTRAIT_BALL 1.7
 uniform sampler2D map;
-uniform float tiles, opacity, tanH, aspect, fish, bendTop;
+uniform float tiles, opacity, tanH, aspect, fish, bendTop, portrait;
 uniform mat3 rot;
 // photographer's flash on the sphere: its level, where its hotspot lands (uv), and the
 // robot's silhouette (rendered small while a flash is on) cast as his shadow: projected from
@@ -74,16 +75,31 @@ uniform vec2 flashAt, shadowFrom;
 uniform sampler2D shadowMask;
 varying vec2 vUv;
 void main(){
-  vec2 p = vUv * 2.0 - 1.0; p.x *= aspect;
-  float r2 = dot(p, p) / (1.0 + aspect * aspect);   // 0 at the centre, 1 in the corners
-  vec2 q = p * (1.0 + fish * 3.0 * r2);               // barrel: rays pushed out at the edges
-  // TEST: edge warp — nothing in the middle, stretching harder and harder near the edges
-  q *= 1.0 + edgeWarp * 2.0 * r2 * r2 * r2;
-  // top bend: towards the top, the further out to the sides the higher it samples, so rows
-  // there bow down at the sides like the top of a curved screen
-  float top = smoothstep(0.0, 1.0, vUv.y);
-  q.y += bendTop * 2.25 * top * top * (p.x / aspect) * (p.x / aspect);
-  vec3 d = normalize(rot * vec3(q * tanH, -1.0));
+  vec2 p = vUv * 2.0 - 1.0;
+  float r2;
+  vec3 d;
+  if (portrait > 0.5) {
+    // a tall (phone) screen: measured from its width (p.x −1…1), a round fisheye — the
+    // angle grows with the distance from the centre the same in every direction — so the
+    // graphics wrap round a ball, and r2 is a circle (1 at PORTRAIT_BALL widths) for the
+    // edge effects, instead of the screen's tall corners
+    p.y /= aspect;
+    float r = max(length(p), 1e-4);
+    r2 = r * r / (PORTRAIT_BALL * PORTRAIT_BALL);
+    float th = r * atan(tanH) * (1.0 + fish * r2);
+    d = normalize(rot * vec3(sin(th) * p / r, -cos(th)));
+  } else {
+    p.x *= aspect;
+    r2 = dot(p, p) / (1.0 + aspect * aspect);   // 0 at the centre, 1 in the corners
+    vec2 q = p * (1.0 + fish * 3.0 * r2);       // barrel: rays pushed out at the edges
+    // TEST: edge warp — nothing in the middle, stretching harder and harder near the edges
+    q *= 1.0 + edgeWarp * 2.0 * r2 * r2 * r2;
+    // top bend: towards the top, the further out to the sides the higher it samples, so
+    // rows there bow down at the sides like the top of a curved screen
+    float top = smoothstep(0.0, 1.0, vUv.y);
+    q.y += bendTop * 2.25 * top * top * (p.x / aspect) * (p.x / aspect);
+    d = normalize(rot * vec3(q * tanH, -1.0));
+  }
   float lon = atan(d.x, -d.z);
   float lat = asin(clamp(d.y, -1.0, 1.0));
   vec2 uv = vec2(lon / 6.2831853, lat / 3.1415927) * tiles + 0.5;
@@ -240,6 +256,7 @@ export function mountHeroScene(o: {
     opacity: { value: 1 },
     tanH: { value: 1 },
     aspect: { value: 1 },
+    portrait: { value: 0 },
     fish: { value: 0 },
     bendTop: { value: 0 },
     rot: { value: new THREE.Matrix3() },
@@ -281,6 +298,7 @@ export function mountHeroScene(o: {
     camera.lookAt(0, cy, 0);
     camera.updateProjectionMatrix();
     bgUniforms.aspect.value = camera.aspect;
+    bgUniforms.portrait.value = portrait ? 1 : 0;
     const db = renderer.getDrawingBufferSize(new THREE.Vector2());
     robotRT.setSize(db.x, db.y);
     gtao.setSize(Math.ceil(db.x / 2), Math.ceil(db.y / 2));
