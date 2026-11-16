@@ -140,10 +140,10 @@ const heroData = JSON.stringify({ ...heroSettings, background: background?.src ?
     z-index: var(--z-raised);
   }
 
-  /* ── Mobile: Figma "home mob" (10101:6462), 390×844 ── */
+  /* ── Mobile: Figma "home mob" (10101:6462), 390×844; the hero is 10% shorter (760) ── */
   @media (max-width: 1023px) {
     .home-hero {
-      aspect-ratio: 390 / 844;
+      aspect-ratio: 390 / 760;
     }
     /* Receipt sphere: cropped to its centre (Figma shows a close-up of the receipts) */
     .home-hero :global(.home-hero__sphere) {
