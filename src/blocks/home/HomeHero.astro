@@ -62,11 +62,10 @@ const heroData = JSON.stringify({ ...heroSettings, background: background?.src ?
 <script>
   import { isDesktop } from '../../scripts/media-query';
   // the WebGL hero: three.js, the model and the background are only fetched on desktop
-  if (isDesktop()) {
-    import('../../scripts/hero-robot').catch(() =>
-      document.querySelector('.home-hero')?.classList.add('is-robot-fallback'),
-    );
-  }
+  // (anywhere it doesn't run, e.g. an iPad with a trackpad, the still pictures show)
+  const stills = () => document.querySelector('.home-hero')?.classList.add('is-robot-fallback');
+  if (isDesktop()) import('../../scripts/hero-robot').catch(stills);
+  else stills();
 </script>
 
 <style>
@@ -123,7 +122,11 @@ const heroData = JSON.stringify({ ...heroSettings, background: background?.src ?
   .home-hero :global(.is-robot-live .home-hero__robot-canvas) {
     opacity: 1;
   }
+  /* desktop: the old stills (the receipt sphere, the photo robot) never show while the 3D
+     scene loads: the hero stays white until it fades in. They come back only if it can't run
+     (.is-robot-fallback) */
   @media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
+    .home-hero:not(.is-robot-fallback) :global(.home-hero__sphere),
     .home-hero:not(.is-robot-fallback) .home-hero__robot-frame {
       visibility: hidden;
     }

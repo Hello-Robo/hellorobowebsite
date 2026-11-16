@@ -216,7 +216,7 @@ export const CMS_COLLECTIONS: CmsCollection[] = [
           { kind: 'number', key: 'torsoShare', label: 'Head: body turns along', default: 0.15, hint: 'Share of the turn the whole body takes, 0–0.5 (0.15 = 15%).' },
           { kind: 'number', key: 'idleAfterMs', label: 'Head: looks around after (ms)', default: 4000, hint: 'Without the mouse for this long, he looks around on his own. 4000 = 4 seconds.' },
           { kind: 'number', key: 'robotScale', label: 'Robot: size', default: 1.4, hint: '1 = the whole torso fits; 1.4 = 140%. 0.5–2.' },
-          { kind: 'number', key: 'robotLiftOfFrame', label: 'Robot: height', default: -0.41, hint: 'Moves him up (+) or down (−), as a share of the hero’s height. −0.6 to 0.6.' },
+          { kind: 'number', key: 'robotLiftOfFrame', label: 'Robot: height', default: -0.22, hint: 'Moves him up (+) or down (−), as a share of the hero’s height. −0.6 to 0.6.' },
           { kind: 'number', key: 'bgRotationStrength', label: 'Background: turn strength', default: 0.45, hint: 'How much the background turns with the head (1 = the same angle). 0–3.' },
           { kind: 'boolean', key: 'bgSameDirection', label: 'Background turns the same way as the head', default: false, hint: 'Off: it turns against the head.' },
           { kind: 'number', key: 'bgTiles', label: 'Background: repeats', default: 4, hint: 'How many times the picture repeats round the sphere. 1–12.' },
