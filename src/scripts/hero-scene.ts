@@ -1,7 +1,8 @@
 /**
  * Home hero — one WebGL scene (ported from the "robot-hero draft v2" prototype):
- * - the robot (public/models/hello-robot.glb, its head swapped for public/models/
- *   sentinel-head.glb, with a slight glossy lacquer) cropped at the torso; his head follows the
+ * - the robot (public/models/hero-robot.glb: the Meshy "Character Robot", rigged, in its
+ *   rest pose) as plain matte clay (CLAY below: one colour, no textures or effects, shaded by
+ *   ambient occlusion), cropped at the torso; his head (the rig's Head bone) follows the
  *   mouse, the body takes a little of the turn; after a few seconds without the mouse he
  *   looks around on his own; he "breathes" slightly;
  * - now and then a photographer's flash lights him and the sphere for a moment and casts
@@ -23,11 +24,9 @@ import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { sfx } from './sound';
 import { reducedMotion } from './media-query';
-import { ledStrip, ledTick, ledUse } from './robot-led';
-/** Defaults (the prototype's tuned values); the CMS overrides all but head / pivot */
+/** Defaults (the prototype's tuned values); the CMS overrides all but head */
 const DEFAULTS = {
-  head: 'tripo_part_3', // mesh that turns as the head
-  pivot: [0.003, 0.888, -0.004] as [number, number, number], // neck point, model space
+  head: 'Head', // the rig's bone that turns as the head (it hangs from the neck column)
   maxYawDeg: 55, // head turn left / right
   maxPitchDeg: 18, // head tilt up / down
   damping: 4, // how fast the head catches up (higher = snappier)
@@ -52,8 +51,11 @@ const FRESNEL = 0.8;
 const EDGE_WARP = 0.35;
 const EDGE_BLUR = 2.5;
 
-// Part of the model kept in frame: from mid-torso to just above the head (model units).
-const FRAME = { top: 1.06, bottom: 0.5, width: 0.62 };
+// Part of the model kept in frame: from the chest to just above the head (model units,
+// the robot is 1 tall; his antennae reach 1.0).
+const FRAME = { top: 1.08, bottom: 0.54, width: 0.55 };
+// The clay he's made of: one matte colour in place of the model's textures
+const CLAY = { color: 0xb9b4ad, roughness: 0.92 };
 
 const BG_VERT = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
 const BG_FRAG = `
@@ -135,8 +137,6 @@ export function mountHeroScene(o: {
   host: HTMLElement;
   className: string;
   modelUrl: string;
-  /** the head model, in the body's units and place; it stands in for the body's own head */
-  headUrl: string;
   bgUrl: string;
   config?: Partial<HeroSettings>;
   label?: string;
@@ -144,7 +144,6 @@ export function mountHeroScene(o: {
   onFail?: () => void;
 }) {
   const config: HeroSettings = { ...DEFAULTS, ...o.config };
-  ledUse(); // what the LED strip round his head says (robot-led.ts)
   const reduceMotion = reducedMotion;
 
   let renderer: THREE.WebGLRenderer;
@@ -186,41 +185,21 @@ export function mountHeroScene(o: {
   const camera = new THREE.PerspectiveCamera(26, 1, 0.01, 20);
 
   // Post: the robot is drawn into his own HDR buffer, shaded by ambient occlusion (GTAO, half
-  // resolution), his brightest glints bloomed (a dual-filter blur down and up a mip chain),
-  // then tone-mapped and laid over the background (see POST below)
+  // resolution), then tone-mapped and laid over the background (see POST below)
   const robotRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 });
   const gtao = new GTAOPass(scene, camera, 1, 1);
   gtao.output = GTAOPass.OUTPUT.Off; // only compute it; the composite reads it
   gtao.updateGtaoMaterial({ radius: POST.aoRadius, distanceExponent: 1.5, thickness: 1, scale: 1, samples: 16 });
-  const bloomMips = Array.from({ length: 5 }, () => new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType }));
   const quad = new FullScreenQuad();
-  const postMat = (frag: string, uniforms: Record<string, THREE.IUniform>, blending: THREE.Blending = THREE.NoBlending) =>
-    new THREE.ShaderMaterial({
-      uniforms: { src: { value: null }, texel: { value: new THREE.Vector2() }, ...uniforms },
-      vertexShader: BG_VERT,
-      fragmentShader: frag,
-      blending,
-      depthTest: false,
-      depthWrite: false,
-      toneMapped: false,
-    });
-  const prefilterMat = postMat(BLOOM_PREFILTER, {
-    threshold: { value: POST.bloomThreshold },
-    knee: { value: POST.bloomKnee },
-  });
-  const downMat = postMat(BLOOM_DOWN, {});
-  const upMat = postMat(BLOOM_UP, {}, THREE.AdditiveBlending);
   const compositeMat = new THREE.ShaderMaterial({
     uniforms: {
       robot: { value: robotRT.texture },
       ao: { value: gtao.pdRenderTarget.texture },
-      bloom: { value: bloomMips[0].texture },
       aoStrength: { value: POST.aoStrength },
-      bloomStrength: { value: POST.bloomStrength },
     },
     vertexShader: BG_VERT,
     fragmentShader: COMPOSITE,
-    // premultiplied "over": the robot covers the background, his bloom adds light to it
+    // premultiplied "over": the robot covers the background
     blending: THREE.CustomBlending,
     blendSrc: THREE.OneFactor,
     blendDst: THREE.OneMinusSrcAlphaFactor,
@@ -229,13 +208,6 @@ export function mountHeroScene(o: {
     // tone mapping and sRGB come from the renderer (toneMapping(), linearToOutputTexel())
     toneMapped: true,
   });
-  const blit = (mat: THREE.ShaderMaterial, src: THREE.WebGLRenderTarget, target: THREE.WebGLRenderTarget) => {
-    mat.uniforms.src.value = src.texture;
-    mat.uniforms.texel.value.set(1 / src.width, 1 / src.height);
-    renderer.setRenderTarget(target);
-    quad.material = mat;
-    quad.render(renderer);
-  };
   function drawRobot() {
     renderer.setRenderTarget(robotRT);
     renderer.setClearColor(0x000000, 0);
@@ -243,9 +215,6 @@ export function mountHeroScene(o: {
     renderer.render(scene, camera);
     // @ts-expect-error: with output Off the pass reads no buffers
     gtao.render(renderer, null, null);
-    blit(prefilterMat, robotRT, bloomMips[0]);
-    for (let i = 1; i < bloomMips.length; i++) blit(downMat, bloomMips[i - 1], bloomMips[i]);
-    for (let i = bloomMips.length - 2; i >= 0; i--) blit(upMat, bloomMips[i + 1], bloomMips[i]);
     renderer.setRenderTarget(null);
     renderer.setClearColor(0xffffff, 1);
   }
@@ -310,7 +279,6 @@ export function mountHeroScene(o: {
     const db = renderer.getDrawingBufferSize(new THREE.Vector2());
     robotRT.setSize(db.x, db.y);
     gtao.setSize(Math.ceil(db.x / 2), Math.ceil(db.y / 2));
-    bloomMips.forEach((rt, i) => rt.setSize(Math.max(1, Math.ceil(db.x / 2 ** (i + 1))), Math.max(1, Math.ceil(db.y / 2 ** (i + 1)))));
   }
   new ResizeObserver(layout).observe(o.host);
   layout();
@@ -330,67 +298,45 @@ export function mountHeroScene(o: {
   document.addEventListener('pointerleave', () => (hasPointer = false));
   addEventListener('blur', () => (hasPointer = false));
 
-  // ── model + head pivot (a "rig" without bones) ──
-  const rig: { stage?: THREE.Group; body?: THREE.Group; pivot?: THREE.Group } = {};
+  // ── model + the head bone ──
+  // The head turns on its bone (config.head). The turn is meant round the model's own axes
+  // (yaw round its up, pitch round its sideways), whatever way the bone's own axes point, so
+  // it's taken into the bone's space: L' = P⁻¹ · R · P · L, with L the bone's rest rotation
+  // and P its parent's orientation in the model (fixed: no other bone moves).
+  const rig: { stage?: THREE.Group; body?: THREE.Group; head?: THREE.Object3D } = {};
+  const headRest = new THREE.Quaternion();
+  const headParent = new THREE.Quaternion();
+  const headParentInv = new THREE.Quaternion();
   let live = false;
-  const loader = new GLTFLoader();
-  Promise.all([loader.loadAsync(o.modelUrl), loader.loadAsync(o.headUrl)]).then(
-    ([{ scene: model }, { scene: headModel }]) => {
-      // the body's own head goes; the head model's mesh takes its name and place
-      model.getObjectByName(config.head)?.removeFromParent();
-      const headMesh = headModel.getObjectByProperty('type', 'Mesh');
-      if (headMesh) {
-        headMesh.name = config.head;
-        model.add(headMesh);
-      }
-      // shine and texture: the model is fully matte (roughness 0.82), so each part gets a
-      // clear lacquer on top (glossy highlights and room reflections) over a finely grained
-      // surface (grain(), below); colours and textures stay as they are
-      const size = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
-      const grainFreq = GRAIN.cells / Math.max(size.x, size.y, size.z, 1e-6);
-      const glossy = new Map<THREE.Material, THREE.MeshPhysicalMaterial>();
+  new GLTFLoader().loadAsync(o.modelUrl).then(
+    ({ scene: model }) => {
+      // clay: the model's own materials and textures go; one matte colour for all of him
+      const clay = new THREE.MeshStandardMaterial({ color: CLAY.color, roughness: CLAY.roughness, metalness: 0 });
       model.traverse((n) => {
         const mesh = n as THREE.Mesh;
         const m = mesh.material as THREE.MeshStandardMaterial | undefined;
         if (!mesh.isMesh || !m?.isMeshStandardMaterial) return;
-        let g = glossy.get(m);
-        if (!g) {
-          // copy the standard properties only (the physical copy expects a physical source),
-          // then put back the physical shader's defines that the copy replaced
-          g = new THREE.MeshPhysicalMaterial();
-          THREE.MeshStandardMaterial.prototype.copy.call(g, m);
-          g.defines = { STANDARD: '', PHYSICAL: '' };
-          if (mesh.name === config.head) {
-            // the head is matte plastic: no lacquer, a soft sheen only
-            g.roughness = 0.62;
-            g.clearcoat = 0;
-          } else {
-            g.roughness = Math.min(m.roughness, 0.34);
-            g.clearcoat = 1;
-            g.clearcoatRoughness = 0.04;
-          }
-          g.specularIntensity = 1;
-          g.envMapIntensity = 2.1;
-          grain(g, grainFreq, mesh.name === config.head); // the head also gets the LED strip
-          glossy.set(m, g);
-          m.dispose();
-        }
-        mesh.material = g;
+        mesh.frustumCulled = false; // a skinned mesh's bounds are its rest pose's
+        for (const t of [m.map, m.normalMap, m.metalnessMap, m.roughnessMap]) t?.dispose();
+        m.dispose();
+        mesh.material = clay;
       });
-      const head = model.getObjectByName(config.head);
-      if (!head) console.warn(`[hero] no "${config.head}" in the model`);
       rig.stage = new THREE.Group();
       rig.body = new THREE.Group();
       rig.body.add(model);
       rig.stage.add(rig.body);
       scene.add(rig.stage);
       model.updateMatrixWorld(true);
-      rig.pivot = new THREE.Group();
-      rig.pivot.position.fromArray(config.pivot);
-      rig.pivot.rotation.order = 'YXZ';
-      model.add(rig.pivot);
-      rig.pivot.updateMatrixWorld(true);
-      if (head) rig.pivot.attach(head);
+      const head = model.getObjectByName(config.head);
+      if (!head?.parent) {
+        console.warn(`[hero] no "${config.head}" bone in the model`);
+        return;
+      }
+      headRest.copy(head.quaternion);
+      model.getWorldQuaternion(headParentInv).invert();
+      head.parent.getWorldQuaternion(headParent).premultiply(headParentInv);
+      headParentInv.copy(headParent).invert();
+      rig.head = head;
     },
     () => fail(),
   );
@@ -408,6 +354,8 @@ export function mountHeroScene(o: {
 
   // ── loop ──
   const headScreen = new THREE.Vector3();
+  const headTurn = new THREE.Quaternion();
+  const headEuler = new THREE.Euler(0, 0, 0, 'YXZ');
   const cur = { yaw: 0, pitch: 0 };
   const clock = new THREE.Clock();
   const D2R = THREE.MathUtils.degToRad;
@@ -472,12 +420,10 @@ export function mountHeroScene(o: {
     const dt = Math.min(clock.getDelta(), 0.05);
     const f = flashLevel(clock.elapsedTime);
     flash.intensity = FLASH.peak * f;
-    scene.environmentIntensity = 1 + 1.2 * f; // the room reflections brighten with it
-    glowUniform.value = GLOW.strength * (1 + GLOW.flashBoost * f); // and so does his edge glow
-    ledTick(clock.elapsedTime, reduceMotion);
+    scene.environmentIntensity = 1 + 1.2 * f; // the room's light brightens with it
     const t = clock.elapsedTime;
     const c = config;
-    if (rig.pivot && rig.body && rig.stage) {
+    if (rig.head && rig.body && rig.stage) {
       let tx = 0;
       let ty = 0;
       const idle = !hasPointer || performance.now() - lastMove > c.idleAfterMs;
@@ -485,7 +431,7 @@ export function mountHeroScene(o: {
         tx = Math.sin(t * 0.35) * 0.45;
         ty = Math.sin(t * 0.23 + 1.2) * 0.25;
       } else if (!idle) {
-        rig.pivot.getWorldPosition(headScreen).project(camera);
+        rig.head.getWorldPosition(headScreen).project(camera);
         tx = THREE.MathUtils.clamp((pointer.x - headScreen.x) * 1.1, -1, 1);
         ty = THREE.MathUtils.clamp((pointer.y - headScreen.y) * 1.1, -1, 1);
       }
@@ -493,8 +439,9 @@ export function mountHeroScene(o: {
       cur.yaw += (tx * D2R(c.maxYawDeg) - cur.yaw) * k;
       cur.pitch += (-ty * D2R(c.maxPitchDeg) - cur.pitch) * k;
       rig.body.rotation.y = cur.yaw * c.torsoShare;
-      rig.pivot.rotation.y = cur.yaw * (1 - c.torsoShare);
-      rig.pivot.rotation.x = cur.pitch;
+      headEuler.set(cur.pitch, cur.yaw * (1 - c.torsoShare), 0);
+      headTurn.setFromEuler(headEuler);
+      rig.head.quaternion.copy(headParentInv).multiply(headTurn).multiply(headParent).multiply(headRest);
       rig.body.position.y = reduceMotion ? 0 : Math.sin(t * 1.6) * 0.0025;
       const s = c.robotScale;
       const cy = (FRAME.top + FRAME.bottom) / 2;
@@ -566,60 +513,25 @@ export function mountHeroScene(o: {
   update();
 }
 
-/** Post settings: ambient occlusion `aoRadius` (world units) and how much it darkens (0..1);
- * bloom: linear brightness where glints start to bloom, the softness of that start, and how
- * strong the bloom is */
-const POST = { aoRadius: 0.05, aoStrength: 0.8, bloomThreshold: 1.6, bloomKnee: 0.4, bloomStrength: 0.22 };
+/** Post settings: ambient occlusion `aoRadius` (world units) and how much it darkens (0..1) */
+const POST = { aoRadius: 0.05, aoStrength: 0.8 };
 
-const BLOOM_PREFILTER = `
-uniform sampler2D src; uniform vec2 texel; uniform float threshold, knee;
-varying vec2 vUv;
-void main(){
-  vec3 c = 0.25 * (texture2D(src, vUv + texel * vec2(-0.5, -0.5)).rgb + texture2D(src, vUv + texel * vec2(0.5, -0.5)).rgb
-                 + texture2D(src, vUv + texel * vec2(-0.5, 0.5)).rgb + texture2D(src, vUv + texel * vec2(0.5, 0.5)).rgb);
-  float br = max(c.r, max(c.g, c.b));
-  float soft = clamp(br - threshold + knee, 0.0, 2.0 * knee);
-  soft = soft * soft / (4.0 * knee + 1e-4);
-  gl_FragColor = vec4(c * max(soft, br - threshold) / max(br, 1e-4), 1.0);
-}`;
-const BLOOM_DOWN = `
-uniform sampler2D src; uniform vec2 texel;
-varying vec2 vUv;
-void main(){
-  vec3 s = texture2D(src, vUv).rgb * 4.0;
-  s += texture2D(src, vUv - texel).rgb + texture2D(src, vUv + texel).rgb;
-  s += texture2D(src, vUv + vec2(texel.x, -texel.y)).rgb + texture2D(src, vUv - vec2(texel.x, -texel.y)).rgb;
-  gl_FragColor = vec4(s / 8.0, 1.0);
-}`;
-const BLOOM_UP = `
-uniform sampler2D src; uniform vec2 texel;
-varying vec2 vUv;
-void main(){
-  vec3 s = texture2D(src, vUv + vec2(-2.0, 0.0) * texel).rgb + texture2D(src, vUv + vec2(2.0, 0.0) * texel).rgb;
-  s += texture2D(src, vUv + vec2(0.0, -2.0) * texel).rgb + texture2D(src, vUv + vec2(0.0, 2.0) * texel).rgb;
-  s += 2.0 * (texture2D(src, vUv + vec2(-1.0, -1.0) * texel).rgb + texture2D(src, vUv + vec2(1.0, -1.0) * texel).rgb
-            + texture2D(src, vUv + vec2(-1.0, 1.0) * texel).rgb + texture2D(src, vUv + vec2(1.0, 1.0) * texel).rgb);
-  gl_FragColor = vec4(s / 12.0, 1.0);
-}`;
 const COMPOSITE = `
-uniform sampler2D robot, ao, bloom;
-uniform float aoStrength, bloomStrength;
+uniform sampler2D robot, ao;
+uniform float aoStrength;
 varying vec2 vUv;
 void main(){
   vec4 r = texture2D(robot, vUv);
   float a = r.a;
   vec3 base = a > 1e-4 ? r.rgb / a : vec3(0.0);
   base *= mix(1.0, texture2D(ao, vUv).r, aoStrength);
-  vec3 b = texture2D(bloom, vUv).rgb * bloomStrength;
-  vec3 inside = linearToOutputTexel(vec4(toneMapping(base + b), 1.0)).rgb;
-  vec3 outside = linearToOutputTexel(vec4(toneMapping(b), 1.0)).rgb;
-  gl_FragColor = vec4(inside * a + outside * (1.0 - a), a);
+  gl_FragColor = vec4(linearToOutputTexel(vec4(toneMapping(base), 1.0)).rgb * a, a);
 }`;
 
 /** The reflections on his lacquer: a photo studio instead of a generic room — a grey cyc,
  * lighter overhead and dark towards the floor, with big softboxes (above-front, two tall
  * strips at the sides, a warm one behind, a low fill card) bright enough (HDR) to give long,
- * clean highlights that bloom */
+ * clean highlights */
 function studioEnvironment() {
   const env = new THREE.Scene();
   env.add(
@@ -649,89 +561,4 @@ function studioEnvironment() {
   box(4, 0.8, 6, 0xffd9c4, 0, 2.5, -4); // warm rim, behind
   box(4, 1.5, 1.5, 0xffffff, 0, -0.5, 4.5); // low fill card, front
   return env;
-}
-
-/** The robot's surface grain: a fine, slightly uneven texture like a powder-coated or
- * bead-blasted part, felt in how the light catches it (not painted on). `cells` across the
- * model's longest side; `bump` how far it tilts the surface (about the steepest slope); `rough` how much the gloss varies
- * between patches */
-const GRAIN = { cells: 420, bump: 0.12, rough: 0.22 };
-
-/** The robot's edge glow: a warm light that wraps his silhouette, strongest where the
- * surface turns away from the camera (fresnel). `strength` 0 = off; `power` higher = a
- * thinner rim; `flashBoost` how much brighter it gets during a photographer's flash */
-const GLOW = { color: [1.0, 0.78, 0.6], strength: 0.45, power: 4.5, flashBoost: 1.5 };
-const glowUniform = { value: GLOW.strength };
-
-/** Adds the grain to `mat`: 3D value noise on each part's own coordinates (the model's UVs
- * are an AI unwrap in many small islands, a tiled map would show their seams), so it sticks
- * to the surface as the head turns. It tilts the base surface's normal (the clear coat on top
- * stays smooth, so reflections stay crisp) and varies its roughness a little, in larger
- * patches */
-function grain(mat: THREE.MeshPhysicalMaterial, freq: number, led = false) {
-  mat.onBeforeCompile = (shader) => {
-    if (led) ledStrip(shader);
-    shader.uniforms.grainFreq = { value: freq };
-    shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vGrainPos;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGrainPos = position;');
-    shader.fragmentShader = shader.fragmentShader
-      .replace(
-        '#include <common>',
-        `#include <common>
-        varying vec3 vGrainPos;
-        uniform float grainFreq;
-        float grainHash(vec3 p) {
-          p = fract(p * 0.3183099 + 0.1);
-          p *= 17.0;
-          return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
-        }
-        float grainNoise(vec3 x) {
-          vec3 i = floor(x);
-          vec3 f = fract(x);
-          f = f * f * (3.0 - 2.0 * f);
-          return mix(
-            mix(mix(grainHash(i), grainHash(i + vec3(1, 0, 0)), f.x),
-                mix(grainHash(i + vec3(0, 1, 0)), grainHash(i + vec3(1, 1, 0)), f.x), f.y),
-            mix(mix(grainHash(i + vec3(0, 0, 1)), grainHash(i + vec3(1, 0, 1)), f.x),
-                mix(grainHash(i + vec3(0, 1, 1)), grainHash(i + vec3(1, 1, 1)), f.x), f.y),
-            f.z);
-        }`,
-      )
-      .replace(
-        '#include <roughnessmap_fragment>',
-        `#include <roughnessmap_fragment>
-        vec3 grainP = vGrainPos * grainFreq;
-        float grainH = grainNoise(grainP) * 0.65 + grainNoise(grainP * 2.3) * 0.35;
-        roughnessFactor = clamp(roughnessFactor * (1.0 + ${GRAIN.rough.toFixed(3)} * (grainNoise(grainP * 0.08) - 0.5) * 2.0), 0.04, 1.0);`,
-      )
-      .replace(
-        '#include <normal_fragment_maps>',
-        `#include <normal_fragment_maps>
-        {
-          // bump from the grain's slope on screen (as three's bump map does)
-          vec3 sx = dFdx(-vViewPosition);
-          vec3 sy = dFdy(-vViewPosition);
-          float hx = dFdx(grainH);
-          float hy = dFdy(grainH);
-          vec3 r1 = cross(sy, normal);
-          vec3 r2 = cross(normal, sx);
-          float det = dot(sx, r1);
-          vec3 slope = sign(det) * (hx * r1 + hy * r2);
-          normal = normalize(abs(det) * normal - (${GRAIN.bump.toFixed(3)} / grainFreq) * slope);
-        }`,
-      )
-      .replace(
-        '#include <opaque_fragment>',
-        `{
-          // edge glow (GLOW, above): fresnel on the smooth geometry normal, added as light
-          float glowRim = pow(1.0 - saturate(dot(normalize(vNormal), normalize(vViewPosition))), ${GLOW.power.toFixed(3)});
-          outgoingLight += vec3(${GLOW.color.map((c) => c.toFixed(3)).join(', ')}) * glowRim * glowLevel;
-        }
-        #include <opaque_fragment>`,
-      )
-      .replace('#include <common>', '#include <common>\nuniform float glowLevel;');
-    shader.uniforms.glowLevel = glowUniform;
-  };
-  mat.customProgramCacheKey = () => (led ? 'robot-grain-led' : 'robot-grain');
 }
