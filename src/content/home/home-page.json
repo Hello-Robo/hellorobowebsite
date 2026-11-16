@@ -92,7 +92,7 @@
     "damping": 4,
     "torsoShare": 0.15,
     "robotScale": 1.4,
-    "robotLiftOfFrame": -0.41,
+    "robotLiftOfFrame": -0.22,
     "bgRotationStrength": 0.45,
     "bgSameDirection": false,
     "bgTiles": 4,

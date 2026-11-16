@@ -8,7 +8,7 @@
  * https://www.figma.com/design/9SsfbCUY7KcxjZpCuRpDxf/Hello-Robo-Website-2026?node-id=10203-131
  * Mobile: slides "block 1 / block 2 / block" (10101:14507, 10101:14838, 10101:15206), 390×694.
  * Each slide's picture is a reel (data/reels.ts: Brand, UI, Video production) playing over
- * the Figma still, which shows until the video has a frame.
+ * black until its first frame (the Figma still shows only if the video can't load).
  *
  * Scroll (desktop): the block starts inside the page layout (40 side margins, as the
  * Figma photo block 1648×1117) and pins when it reaches the top. The first half
@@ -217,6 +217,8 @@ const slides = [
   .home-showcase__picture {
     position: absolute;
     inset: 0;
+    /* under the reel until its first frame (the still only shows if it can't load) */
+    background: var(--color-black);
   }
   .home-showcase :global(.home-showcase__photo) {
     position: absolute;

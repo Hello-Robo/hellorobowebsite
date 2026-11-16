@@ -1,10 +1,10 @@
 /**
  * Home hero — one WebGL scene (ported from the "robot-hero draft v2" prototype):
- * - the robot (public/models/hero-robot.glb: the Meshy "Character Robot", rigged, in its
- *   rest pose) as plain matte clay (CLAY below: one colour, no textures or effects, shaded by
- *   ambient occlusion), cropped at the torso; his head (the rig's Head bone) follows the
- *   mouse, the body takes a little of the turn; after a few seconds without the mouse he
- *   looks around on his own; he "breathes" slightly;
+ * - the robot (public/models/hero-robot.glb: the Meshy "Character Robot Faithful Copy", in
+ *   its own material and texture, shaded by ambient occlusion; his head is a separate object
+ *   cut off at the neck, its origin on the neck's axis) cropped at the torso; his head
+ *   follows the mouse, the body takes a little of the turn; after a few seconds without the
+ *   mouse he looks around on his own; he "breathes" slightly;
  * - now and then a photographer's flash lights him and the sphere for a moment and casts
  *   his soft shadow on it (only the light shows, not the flash itself);
  * - behind him the sticker graphics (public/images/home/hero-bg.jpg, an equirect 2:1
@@ -26,14 +26,14 @@ import { sfx } from './sound';
 import { reducedMotion } from './media-query';
 /** Defaults (the prototype's tuned values); the CMS overrides all but head */
 const DEFAULTS = {
-  head: 'Head', // the rig's bone that turns as the head (it hangs from the neck column)
+  head: 'head', // the object that turns as the head (its origin is on the neck's axis)
   maxYawDeg: 55, // head turn left / right
   maxPitchDeg: 18, // head tilt up / down
   damping: 4, // how fast the head catches up (higher = snappier)
   torsoShare: 0.15, // share of the turn taken by the whole body
   idleAfterMs: 4000, // looks around on his own after this long without the mouse
   robotScale: 1.4, // scaled around the frame centre
-  robotLiftOfFrame: -0.41, // vertical shift, share of the frame's height
+  robotLiftOfFrame: -0.22, // vertical shift, share of the frame's height
   bgRotationStrength: 0.45, // background turn relative to the head (1 = same angle)
   bgSameDirection: false, // false = the background turns against the head
   bgTiles: 4, // picture repeats round the sphere and top to bottom
@@ -54,8 +54,6 @@ const EDGE_BLUR = 2.5;
 // Part of the model kept in frame: from the chest to just above the head (model units,
 // the robot is 1 tall; his antennae reach 1.0).
 const FRAME = { top: 1.08, bottom: 0.54, width: 0.55 };
-// The clay he's made of: one matte colour in place of the model's textures
-const CLAY = { color: 0xb9b4ad, roughness: 0.92 };
 
 const BG_VERT = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
 const BG_FRAG = `
@@ -298,29 +296,13 @@ export function mountHeroScene(o: {
   document.addEventListener('pointerleave', () => (hasPointer = false));
   addEventListener('blur', () => (hasPointer = false));
 
-  // ── model + the head bone ──
-  // The head turns on its bone (config.head). The turn is meant round the model's own axes
-  // (yaw round its up, pitch round its sideways), whatever way the bone's own axes point, so
-  // it's taken into the bone's space: L' = P⁻¹ · R · P · L, with L the bone's rest rotation
-  // and P its parent's orientation in the model (fixed: no other bone moves).
+  // ── model + the head ──
+  // He keeps the materials and texture the model comes with. The head (config.head) is its
+  // own object, unrotated, with its origin on the neck's axis, so it turns in place.
   const rig: { stage?: THREE.Group; body?: THREE.Group; head?: THREE.Object3D } = {};
-  const headRest = new THREE.Quaternion();
-  const headParent = new THREE.Quaternion();
-  const headParentInv = new THREE.Quaternion();
   let live = false;
   new GLTFLoader().loadAsync(o.modelUrl).then(
     ({ scene: model }) => {
-      // clay: the model's own materials and textures go; one matte colour for all of him
-      const clay = new THREE.MeshStandardMaterial({ color: CLAY.color, roughness: CLAY.roughness, metalness: 0 });
-      model.traverse((n) => {
-        const mesh = n as THREE.Mesh;
-        const m = mesh.material as THREE.MeshStandardMaterial | undefined;
-        if (!mesh.isMesh || !m?.isMeshStandardMaterial) return;
-        mesh.frustumCulled = false; // a skinned mesh's bounds are its rest pose's
-        for (const t of [m.map, m.normalMap, m.metalnessMap, m.roughnessMap]) t?.dispose();
-        m.dispose();
-        mesh.material = clay;
-      });
       rig.stage = new THREE.Group();
       rig.body = new THREE.Group();
       rig.body.add(model);
@@ -328,14 +310,11 @@ export function mountHeroScene(o: {
       scene.add(rig.stage);
       model.updateMatrixWorld(true);
       const head = model.getObjectByName(config.head);
-      if (!head?.parent) {
-        console.warn(`[hero] no "${config.head}" bone in the model`);
+      if (!head) {
+        console.warn(`[hero] no "${config.head}" in the model`);
         return;
       }
-      headRest.copy(head.quaternion);
-      model.getWorldQuaternion(headParentInv).invert();
-      head.parent.getWorldQuaternion(headParent).premultiply(headParentInv);
-      headParentInv.copy(headParent).invert();
+      head.rotation.order = 'YXZ';
       rig.head = head;
     },
     () => fail(),
@@ -354,8 +333,6 @@ export function mountHeroScene(o: {
 
   // ── loop ──
   const headScreen = new THREE.Vector3();
-  const headTurn = new THREE.Quaternion();
-  const headEuler = new THREE.Euler(0, 0, 0, 'YXZ');
   const cur = { yaw: 0, pitch: 0 };
   const clock = new THREE.Clock();
   const D2R = THREE.MathUtils.degToRad;
@@ -439,9 +416,7 @@ export function mountHeroScene(o: {
       cur.yaw += (tx * D2R(c.maxYawDeg) - cur.yaw) * k;
       cur.pitch += (-ty * D2R(c.maxPitchDeg) - cur.pitch) * k;
       rig.body.rotation.y = cur.yaw * c.torsoShare;
-      headEuler.set(cur.pitch, cur.yaw * (1 - c.torsoShare), 0);
-      headTurn.setFromEuler(headEuler);
-      rig.head.quaternion.copy(headParentInv).multiply(headTurn).multiply(headParent).multiply(headRest);
+      rig.head.rotation.set(cur.pitch, cur.yaw * (1 - c.torsoShare), 0);
       rig.body.position.y = reduceMotion ? 0 : Math.sin(t * 1.6) * 0.0025;
       const s = c.robotScale;
       const cy = (FRAME.top + FRAME.bottom) / 2;
