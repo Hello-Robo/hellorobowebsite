@@ -1,7 +1,8 @@
 /**
  * Home hero — one WebGL scene (ported from the "robot-hero draft v2" prototype):
- * - the robot (public/models/hero-robot.glb: the Meshy "Character Robot Faithful Copy", in
- *   its own material and texture, shaded by ambient occlusion; his head is a separate object
+ * - the robot (public/models/robot-ts.glb: TurboSquid's "Robot TS", converted from its FBX in
+ *   Blender — rest pose, no rig, 1 tall, 2K basic PBR maps: colour, normal, roughness,
+ *   metal and the blue glow — shaded by ambient occlusion; his head is a separate object
  *   cut off at the neck, its origin on the neck's axis) cropped at the torso; his head
  *   follows the mouse, the body takes a little of the turn; after a few seconds without the
  *   mouse he looks around on his own; he "breathes" slightly;
