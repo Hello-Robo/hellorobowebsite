@@ -344,28 +344,40 @@ export function mountHeroScene(o: {
           side: src.side,
         });
       } else if (src.name.startsWith('joint')) {
-        // frosted glass: milky, see-through, a soft sheen on top; the ribs stay (normal map)
-        m.material = new THREE.MeshPhysicalMaterial({
+        // frosted glass: thick and milky — the background only a soft shape through it,
+        // lit from within (it scatters light, never goes dark), whiter and more solid towards
+        // its edges (fresnel), with a fine sandblasted grain; the ribs stay (normal map)
+        const glass = new THREE.MeshPhysicalMaterial({
           name: src.name,
-          color: 0xf2f6f8,
-          // a little light of its own: frosted glass scatters light through, never goes dark
-          emissive: 0x3a4044,
+          color: 0xf6f9fb,
+          emissive: 0x6a7276,
           normalMap: src.normalMap,
           normalScale: src.normalScale,
-          roughness: 0.6,
+          roughness: 0.9,
           metalness: 0,
           sheen: 1,
           sheenColor: 0xffffff,
-          sheenRoughness: 0.6,
-          clearcoat: 0.6,
-          clearcoatRoughness: 0.45,
-          envMapIntensity: 0.9,
+          sheenRoughness: 0.9,
+          clearcoat: 0.25,
+          clearcoatRoughness: 0.7,
+          envMapIntensity: 0.7,
           transparent: true,
-          opacity: 0.62,
+          opacity: 0.78,
           // only the nearest surface of a piece: a ribbed ring's inside faces showing through
           // its outside made a jumble of triangles
           depthWrite: true,
         });
+        glass.onBeforeCompile = (sh) => {
+          sh.fragmentShader = sh.fragmentShader.replace(
+            '#include <opaque_fragment>',
+            `#include <opaque_fragment>
+  float frE = pow(1.0 - abs(dot(normalize(normal), normalize(vViewPosition))), 2.0);
+  float grain = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
+  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.05), frE * 0.35) * (1.0 + grain * 0.06);
+  gl_FragColor.a = clamp(mix(gl_FragColor.a, 0.97, frE) + grain * 0.05, 0.0, 1.0);`,
+          );
+        };
+        m.material = glass;
         m.renderOrder = 1;
       } else if (src.name.startsWith('visor')) {
         // the black visor as a display: glossy black glass, the ticker glowing on it (on its
