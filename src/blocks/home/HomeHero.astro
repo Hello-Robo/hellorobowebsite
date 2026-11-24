@@ -13,6 +13,11 @@
  * CRT: Figma's CRT screen shader (CrtScreen, overlay) lies over the picture and the robot,
  * with the Showcase section's settings; the title sits above it, untouched. The hero's bottom
  * edge is straight (no corner notches).
+ *
+ * Parallax: scrolling down, the hero itself scrolls away as normal, but the scene and the
+ * title inside it drift down at 40% of the scroll, so they leave more slowly than the box
+ * (clipped by its overflow). The CRT layer stays with the box, like glass. Desktop only;
+ * none with reduced motion.
  */
 import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
@@ -63,6 +68,23 @@ const heroData = JSON.stringify({ ...heroSettings, background: background?.src ?
   // if it can't run
   const stills = () => document.querySelector('.home-hero')?.classList.add('is-robot-fallback');
   import('../../scripts/hero-robot').catch(stills);
+
+  // the slow parallax (desktop only, not with reduced motion): the scene and title move down
+  // by 40% of how far the hero has scrolled up, while it's on screen
+  import { isDesktop, reducedMotion } from '../../scripts/media-query';
+  const hero = document.querySelector<HTMLElement>('.home-hero');
+  if (hero && isDesktop() && !reducedMotion) {
+    const RATE = 0.4;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const r = hero.getBoundingClientRect();
+      if (r.bottom < 0) return; // scrolled past: leave it where it was
+      hero.style.setProperty('--hero-shift', `${Math.max(0, -r.top) * RATE}px`);
+    };
+    addEventListener('scroll', () => (frame ||= requestAnimationFrame(update)), { passive: true });
+    update();
+  }
 </script>
 
 <style>
@@ -76,6 +98,12 @@ const heroData = JSON.stringify({ ...heroSettings, background: background?.src ?
   .home-hero :global(.home-hero__scene) {
     position: absolute;
     inset: 0;
+  }
+  /* the parallax drift (set by the script above on desktop) */
+  .home-hero :global(.home-hero__scene),
+  .home-hero__title {
+    transform: translate3d(0, var(--hero-shift, 0px), 0);
+    will-change: transform;
   }
   /* Sphere: 1784×1118, centred */
   .home-hero :global(.home-hero__sphere) {
