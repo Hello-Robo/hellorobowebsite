@@ -362,7 +362,9 @@ export function mountHeroScene(o: {
           envMapIntensity: 0.9,
           transparent: true,
           opacity: 0.62,
-          depthWrite: false,
+          // only the nearest surface of a piece: a ribbed ring's inside faces showing through
+          // its outside made a jumble of triangles
+          depthWrite: true,
         });
         m.renderOrder = 1;
       } else if (src.name.startsWith('visor')) {
