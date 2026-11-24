@@ -8,10 +8,10 @@
  * each where it sits in the box (a row of photos, e.g. the Careers strip).
  *
  * Settings default to the values on the menu photo (Figma 10194:1895): curvature 0
- * (flat glass — no rounded corners), scanlines 38 / size 3, shadow mask 9 / pitch 12,
- * radial dispersion 17, flicker 62, static 18 / size 1.5, roll speed 0.93, jitter 0,
+ * (flat glass — no rounded corners), scanlines 38, shadow mask 9, flicker 62, static 18, roll speed 0.93, jitter 0,
  * vignette 13, brightness 0, speed 1.01. Pixel sizes are design pixels (CSS px), as Figma
- * renders them at 1×.
+ * renders them at 1×. The grain is finer and crisper than Figma's (2026-11-24): scanline
+ * size 2 (Figma 3), mask pitch 6 (12), static size 1 (1.5), colour fringing 8 (17).
  * Animates only while visible; with reduced motion it draws one still frame. Without
  * WebGL the canvas hides and the plain image shows. Phones and tablets (no mouse, or up to
  * 1023px wide) get the plain image too: each canvas is a WebGL context of its own, and a
@@ -32,16 +32,16 @@ interface Props {
 const figma = {
   mask: 9,
   maskType: 2,
-  maskPitch: 12,
+  maskPitch: 6,
   curvature: 0,
   clipToCurve: true,
   scanlines: 38,
-  scanlineSize: 3,
-  aberration: 17,
+  scanlineSize: 2,
+  aberration: 8,
   aberrationScheme: 0,
   flicker: 62,
   noise: 18,
-  noiseSize: 1.5,
+  noiseSize: 1,
   rollSpeed: 0.93,
   jitter: 0,
   vignette: 13,
@@ -391,8 +391,9 @@ void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
     };
     const resize = () => {
       const r = box.getBoundingClientRect();
-      // an overlay is soft texture over a video: design pixels are enough, and much lighter
-      const dpr = overlay ? 1 : Math.min(2, window.devicePixelRatio || 1);
+      // full device resolution, overlays too: drawn at design pixels and stretched 2× on a
+      // retina screen, the fine scanlines and mask came out soft and blurred
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
       const w = Math.round(r.width * dpr);
       const h = Math.round(r.height * dpr);
       if (canvas.width !== w || canvas.height !== h) {

@@ -10,6 +10,6 @@ export const CRT_SUBTLE = {
   flicker: 12,
   noise: 4,
   vignette: 9,
-  aberration: 6,
+  aberration: 3,
   rollSpeed: 0.35,
 };
