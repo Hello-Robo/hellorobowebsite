@@ -16,7 +16,7 @@ if (hero && slot) {
   mountHeroScene({
     host: slot,
     className: 'home-hero__robot-canvas',
-    modelUrl: '/models/hero-robot.glb',
+    modelUrl: '/models/robot-ts.glb',
     bgUrl: background,
     config,
     label: 'Hello Robo service robot',

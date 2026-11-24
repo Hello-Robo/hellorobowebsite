@@ -1,7 +1,8 @@
 /**
  * Home hero — one WebGL scene (ported from the "robot-hero draft v2" prototype):
- * - the robot (public/models/hero-robot.glb: the Meshy "Character Robot Faithful Copy", in
- *   its own material and texture, shaded by ambient occlusion; his head is a separate object
+ * - the robot (public/models/robot-ts.glb: TurboSquid's "Robot TS", converted from its FBX in
+ *   Blender — rest pose, no rig, 1 tall, 2K basic PBR maps: colour, normal, roughness,
+ *   metal and the blue glow — shaded by ambient occlusion; his head is a separate object
  *   cut off at the neck, its origin on the neck's axis) cropped at the torso; his head
  *   follows the mouse, the body takes a little of the turn; after a few seconds without the
  *   mouse he looks around on his own; he "breathes" slightly;
@@ -291,6 +292,7 @@ export function mountHeroScene(o: {
       rig.body.add(model);
       rig.stage.add(rig.body);
       scene.add(rig.stage);
+      dressRobot(model);
       model.updateMatrixWorld(true);
       const head = model.getObjectByName(config.head);
       if (!head) {
@@ -314,6 +316,89 @@ export function mountHeroScene(o: {
     () => fail(),
   );
 
+  // ── his materials ──
+  // The model comes with three: "robot" (the white shell and its dark panels), "joint" (the
+  // small dark pieces: shoulder, neck and wrist rings, discs, the neck's wires) and "visor"
+  // (the head's black front), split by colour when it was converted.
+  const visor = visorScreen();
+  function dressRobot(model: THREE.Object3D) {
+    model.traverse((m) => {
+      if (!(m instanceof THREE.Mesh)) return;
+      const src = m.material as THREE.MeshStandardMaterial;
+      if (src.name.startsWith('robot')) {
+        // the white shell: glossier, a clear lacquer over its own roughness
+        m.material = new THREE.MeshPhysicalMaterial({
+          name: src.name,
+          map: src.map,
+          normalMap: src.normalMap,
+          normalScale: src.normalScale,
+          roughnessMap: src.roughnessMap,
+          metalnessMap: src.metalnessMap,
+          emissiveMap: src.emissiveMap,
+          emissive: src.emissive,
+          roughness: 0.6,
+          metalness: 1,
+          clearcoat: 0.8,
+          clearcoatRoughness: 0.1,
+          envMapIntensity: 1.35,
+          side: src.side,
+        });
+      } else if (src.name.startsWith('joint')) {
+        // frosted glass: thick and milky — the background only a soft shape through it,
+        // lit from within (it scatters light, never goes dark), whiter and more solid towards
+        // its edges (fresnel), with a fine sandblasted grain; the ribs stay (normal map)
+        const glass = new THREE.MeshPhysicalMaterial({
+          name: src.name,
+          color: 0xf6f9fb,
+          emissive: 0x6a7276,
+          normalMap: src.normalMap,
+          normalScale: src.normalScale,
+          roughness: 0.9,
+          metalness: 0,
+          sheen: 1,
+          sheenColor: 0xffffff,
+          sheenRoughness: 0.9,
+          clearcoat: 0.25,
+          clearcoatRoughness: 0.7,
+          envMapIntensity: 0.7,
+          transparent: true,
+          opacity: 0.78,
+          // only the nearest surface of a piece: a ribbed ring's inside faces showing through
+          // its outside made a jumble of triangles
+          depthWrite: true,
+        });
+        glass.onBeforeCompile = (sh) => {
+          sh.fragmentShader = sh.fragmentShader.replace(
+            '#include <opaque_fragment>',
+            `#include <opaque_fragment>
+  float frE = pow(1.0 - abs(dot(normalize(normal), normalize(vViewPosition))), 2.0);
+  float grain = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
+  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.05), frE * 0.35) * (1.0 + grain * 0.06);
+  gl_FragColor.a = clamp(mix(gl_FragColor.a, 0.97, frE) + grain * 0.05, 0.0, 1.0);`,
+          );
+        };
+        m.material = glass;
+        m.renderOrder = 1;
+      } else if (src.name.startsWith('visor')) {
+        // the black visor as a display: glossy black glass, the ticker glowing on it (on its
+        // own front-on UVs, channel 1); no eyes
+        const mat = new THREE.MeshPhysicalMaterial({
+          name: src.name,
+          color: 0x040506,
+          normalMap: src.normalMap,
+          normalScale: src.normalScale,
+          roughness: 0.12,
+          metalness: 0,
+          clearcoat: 1,
+          clearcoatRoughness: 0.05,
+          emissive: 0xffffff,
+          emissiveMap: visor.texture,
+        });
+        m.material = mat;
+      }
+    });
+  }
+
   // ── loop ──
   const headScreen = new THREE.Vector3();
   const cur = { yaw: 0, pitch: 0 };
@@ -333,6 +418,7 @@ export function mountHeroScene(o: {
     raf = 0;
     const dt = Math.min(clock.getDelta(), 0.05);
     const t = clock.elapsedTime;
+    visor.update(reduceMotion ? 0 : t);
     const c = config;
     if (rig.head && rig.body && rig.stage) {
       let tx = 0;
@@ -454,4 +540,73 @@ function studioEnvironment() {
   box(4, 0.8, 6, 0xffd9c4, 0, 2.5, -4); // warm rim, behind
   box(4, 1.5, 1.5, 0xffffff, 0, -0.5, 4.5); // low fill card, front
   return env;
+}
+
+/** The visor's display: three rows of big text in the brand orange running right to left —
+ * where the visitor is and the weather there (from /api/here), with a fallback line until it
+ * answers or if it can't. Drawn into a canvas 30 times a second. */
+function visorScreen() {
+  const SIZE = 512;
+  const c = document.createElement('canvas');
+  c.width = c.height = SIZE;
+  const g = c.getContext('2d')!;
+  const texture = new THREE.CanvasTexture(c);
+  texture.flipY = false; // glTF UVs: v runs down
+  texture.channel = 1; // the visor's own front-on UVs
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const FONT = '600 {px}px ui-monospace, Menlo, monospace';
+  /** each row: its text, size, height on the visor (share of it), speed (px/s), brightness */
+  const rows = [
+    { text: 'HELLO FROM HELLO ROBO', px: 92, y: 0.2, speed: 70, alpha: 0.55 },
+    { text: 'MAKE THE WORLD SAY YES', px: 150, y: 0.47, speed: 110, alpha: 1 },
+    { text: 'DESIGN FOR ROBOTICS', px: 92, y: 0.74, speed: 85, alpha: 0.55 },
+  ];
+  const SEP = '   ·   ';
+  /** the text repeated, measured once per change */
+  const widths = rows.map(() => 0);
+  const measure = () =>
+    rows.forEach((r, i) => {
+      g.font = FONT.replace('{px}', String(r.px));
+      widths[i] = g.measureText(r.text + SEP).width;
+    });
+  measure();
+  fetch('/api/here')
+    .then((r) => (r.ok ? r.json() : null))
+    .then((d) => {
+      if (!d?.city && d?.temp == null) return;
+      const place = [d.city, d.country].filter(Boolean).join(', ').toUpperCase();
+      if (place) rows[0].text = `HELLO, ${place}`;
+      if (d.temp != null) {
+        rows[1].text = `${d.temp}°${d.unit}  ${String(d.weather || '').toUpperCase()}`.trim();
+        rows[2].text = `WIND ${d.wind} ${String(d.windUnit).toUpperCase()}${SEP}HUMIDITY ${d.humidity}%`;
+      }
+      measure();
+      last = -1; // redraw with it on the next frame (even when still)
+    })
+    .catch(() => {});
+  let last = -1;
+  const draw = (t: number) => {
+    g.fillStyle = '#000';
+    g.fillRect(0, 0, SIZE, SIZE);
+    g.textBaseline = 'middle';
+    rows.forEach((r, i) => {
+      g.font = FONT.replace('{px}', String(r.px));
+      g.fillStyle = `rgba(255,107,3,${r.alpha})`;
+      const w = widths[i];
+      const line = r.text + SEP;
+      for (let x = -((t * r.speed) % w); x < SIZE; x += w) g.fillText(line, x, r.y * SIZE);
+    });
+    texture.needsUpdate = true;
+  };
+  draw(0);
+  return {
+    texture,
+    /** `t`: seconds; 0 (reduced motion) keeps it still (but still shows the text) */
+    update(t: number) {
+      const step = Math.floor(t * 30); // 30 redraws a second
+      if (step === last) return;
+      last = step;
+      draw(t);
+    },
+  };
 }
