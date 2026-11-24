@@ -2,7 +2,7 @@
  * Sound design — after toyfight.co and pensatori-irrazionali.com: short, quiet UI sounds,
  * synthesized in the browser (Web Audio), so there are no audio files to load or license.
  *
- * Every play varies (a few takes of each, pitch / level / timing nudged at random):
+ * Every play varies (pitch / level / timing nudged at random):
  *  click    a tiny, quiet tick on press, matched to toyfight.co's button sound: a ~3.1 kHz
  *           blip gone in under 2 ms, with a faint ring for ~20 ms after it
  *  error    a low two-note "nope" when the contact form shows an error, or an NDA project is
@@ -11,30 +11,24 @@
  *  print    the contact printer feeding a receipt, as a clock movement: struck metallic
  *           tick-tocks, speeding up and slowing down with the paper (as long as the caller
  *           says)
- *  shutter  a real film camera's shutter with each photographer's flash in the home hero:
- *           public/sounds/shutter.m4a, from "Werra.wav" by hmilleo (freesound.org/s/409093,
- *           CC0), a little different each time (pitch and level); a synthesized click until
- *           it has loaded
  *
  * Browsers only let a page make sound after the visitor has clicked, tapped or pressed a key,
- * so everything is silent until then (on desktop the audio is set up and the shutter loaded
- * at once, so it plays from the very first flash wherever the browser allows it, and from
- * the first one after a click everywhere else). Off when the visitor has turned it off
+ * so everything is silent until then (on desktop the audio is set up at once, so it plays
+ * from the first sound wherever the browser allows it, and after a click everywhere else). Off when the visitor has turned it off
  * (localStorage "sound" = "off"). Presses on buttons and links click on their own (below);
  * the form sounds are called by the contact block. Hovering makes no sound.
  */
 
-type Name = 'click' | 'error' | 'success' | 'shutter' | 'print';
+type Name = 'click' | 'error' | 'success' | 'print';
 
 const VOLUME = 0.32;
 
 let ctx: AudioContext | null = null;
 let out: GainNode | null = null;
 let noise: AudioBuffer | null = null;
-let shutter: AudioBuffer | null = null;
 const last: Partial<Record<Name, number>> = {};
 /** least ms between two of the same sound */
-const GAP: Record<Name, number> = { click: 40, error: 300, success: 600, shutter: 90, print: 500 };
+const GAP: Record<Name, number> = { click: 40, error: 300, success: 600, print: 500 };
 
 const off = () => {
   try {
@@ -44,7 +38,7 @@ const off = () => {
   }
 };
 
-/** sets up the audio graph and loads the recorded shutter */
+/** sets up the audio graph */
 function init() {
   const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!AC) return;
@@ -56,15 +50,6 @@ function init() {
   soft.type = 'lowpass';
   soft.frequency.value = 9000;
   out.connect(soft).connect(ctx.destination);
-  // the recorded shutter: decoding works while the audio is still waiting for a click, so
-  // the first flash after it already has the real sound
-  const c = ctx;
-  // (only the desktop hero's flash uses it)
-  if (matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px)').matches) fetch('/sounds/shutter.m4a')
-    .then((r) => r.arrayBuffer())
-    .then((b) => c.decodeAudioData(b))
-    .then((buf) => (shutter = buf))
-    .catch(() => {});
   noise = ctx.createBuffer(1, Math.round(ctx.sampleRate * 0.05), ctx.sampleRate);
   const d = noise.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -88,8 +73,8 @@ function unlock() {
 }
 // (iOS only counts the end of a tap, other browsers the start)
 for (const type of ['pointerdown', 'pointerup', 'touchend', 'keydown']) addEventListener(type, unlock, { passive: true, capture: true });
-// set up and load straight away; browsers that allow sound before a click (a site the visitor
-// often plays sound on, or set to allow it) then play from the very first flash. Desktop only:
+// set up straight away; browsers that allow sound before a click (a site the visitor often
+// plays sound on, or set to allow it) then play from the very first sound. Desktop only:
 // on phones it waits for the first tap as before
 if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
   try {
@@ -190,8 +175,8 @@ export function sfx(name: Name, seconds = 6) {
   if (now - (last[name] ?? -1e9) < GAP[name]) return;
   last[name] = now;
   const t = ctx.currentTime + 0.005;
-  // every play a little different: a few takes of each sound, then pitch, level and timing
-  // nudged at random — so a run of clicks never sounds like the same sample over and over
+  // every play a little different: pitch, level and timing nudged at random — so a run of
+  // clicks never sounds like the same sample over and over
   const p = vary(0.08); // pitch
   const v = vary(0.2); // level
   const d = vary(0.15); // timing
@@ -205,37 +190,6 @@ export function sfx(name: Name, seconds = 6) {
     case 'error':
       tone(t, 190 * p, 175 * p, 0.075 * d, 0.3 * v);
       tone(t + 0.11 * d, 150 * p, 135 * p, 0.13 * d, 0.3 * v);
-      break;
-    // a camera shutter: the mirror flips up (a bright click and a soft thunk), the shutter
-    // snaps a few tens of ms later; a few takes, like different cameras
-    case 'shutter':
-      if (shutter && ctx && out) {
-        const src = ctx.createBufferSource();
-        src.buffer = shutter;
-        src.playbackRate.value = vary(0.05);
-        const g = ctx.createGain();
-        g.gain.value = 1.6 * v;
-        src.connect(g).connect(out);
-        src.start(t);
-        break;
-      }
-      take(name, [
-        () => {
-          burst(t, 3200 * p, 0.018 * d, 0.5 * v);
-          tone(t, 190 * p, 110 * p, 0.045 * d, 0.22 * v, 'sine');
-          burst(t + 0.055 * d, 2400 * p, 0.022 * d, 0.42 * v);
-        },
-        () => {
-          burst(t, 4200 * p, 0.012 * d, 0.45 * v);
-          tone(t, 220 * p, 130 * p, 0.04 * d, 0.2 * v, 'sine');
-          burst(t + 0.04 * d, 3000 * p, 0.016 * d, 0.38 * v);
-        },
-        () => {
-          burst(t, 2600 * p, 0.022 * d, 0.5 * v);
-          tone(t, 160 * p, 95 * p, 0.06 * d, 0.24 * v, 'sine');
-          burst(t + 0.075 * d, 2000 * p, 0.03 * d, 0.4 * v);
-        },
-      ]);
       break;
     case 'print':
       printing(t, seconds, v);
@@ -314,15 +268,6 @@ function printing(at: number, dur: number, vol: number) {
 
 /** 1 ± up to `amount`, at random */
 const vary = (amount: number) => 1 + (Math.random() * 2 - 1) * amount;
-
-/** plays one of a sound's takes at random, never the same one twice in a row */
-const lastTake: Partial<Record<Name, number>> = {};
-function take(name: Name, takes: (() => void)[]) {
-  let i = Math.floor(Math.random() * takes.length);
-  if (i === lastTake[name] && takes.length > 1) i = (i + 1) % takes.length;
-  lastTake[name] = i;
-  takes[i]();
-}
 
 // a click on every press of a button or link (the contact block's cards and steps included)
 addEventListener(
