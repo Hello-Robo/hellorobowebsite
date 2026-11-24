@@ -5,8 +5,6 @@
  *   cut off at the neck, its origin on the neck's axis) cropped at the torso; his head
  *   follows the mouse, the body takes a little of the turn; after a few seconds without the
  *   mouse he looks around on his own; he "breathes" slightly;
- * - now and then a photographer's flash lights him and the sphere for a moment and casts
- *   his soft shadow on it (only the light shows, not the flash itself);
  * - behind him the sticker graphics (public/images/home/hero-bg.jpg, an equirect 2:1
  *   picture) on a virtual sphere — tiled, a little fisheye at the edges, the top bent like a
  *   curved screen — that turns with
@@ -22,7 +20,6 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
-import { sfx } from './sound';
 import { reducedMotion, isDesktop } from './media-query';
 /** Defaults (the prototype's tuned values); the CMS overrides all but head */
 const DEFAULTS = {
@@ -64,15 +61,8 @@ const BG_FRAG = `
 uniform sampler2D map;
 uniform float tiles, opacity, tanH, aspect, fish, bendTop, portrait;
 uniform mat3 rot;
-// photographer's flash on the sphere: its level, where its hotspot lands (uv), and the
-// robot's silhouette (rendered small while a flash is on) cast as his shadow: projected from
-// the flash's spot on screen (shadowFrom) and enlarged by shadowScale — the sphere is
-// further away than he is — so it falls long and away from the flash, with a firm edge
-uniform float flash, shadowScale;
 // TEST: fresnel — the sphere's edge glows like glass seen at a grazing angle (0 = off)
 uniform float fresnel, edgeWarp, edgeBlur;
-uniform vec2 flashAt, shadowFrom;
-uniform sampler2D shadowMask;
 varying vec2 vUv;
 void main(){
   vec2 p = vUv * 2.0 - 1.0;
@@ -130,23 +120,6 @@ void main(){
   float fr = pow(clamp(r2 * 1.25, 0.0, 1.0), 2.2);
   col = mix(col, vec3(1.0), fresnel * fr * 0.85);
   col += vec3(0.06, 0.025, 0.0) * fresnel * smoothstep(0.25, 0.7, fr) * (1.0 - fr);
-  if (flash > 0.0) {
-    // the flash lights the graphics: brightest round its hotspot, a little everywhere
-    vec2 h = (vUv - flashAt) * vec2(aspect, 1.0);
-    float spot = 0.35 + 0.65 * exp(-dot(h, h) * 1.6);
-    col += (1.0 - col) * flash * 0.55 * spot;
-    // the robot's shadow: the point of him that shades this spot of the sphere lies on the
-    // line to the flash, closer by shadowScale; a light blur keeps the edge firm but clean
-    vec2 su = shadowFrom + (vUv - shadowFrom) / shadowScale;
-    float sh = 0.0;
-    for (int i = -1; i <= 1; i++) {
-      for (int j = -1; j <= 1; j++) {
-        sh += texture2D(shadowMask, su + vec2(float(i), float(j)) * vec2(0.0018 / aspect, 0.0018)).r;
-      }
-    }
-    sh = smoothstep(0.15, 0.85, sh / 9.0);
-    col *= 1.0 - flash * 0.55 * sh;
-  }
   gl_FragColor = vec4(col, 1.0);
 }`;
 
@@ -193,12 +166,6 @@ export function mountHeroScene(o: {
   const rim = new THREE.DirectionalLight(0xffd9c4, 1.7 * Math.PI);
   rim.position.set(-1.6, 1.4, -1.8);
   scene.add(key, rim, new THREE.HemisphereLight(0xffffff, 0x8a8580, 0.35 * Math.PI));
-  // Photographer's flash, now and then: a bright, cool-white burst from just beside the camera
-  // (a little left and up) that lights only the robot — its glossy coat and paint catch it —
-  // and dies off fast. The flash itself is never shown; the background isn't lit by it.
-  const flash = new THREE.DirectionalLight(0xf4f8ff, 0);
-  flash.position.set(-0.5, 1.5, 3);
-  scene.add(flash);
   const camera = new THREE.PerspectiveCamera(26, 1, 0.01, 20);
 
   // Post: the robot is drawn into his own HDR buffer, shaded by ambient occlusion (GTAO, half
@@ -239,18 +206,10 @@ export function mountHeroScene(o: {
   // Background: a full-screen quad, each pixel casts a ray onto the virtual sphere.
   const bgScene = new THREE.Scene();
   const bgCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-  // the robot's silhouette for the flash shadow, small (it's blurred anyway)
-  const shadowRT = new THREE.WebGLRenderTarget(1, 1);
-  const shadowMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const bgUniforms = {
-    flash: { value: 0 },
     fresnel: { value: FRESNEL },
     edgeWarp: { value: EDGE_WARP },
     edgeBlur: { value: EDGE_BLUR },
-    flashAt: { value: new THREE.Vector2(0.5, 0.6) },
-    shadowFrom: { value: new THREE.Vector2(0.5, 0.5) },
-    shadowScale: { value: 1.3 },
-    shadowMask: { value: shadowRT.texture },
     map: { value: null as THREE.Texture | null },
     tiles: { value: 1 },
     opacity: { value: 1 },
@@ -282,7 +241,6 @@ export function mountHeroScene(o: {
     const w = o.host.clientWidth || innerWidth;
     const h = o.host.clientHeight || innerHeight;
     renderer.setSize(w, h, false);
-    shadowRT.setSize(Math.max(1, Math.round(w / 4)), Math.max(1, Math.round(h / 4)));
     camera.aspect = w / h;
     const halfV = THREE.MathUtils.degToRad(camera.fov / 2);
     // a tall (phone) screen: fitting his full width would show him down to the hips, so it
@@ -371,58 +329,9 @@ export function mountHeroScene(o: {
     o.onFail?.();
   }
 
-  // flash timing, random like a press pit: the next one comes 1.5–7 s later (short gaps more
-  // likely), now and then a quick burst of 2–3; each flash has its own strength and comes
-  // from its own spot round the camera (left / right, higher / lower), as if from different
-  // photographers. Each burst: up in 20 ms, then a fast exponential fall-off (~0.25 s).
-  const FLASH = { peak: 6 * Math.PI, rise: 0.02, fall: 0.07 };
-  type Flash = { at: number; strength: number; x: number; y: number; heard?: boolean };
-  const flashPos = new THREE.Vector2();
-  let flashes: Flash[] = [];
-  let nextFlash = 1.5 + Math.random() * 3;
-  const shot = (at: number): Flash => ({
-    at,
-    strength: 0.55 + Math.random() * 0.45,
-    x: (Math.random() * 2 - 1) * 1.6,
-    y: 0.9 + Math.random() * 1.2,
-  });
-  const flashLevel = (t: number) => {
-    if (reduceMotion) return 0;
-    if (t >= nextFlash) {
-      // fire it now: after a pause (scrolled away, menu open, another tab) the clock has
-      // jumped past it, and starting it in the past skipped both the flash and its sound
-      flashes = [shot(t)];
-      const r = Math.random();
-      const extra = r < 0.12 ? 2 : r < 0.35 ? 1 : 0;
-      for (let i = 1; i <= extra; i++) flashes.push(shot(flashes[i - 1].at + 0.12 + Math.random() * 0.22));
-      nextFlash = t + 1.5 + 5.5 * Math.pow(Math.random(), 1.6);
-    }
-    let level = 0;
-    for (const f of flashes) {
-      const k = t - f.at;
-      if (k < 0) continue;
-      // the shutter clicks as it fires (silent until the visitor has clicked, or if they
-      // turned sound off: see sound.ts)
-      if (!f.heard) {
-        f.heard = true;
-        if (k < 0.3) sfx('shutter'); // (a slow frame still gets its click)
-      }
-      const l = f.strength * (k < FLASH.rise ? k / FLASH.rise : Math.exp(-(k - FLASH.rise) / FLASH.fall));
-      if (l > level) {
-        level = l;
-        flash.position.set(f.x, f.y, 3);
-        flashPos.set(f.x, f.y);
-      }
-    }
-    return level < 0.002 ? 0 : level;
-  };
-
   function tick() {
     raf = 0;
     const dt = Math.min(clock.getDelta(), 0.05);
-    const f = flashLevel(clock.elapsedTime);
-    flash.intensity = FLASH.peak * f;
-    scene.environmentIntensity = 1 + 1.2 * f; // the room's light brightens with it
     const t = clock.elapsedTime;
     const c = config;
     if (rig.head && rig.body && rig.stage) {
@@ -457,22 +366,6 @@ export function mountHeroScene(o: {
     bgUniforms.bendTop.value = c.bgBendTop;
     bgUniforms.tanH.value = Math.tan(D2R(c.bgFovDeg / 2));
 
-    // during a flash: the robot's silhouette into the small mask, for his shadow on the sphere
-    const fl = flash.intensity / FLASH.peak;
-    bgUniforms.flash.value = fl;
-    if (fl > 0 && rig.stage) {
-      bgUniforms.flashAt.value.set(0.5 + flashPos.x * 0.16, 0.5 + (flashPos.y - 1.2) * 0.22);
-      // the flash's spot on screen (off to the side / above for a far-out flash)
-      bgUniforms.shadowFrom.value.set(0.5 + flashPos.x * 0.35, 0.55 + (flashPos.y - 1.2) * 0.4);
-      renderer.setRenderTarget(shadowRT);
-      renderer.setClearColor(0x000000, 1);
-      renderer.clear();
-      scene.overrideMaterial = shadowMat;
-      renderer.render(scene, camera);
-      scene.overrideMaterial = null;
-      renderer.setRenderTarget(null);
-      renderer.setClearColor(0xffffff, 1);
-    }
     if (rig.stage) drawRobot();
     renderer.clear();
     if (bgUniforms.map.value) renderer.render(bgScene, bgCamera);
