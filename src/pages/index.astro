@@ -12,8 +12,11 @@ import HomeRadio from '../blocks/home/HomeRadio.astro';
 import HomeNews from '../blocks/home/HomeNews.astro';
 ---
 <BaseLayout title={'Home'}>
-  <HomeHero />
-  <HomeIntro />
+  <!-- the hero stays put while the intro slides up over it -->
+  <div class="home-cover">
+    <HomeHero />
+    <HomeIntro />
+  </div>
   <HomeShowreel />
   <HomePhilosophy />
   <HomeShowcase />
@@ -23,3 +26,29 @@ import HomeNews from '../blocks/home/HomeNews.astro';
   <HomeRadio />
   <HomeNews />
 </BaseLayout>
+
+<style>
+  /* Scrolling down, the hero holds still and the intro's white block slides up over it.
+     The hero is sticky inside this wrapper only (so it lets go once the intro has passed,
+     not behind the whole page). Taller than the screen, it first scrolls until its bottom
+     edge is in view, then holds: top = screen height − hero height (from the wrapper's
+     width, 100cqw, and the hero's aspect ratio), never more than 0. */
+  .home-cover {
+    container-type: inline-size;
+  }
+  .home-cover :global(.home-hero) {
+    position: sticky;
+    top: min(0px, calc(100svh - 100cqw * 1117 / 1728));
+    z-index: 0;
+  }
+  .home-cover :global(.home-intro) {
+    position: relative;
+    z-index: 1;
+    background: var(--color-bg);
+  }
+  @media (max-width: 1023px) {
+    .home-cover :global(.home-hero) {
+      top: min(0px, calc(100svh - 100cqw * 760 / 390));
+    }
+  }
+</style>
