@@ -37,7 +37,7 @@
  * behind, his head tilted up to the screen and following the picture side to side (it
  * doesn't follow the mouse), soft wide projector rays from his face to the screen; the
  * screen's light on him (and the rays) flickers while an episode plays.
- * Phones keep the photo.
+ * Phones get the 3D robot too (the photo only if he can't be drawn).
  */
 import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
@@ -190,13 +190,10 @@ const crt = { scanlines: 59, vignette: 24, curvature: 0, jitter: 3 };
 </section>
 
 <script>
-  import { isDesktop } from '../../scripts/media-query';
-  // the 3D robot: three.js and the model are only fetched on desktop
-  if (isDesktop()) {
-    import('../../scripts/tv-robot').catch(() =>
-      document.querySelectorAll('[data-tv]').forEach((tv) => tv.classList.add('is-robot-fallback')),
-    );
-  }
+  // the 3D robot, on every device (phones too); the photo stays if it can't load
+  import('../../scripts/tv-robot').catch(() =>
+    document.querySelectorAll('[data-tv]').forEach((tv) => tv.classList.add('is-robot-fallback')),
+  );
 
   type Item = { id: string; title: string };
   type YTPlayer = {
@@ -517,8 +514,8 @@ const crt = { scanlines: 59, vignette: 24, curvature: 0, jitter: 3 };
     height: auto;
     pointer-events: none;
   }
-  /* Desktop: the 3D robot (seen from behind) replaces the photo, fading in once drawn; the
-     photo only shows if the model can't */
+  /* The 3D robot (seen from behind) replaces the photo, on every device, fading in once
+     drawn; the photo only shows if the model can't */
   .radio-tv__robot-3d {
     position: absolute;
     z-index: 2;
@@ -534,21 +531,14 @@ const crt = { scanlines: 59, vignette: 24, curvature: 0, jitter: 3 };
   .radio-tv__robot-3d:global(.is-live) :global(canvas) {
     opacity: 1;
   }
-  @media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
-    .radio-tv:not(:global(.is-robot-fallback)) :global(.radio-tv__robot) {
-      visibility: hidden;
-    }
-    .radio-tv:not(:global(.is-robot-fallback)) .radio-tv__fit {
-      -webkit-mask: var(--fade), radial-gradient(var(--poster-robot), transparent 78%, #000 100%);
-      -webkit-mask-composite: source-in;
-      mask: var(--fade), radial-gradient(var(--poster-robot), transparent 78%, #000 100%);
-      mask-composite: intersect;
-    }
+  .radio-tv:not(:global(.is-robot-fallback)) :global(.radio-tv__robot) {
+    visibility: hidden;
   }
-  @media not ((hover: hover) and (pointer: fine) and (min-width: 1024px)) {
-    .radio-tv__robot-3d {
-      display: none;
-    }
+  .radio-tv:not(:global(.is-robot-fallback)) .radio-tv__fit {
+    -webkit-mask: var(--fade), radial-gradient(var(--poster-robot), transparent 78%, #000 100%);
+    -webkit-mask-composite: source-in;
+    mask: var(--fade), radial-gradient(var(--poster-robot), transparent 78%, #000 100%);
+    mask-composite: intersect;
   }
   /* ── The screen as a button: no icon, a click plays / pauses ── */
   .radio-tv__toggle {

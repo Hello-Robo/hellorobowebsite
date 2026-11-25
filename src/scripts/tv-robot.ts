@@ -21,7 +21,7 @@
  * speaker ("ROBO RADIO 14: ALEJANDRO OTALORA"), between micrographics, and switches when the
  * episode does (RadioTV writes its id to data-current; the titles are in data-playlist).
  *
- * Desktop only (RadioTV imports this only there); if WebGL or the model fails, the photo
+ * Every device, phones too; if WebGL or the model fails, the photo
  * comes back. Placement comes from RadioTV (data-head-x / -y / -share on the host).
  */
 import { mountRobot } from './robot-3d';

@@ -323,7 +323,10 @@ void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
     const uDims = U('uDims');
     const uP1 = U('uP1');
     // The render() uniforms that don't change, packed as Figma packs them
-    gl.uniform4f(U('uP0'), p.curvature / 100, p.scanlines / 100, p.mask / 100, (p.aberration / 100) * 12);
+    // GRID: every CRT's scanlines and shadow mask a touch lighter than its settings say
+    // (the grid read as dirt at full strength); one dial for the whole site
+    const GRID = 0.8;
+    gl.uniform4f(U('uP0'), p.curvature / 100, (p.scanlines / 100) * GRID, (p.mask / 100) * GRID, (p.aberration / 100) * 12);
     gl.uniform4f(U('uP2'), p.flicker / 100, p.noise / 100, p.rollSpeed, p.jitter / 100);
     gl.uniform4f(U('uP3'), 0, p.noiseSize, p.clipToCurve ? 1 : 0, p.maskPitch);
     const overlay = canvas.hasAttribute('data-overlay');

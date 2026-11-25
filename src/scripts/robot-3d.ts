@@ -8,8 +8,8 @@
  * Framing: the caller says where the head's middle sits in the canvas (fractions of its
  * width / height) and how much of the width the head takes; the camera is placed to match.
  *
- * Desktop only — callers check that before importing this (so phones never fetch three.js
- * or the model). Off screen or in a hidden tab it stops drawing; with reduced motion it
+ * Runs on phones too (the Robo Radio TV); there the pixel ratio is capped at 1.5 to save
+ * memory. Off screen or in a hidden tab it stops drawing; with reduced motion it
  * draws one still frame in the head's resting pose.
  */
 import {
@@ -36,7 +36,7 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { reducedMotion } from './media-query';
+import { reducedMotion, isDesktop } from './media-query';
 import { ledStrip, ledTick, ledUniforms, ledUse } from './robot-led';
 
 const MODEL = '/models/hello-robot.glb';
@@ -308,7 +308,7 @@ export function mountRobot(o: RobotOptions) {
     const w = o.host.clientWidth;
     const h = o.host.clientHeight;
     if (!w || !h) return;
-    renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+    renderer.setPixelRatio(Math.min(isDesktop() ? 2 : 1.5, devicePixelRatio || 1));
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     // the distance at which the head takes headShare of the width
