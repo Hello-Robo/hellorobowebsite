@@ -36,7 +36,8 @@ import { reels } from '../data/reels';
         image: video,
         video: reels.videoProduction,
         imageAlt: 'Aerial view of a solar field build site',
-        stamp: { src: '/images/services/stamp-video.svg', w: 121, h: 72, x: 586, y: 215 },
+        // on phones it would cover "video" in the title: desktop only
+        stamp: { src: '/images/services/stamp-video.svg', w: 121, h: 72, x: 586, y: 215, hideOnMobile: true },
       },
     ]}
   />

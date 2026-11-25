@@ -28,7 +28,7 @@ interface Service {
   /** the reel that plays over the image */
   video?: Reel;
   /** Stamp next to the title: src, size and offset inside the left column (Figma px) */
-  stamp: { src: string; w: number; h: number; x: number; y: number };
+  stamp: { src: string; w: number; h: number; x: number; y: number; hideOnMobile?: boolean };
 }
 interface Props {
   items: Service[];
@@ -56,7 +56,7 @@ const { items } = Astro.props;
                   <><span class="mask"><span style={`--d: ${wi + 1}`}>{w}</span></span>{wi < words.length - 1 && ' '}</>
                 ))}
               </h2>
-              <span class="services-scroller__stamp" style={`left:calc(${item.stamp.x} * var(--px));top:calc(${item.stamp.y} * var(--px))`}>
+              <span class:list={['services-scroller__stamp', { 'services-scroller__stamp--desktop': item.stamp.hideOnMobile }]} style={`left:calc(${item.stamp.x} * var(--px));top:calc(${item.stamp.y} * var(--px))`}>
                 <img src={item.stamp.src} alt="" width={item.stamp.w} height={item.stamp.h} style={`--w: ${item.stamp.w}`} loading="lazy" />
               </span>
               <ul class="services-scroller__list t-body">
@@ -311,6 +311,10 @@ const { items } = Astro.props;
     .services-scroller__stamp img {
       width: auto;
       height: 100%;
+    }
+    /* a stamp that would sit on its title's long first line (video production) */
+    .services-scroller__stamp--desktop {
+      display: none;
     }
     /* services in two columns at Body2 (12), so the image gets the height to be vertical */
     .services-scroller__list {
