@@ -13,9 +13,11 @@
  * renders them at 1×. The grain is finer and crisper than Figma's (2026-11-24): scanline
  * size 2 (Figma 3), mask pitch 6 (12), static size 1 (1.5), colour fringing 8 (17).
  * Animates only while visible; with reduced motion it draws one still frame. Without
- * WebGL the canvas hides and the plain image shows. Phones and tablets (no mouse, or up to
- * 1023px wide) get the plain image too: each canvas is a WebGL context of its own, and a
- * few of them (the menu's two, the Careers strip…) were enough for iOS to drop the tab.
+ * WebGL the canvas hides and the plain image shows. Phones and tablets get it too
+ * (2026-11-25), but each canvas is a WebGL context of its own and a page of them at once
+ * (the menu's two, the Careers strip, a Team card each…) was enough for iOS to drop the
+ * tab: there a canvas only starts its context when its box first comes on screen and
+ * shows (an unopened menu or Team card never makes one).
  * `overlay`: for content the page can't read (a YouTube player) — the effect runs on a
  * plain white signal and the canvas lays the result over whatever is underneath as black
  * of varying transparency (no blend mode: Chrome draws mix-blend-mode over a video frame
@@ -273,15 +275,15 @@ varying vec2 vUv;
 void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
 
   const still = reducedMotion;
-  // desktop only (see above): elsewhere no WebGL at all, the plain image shows
+  // desktop: every canvas starts at once; phones and tablets: each when it first shows
   const desktop = isDesktop();
 
-  for (const canvas of document.querySelectorAll<HTMLCanvasElement>('canvas[data-crt]')) {
+  const mount = (canvas: HTMLCanvasElement) => {
     const box = canvas.parentElement;
-    const gl = desktop ? canvas.getContext('webgl', { premultipliedAlpha: true, alpha: true }) : null;
+    const gl = canvas.getContext('webgl', { premultipliedAlpha: true, alpha: true });
     if (!box || !gl) {
       canvas.hidden = true;
-      continue;
+      return;
     }
     const p = JSON.parse(canvas.dataset.crt || '{}');
     const compile = (type: number, src: string) => {
@@ -296,7 +298,7 @@ void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
     gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
       canvas.hidden = true;
-      continue;
+      return;
     }
     gl.useProgram(prog);
     // Figma's quad: position + uv, uv (0,0) at the top left
@@ -479,6 +481,36 @@ void main() { vUv = aUv; gl_Position = vec4(aPos, 0.0, 1.0); }`;
         frame = requestAnimationFrame(loop);
       }).observe(html, { attributes: true, attributeFilter: ['data-menu'] });
     }
+  };
+
+  /** phones and tablets: mount once the box is near the screen and showing (laid out, not
+   * visibility: hidden — an unopened menu or Team card stays without a context) */
+  const mountWhenShown = (canvas: HTMLCanvasElement) => {
+    const box = canvas.parentElement;
+    if (!box) return;
+    let near = false;
+    let timer = 0;
+    const check = () => {
+      timer = 0;
+      if (!near) return;
+      if (box.offsetWidth && getComputedStyle(box).visibility === 'visible') {
+        io.disconnect();
+        mount(canvas);
+      } else timer = window.setTimeout(check, 250);
+    };
+    const io = new IntersectionObserver(
+      ([e]) => {
+        near = e.isIntersecting;
+        if (near && !timer) check();
+      },
+      { rootMargin: '200px 0px' },
+    );
+    io.observe(box);
+  };
+
+  for (const canvas of document.querySelectorAll<HTMLCanvasElement>('canvas[data-crt]')) {
+    if (desktop) mount(canvas);
+    else mountWhenShown(canvas);
   }
 </script>
 
